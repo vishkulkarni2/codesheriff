@@ -164,7 +164,7 @@ export default async function RepoPage({ params }: RepoPageProps) {
 
 function ScanStatusPill({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    COMPLETED: 'bg-green-100 text-green-700',
+    COMPLETE: 'bg-green-100 text-green-700',
     RUNNING:   'bg-blue-100 text-blue-700 animate-pulse',
     QUEUED:    'bg-gray-100 text-gray-600',
     FAILED:    'bg-red-100 text-red-700',

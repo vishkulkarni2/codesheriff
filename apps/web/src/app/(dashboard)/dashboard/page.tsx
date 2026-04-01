@@ -232,7 +232,7 @@ function StatCard({
 
 function ScanStatusPill({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    COMPLETED: 'bg-green-100 text-green-700',
+    COMPLETE: 'bg-green-100 text-green-700',
     RUNNING: 'bg-blue-100 text-blue-700',
     QUEUED: 'bg-gray-100 text-gray-600',
     FAILED: 'bg-red-100 text-red-700',
@@ -242,7 +242,7 @@ function ScanStatusPill({ status }: { status: string }) {
     <span
       className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${styles[status] ?? 'bg-gray-100 text-gray-600'}`}
     >
-      {status === 'COMPLETED' && <CheckCircle2 className="h-3 w-3" />}
+      {status === 'COMPLETE' && <CheckCircle2 className="h-3 w-3" />}
       {status}
     </span>
   );

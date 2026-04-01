@@ -24,6 +24,7 @@ import { orgRoutes } from './routes/orgs.js';
 // Webhook handlers
 import { githubWebhookRoutes } from './webhooks/github.js';
 import { gitlabWebhookRoutes } from './webhooks/gitlab.js';
+import { clerkWebhookRoutes } from './webhooks/clerk.js';
 
 // Auth middleware
 import { authMiddleware } from './middleware/auth.js';
@@ -125,6 +126,7 @@ export async function buildServer(opts: ServerOptions) {
   // Webhook receivers (use HMAC sig auth, not Clerk)
   await app.register(githubWebhookRoutes, { prefix: '/webhooks' });
   await app.register(gitlabWebhookRoutes, { prefix: '/webhooks' });
+  await app.register(clerkWebhookRoutes, { prefix: '/webhooks' });
 
   // Authenticated API routes
   await app.register(scanRoutes, { prefix: '/api/v1' });
