@@ -1,0 +1,32 @@
+{
+  "name": "@codesheriff/autotune",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Self-improving detection loop — evolves semgrep rules and Claude prompts via F1-guided selection",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "autotune": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.24.0",
+    "@codesheriff/shared": "workspace:*",
+    "glob": "^10.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0"
+  }
+}
