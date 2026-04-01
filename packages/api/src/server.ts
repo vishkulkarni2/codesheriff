@@ -106,6 +106,21 @@ export async function buildServer(opts: ServerOptions) {
 
   await app.register(fastifyFormbody);
 
+  // Capture raw body buffer for webhook HMAC verification (GitHub, GitLab, Clerk).
+  // Must be registered before routes — stores raw bytes on req then parses as JSON.
+  app.addContentTypeParser(
+    'application/json',
+    { parseAs: 'buffer' },
+    (req, body, done) => {
+      (req as unknown as { rawBody: Buffer }).rawBody = body;
+      try {
+        done(null, JSON.parse(body.toString('utf8')));
+      } catch (err) {
+        done(err as Error, undefined);
+      }
+    }
+  );
+
   // -------------------------------------------------------------------------
   // Decorators — attach shared resources to every request
   // -------------------------------------------------------------------------
