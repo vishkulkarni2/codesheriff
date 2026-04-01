@@ -1,0 +1,99 @@
+rules:
+  # ---------------------------------------------------------------------------
+  # ai-async-race
+  # Detects parallel async operations that write to shared state without
+  # appropriate locking or isolation.
+  #
+  # AI code generators commonly produce Promise.all() patterns that look
+  # efficient but create race conditions when writing to shared resources.
+  # ---------------------------------------------------------------------------
+
+  - id: ai-promise-all-shared-write
+    patterns:
+      - pattern: |
+          await Promise.all([
+            ...,
+            $OBJ.$PROP = $VAL,
+            ...
+          ])
+      - pattern: |
+          await Promise.all([
+            ...,
+            $ARR.push(...),
+            ...
+          ])
+    message: >
+      Direct mutation of shared state inside Promise.all(). Parallel operations
+      that write to the same variable create a race condition. Collect results
+      and merge after: const [a, b] = await Promise.all([fnA(), fnB()]);
+    severity: WARNING
+    languages: [javascript, typescript]
+    metadata:
+      category: logic
+      cwe: CWE-362
+      ai-specific: true
+
+  - id: ai-promise-all-db-write-without-transaction
+    patterns:
+      - pattern: |
+          await Promise.all([
+            ...,
+            $DB.$TABLE.create(...),
+            $DB.$TABLE.update(...),
+            ...
+          ])
+      - pattern: |
+          await Promise.all([
+            ...,
+            prisma.$TABLE.create(...),
+            prisma.$TABLE.update(...),
+            ...
+          ])
+    message: >
+      Multiple database write operations inside Promise.all() without a transaction.
+      If one write fails, the others will have already committed — leaving data in
+      an inconsistent state. Wrap in prisma.$transaction([...]) or use a try/catch
+      with compensating transactions.
+    severity: WARNING
+    languages: [javascript, typescript]
+    metadata:
+      category: logic
+      cwe: CWE-362
+      ai-specific: true
+
+  - id: ai-counter-race-no-atomic
+    patterns:
+      - pattern: |
+          $OBJ.$COUNT = $OBJ.$COUNT + 1;
+          await $DB.save($OBJ);
+      - pattern: |
+          $OBJ.$COUNT += 1;
+          await $DB.save($OBJ);
+    message: >
+      Non-atomic read-modify-write counter pattern. Two concurrent requests will
+      both read the same value and both write +1, effectively losing one increment.
+      Use a database-level atomic increment: { increment: 1 } in Prisma update.
+    severity: WARNING
+    languages: [javascript, typescript]
+    metadata:
+      category: logic
+      cwe: CWE-362
+      ai-specific: true
+
+  - id: ai-settimeout-shared-state
+    pattern: |
+      setTimeout(() => {
+        ...
+        $SHARED.$FIELD = $VAL;
+        ...
+      }, $DELAY)
+    message: >
+      Mutation of potentially shared variable inside setTimeout. This can cause
+      race conditions if the variable is also written by other async paths.
+      Consider using atomic state updates or explicit synchronization.
+    severity: INFO
+    languages: [javascript, typescript]
+    metadata:
+      category: logic
+      cwe: CWE-362
+      ai-specific: true

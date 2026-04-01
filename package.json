@@ -1,0 +1,30 @@
+{
+  "name": "codesheriff",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI Security & Quality Gate for AI-Generated Code",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "db:generate": "pnpm --filter @codesheriff/db generate",
+    "db:migrate": "pnpm --filter @codesheriff/db migrate:dev",
+    "db:push": "pnpm --filter @codesheriff/db db:push",
+    "db:seed": "pnpm --filter @codesheriff/db seed",
+    "db:studio": "pnpm --filter @codesheriff/db studio"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.0",
+    "prettier": "^3.2.0",
+    "eslint": "^8.57.0"
+  }
+}

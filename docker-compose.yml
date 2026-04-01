@@ -1,0 +1,91 @@
+version: '3.9'
+
+# =============================================================================
+# CodeSheriff — Local Development Stack
+# =============================================================================
+# Start with: docker compose up -d
+# Stop with:  docker compose down
+# Reset data: docker compose down -v
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL 15
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: codesheriff-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: codesheriff
+      POSTGRES_PASSWORD: codesheriff
+      POSTGRES_DB: codesheriff
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U codesheriff -d codesheriff']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Redis 7
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: codesheriff-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Redis Commander — Web UI for Redis inspection (dev only)
+  # ---------------------------------------------------------------------------
+  redis-commander:
+    image: ghcr.io/joeferner/redis-commander:latest
+    container_name: codesheriff-redis-ui
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - '8081:8081'
+    depends_on:
+      redis:
+        condition: service_healthy
+    profiles:
+      - tools
+
+  # ---------------------------------------------------------------------------
+  # pgAdmin — Web UI for Postgres inspection (dev only)
+  # ---------------------------------------------------------------------------
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: codesheriff-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: dev@codesheriff.dev
+      PGADMIN_DEFAULT_PASSWORD: codesheriff
+    ports:
+      - '8080:80'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
+    name: codesheriff_postgres_data
+  redis_data:
+    name: codesheriff_redis_data

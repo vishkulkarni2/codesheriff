@@ -1,0 +1,58 @@
+# Version control
+.git
+.gitignore
+
+# Node modules (rebuilt inside Docker)
+node_modules
+**/node_modules
+
+# Build artifacts
+dist
+**/dist
+.next
+**/.next
+.turbo
+**/.turbo
+
+# Test and coverage
+coverage
+**/coverage
+**/__tests__
+**/*.test.ts
+**/*.spec.ts
+
+# Dev / local tooling
+.env
+.env.*
+!.env.example
+*.local
+
+# Logs
+*.log
+logs/
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode
+.idea
+*.swp
+
+# Docker files themselves (not needed in image)
+docker/
+docker-compose*.yml
+.dockerignore
+
+# GitHub Actions
+.github/
+
+# Dev docs
+*.md
+!README.md
+
+# Prisma dev artifacts (migrations are copied explicitly)
+packages/db/prisma/dev.db
+packages/db/prisma/dev.db-journal

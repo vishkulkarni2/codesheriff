@@ -1,0 +1,91 @@
+# syntax=docker/dockerfile:1.7
+# =============================================================================
+# Dockerfile.api — CodeSheriff API (Fastify)
+#
+# Stages:
+#   base    — Node 20 slim + pnpm
+#   deps    — install ALL workspace deps (with BuildKit cache)
+#   builder — tsc compile all packages the API depends on
+#   runner  — production image, pruned deps only
+# =============================================================================
+
+ARG NODE_VERSION=20
+ARG PNPM_VERSION=9
+
+# -----------------------------------------------------------------------------
+# base — shared Node + pnpm foundation
+# -----------------------------------------------------------------------------
+FROM node:${NODE_VERSION}-slim AS base
+
+RUN npm install -g pnpm@${PNPM_VERSION}
+
+WORKDIR /repo
+
+# -----------------------------------------------------------------------------
+# deps — install full workspace (needed to build cross-package references)
+# -----------------------------------------------------------------------------
+FROM base AS deps
+
+# Copy workspace manifests first for layer caching
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY packages/shared/package.json    packages/shared/
+COPY packages/db/package.json        packages/db/
+COPY packages/analyzer/package.json  packages/analyzer/
+COPY packages/api/package.json       packages/api/
+
+# Install all deps (BuildKit pnpm store cache)
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
+
+# Copy full source (after deps for better caching)
+COPY packages/ packages/
+COPY turbo.json tsconfig.base.json ./
+
+# -----------------------------------------------------------------------------
+# builder — compile TypeScript for all API dependencies
+# -----------------------------------------------------------------------------
+FROM deps AS builder
+
+RUN pnpm --filter @codesheriff/shared build && \
+    pnpm --filter @codesheriff/db    build && \
+    pnpm --filter @codesheriff/api   build
+
+# Prisma: generate client for the current platform
+RUN pnpm --filter @codesheriff/db generate
+
+# Prune to production-only deps for the API package
+RUN pnpm deploy --filter @codesheriff/api --prod /deploy/api
+
+# Copy compiled output into the pruned deploy directory
+RUN cp -r packages/api/dist             /deploy/api/dist && \
+    cp -r packages/db/dist              /deploy/api/node_modules/@codesheriff/db/dist && \
+    cp -r packages/shared/dist          /deploy/api/node_modules/@codesheriff/shared/dist && \
+    cp -r packages/db/prisma            /deploy/api/prisma
+
+# -----------------------------------------------------------------------------
+# runner — minimal production image
+# -----------------------------------------------------------------------------
+FROM node:${NODE_VERSION}-slim AS runner
+
+# Install OpenSSL (required by Prisma query engine binary)
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends openssl ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Non-root user for security
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser  --system --uid 1001 --ingroup nodejs sheriffapi
+
+COPY --from=builder --chown=sheriffapi:nodejs /deploy/api ./
+
+USER sheriffapi
+
+EXPOSE 4000
+
+ENV NODE_ENV=production \
+    PORT=4000
+
+# Run Prisma migrations then start the server
+CMD ["sh", "-c", "node node_modules/.bin/prisma migrate deploy --schema=prisma/schema.prisma && node dist/index.js"]

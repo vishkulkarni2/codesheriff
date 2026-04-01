@@ -1,0 +1,67 @@
+rules:
+  # ---------------------------------------------------------------------------
+  # ai-cors-wildcard
+  # Detects CORS configurations using wildcard origin ('*').
+  #
+  # AI assistants commonly generate CORS configs with origin: '*' as a quick
+  # "fix" for CORS errors. This allows any domain to make credentialed
+  # cross-origin requests, enabling CSRF and data exfiltration attacks.
+  # ---------------------------------------------------------------------------
+
+  - id: ai-cors-wildcard-origin-object
+    patterns:
+      - pattern: |
+          cors({ ..., origin: '*', ... })
+      - pattern: |
+          cors({ origin: '*' })
+    message: >
+      CORS configured with wildcard origin ('*'). This allows any website to make
+      cross-origin requests to your API. Specify allowed origins explicitly:
+      origin: ['https://app.yourdomain.com'] or use an origin allowlist function.
+    severity: WARNING
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      cwe: CWE-942
+      owasp: A05:2021 - Security Misconfiguration
+      ai-specific: true
+
+  - id: ai-cors-header-wildcard
+    patterns:
+      - pattern: res.setHeader('Access-Control-Allow-Origin', '*')
+      - pattern: res.header('Access-Control-Allow-Origin', '*')
+      - pattern: response.headers['Access-Control-Allow-Origin'] = '*'
+    message: >
+      Access-Control-Allow-Origin set to '*' manually. This is a wildcard CORS header
+      that allows any origin. Use a specific origin or validate against an allowlist.
+    severity: WARNING
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      cwe: CWE-942
+      ai-specific: true
+
+  - id: ai-cors-fastify-wildcard
+    pattern: |
+      fastify.register(fastifyCors, { origin: '*' })
+    message: >
+      Fastify CORS plugin configured with wildcard origin. Restrict to known origins.
+    severity: WARNING
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      cwe: CWE-942
+      ai-specific: true
+
+  - id: ai-cors-python-wildcard
+    patterns:
+      - pattern: CORS($APP, resources={r"/*": {"origins": "*"}})
+      - pattern: response.headers.add('Access-Control-Allow-Origin', '*')
+    message: >
+      Wildcard CORS origin detected in Python. Use a specific origin allowlist.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: security
+      cwe: CWE-942
+      ai-specific: false

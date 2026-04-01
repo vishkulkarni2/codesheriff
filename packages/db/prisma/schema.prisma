@@ -1,0 +1,327 @@
+// CodeSheriff — Prisma Schema
+// PostgreSQL 15 via Prisma ORM
+// Run `pnpm db:generate` after changes to regenerate the client.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// Enums
+// =============================================================================
+
+enum Plan {
+  FREE
+  TEAM
+  ENTERPRISE
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum Provider {
+  GITHUB
+  GITLAB
+  BITBUCKET
+}
+
+enum ScanTrigger {
+  PUSH
+  PR
+  MANUAL
+  SCHEDULED
+}
+
+enum ScanStatus {
+  QUEUED
+  RUNNING
+  COMPLETE
+  FAILED
+  CANCELLED
+}
+
+enum Severity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  INFO
+}
+
+enum FindingCategory {
+  SECURITY
+  HALLUCINATION
+  AUTH
+  LOGIC
+  SECRET
+  QUALITY
+}
+
+// =============================================================================
+// Models
+// =============================================================================
+
+/// An organization represents a team or company using CodeSheriff.
+/// Organizations are the top-level billing and access control unit.
+model Organization {
+  id   String @id @default(cuid())
+  name String
+  /// URL-safe unique identifier, e.g. "acme-corp"
+  slug String @unique
+
+  plan  Plan @default(FREE)
+  seats Int  @default(3)
+
+  /// GitHub App installation ID for this org
+  githubInstallationId String?
+  /// GitLab group ID
+  gitlabGroupId        String?
+  /// Bitbucket workspace slug
+  bitbucketWorkspace   String?
+
+  /// Slack incoming webhook URL for post-scan notifications.
+  /// Must be a valid https://hooks.slack.com/services/… URL.
+  slackWebhookUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  users        User[]
+  repositories Repository[]
+  rules        Rule[]
+
+  @@index([slug])
+}
+
+/// A user is a human member of an Organization.
+/// Authentication is delegated to Clerk; clerkId is the external reference.
+model User {
+  id       String  @id @default(cuid())
+  /// Clerk user ID — used for JWT validation
+  clerkId  String  @unique
+  email    String  @unique
+  name     String
+  avatarUrl String?
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role           UserRole     @default(MEMBER)
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([clerkId])
+}
+
+/// A repository connected to CodeSheriff for analysis.
+/// Belongs to one Organization and one VCS provider.
+model Repository {
+  id   String @id @default(cuid())
+  name String
+  /// Full repository path, e.g. "acme-corp/backend-api"
+  fullName      String
+  provider      Provider
+  defaultBranch String   @default("main")
+  isPrivate     Boolean  @default(true)
+  /// Primary programming language detected
+  language      String?
+
+  /// Latest computed risk score (0–100). Null until first scan.
+  riskScore    Int?
+  lastScannedAt DateTime?
+
+  /// VCS-side webhook ID, stored for deregistration when repo is removed
+  webhookId String?
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  scans    Scan[]
+  findings Finding[]
+
+  /// Risk score history snapshots (one per day, kept 90 days)
+  riskHistory RiskHistory[]
+
+  @@unique([organizationId, provider, fullName])
+  @@index([organizationId])
+  @@index([fullName, provider])
+}
+
+/// A single analysis run against a commit or pull request.
+model Scan {
+  id String @id @default(cuid())
+
+  repositoryId String
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  triggeredBy ScanTrigger
+  prNumber    Int?
+  prTitle     String?
+  branch      String
+  commitSha   String
+
+  status ScanStatus @default(QUEUED)
+
+  /// Computed risk score 0–100. Null until scan completes.
+  riskScore Int?
+
+  /// Counts populated once COMPLETE
+  findingsCount Int @default(0)
+  criticalCount Int @default(0)
+  highCount     Int @default(0)
+  mediumCount   Int @default(0)
+  lowCount      Int @default(0)
+
+  /// Wall-clock duration in milliseconds
+  durationMs  Int?
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  findings Finding[]
+
+  @@index([repositoryId])
+  @@index([repositoryId, createdAt])
+  @@index([status])
+}
+
+/// A single security or quality issue discovered during a scan.
+model Finding {
+  id String @id @default(cuid())
+
+  scanId String
+  scan   Scan   @relation(fields: [scanId], references: [id], onDelete: Cascade)
+
+  repositoryId String
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  /// The Rule that triggered this finding. Null for ad-hoc LLM findings.
+  ruleId String?
+  rule   Rule?  @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+
+  title       String
+  description String
+
+  /// AI-generated plain-English explanation of why this is a problem
+  explanation String? @db.Text
+  /// AI-generated copy-pasteable code fix
+  remediation String? @db.Text
+
+  severity Severity
+  category FindingCategory
+
+  filePath    String
+  lineStart   Int
+  lineEnd     Int
+  codeSnippet String @db.Text
+
+  /// True when the finding matches an AI-code-specific anti-pattern
+  isAIPatternSpecific Boolean @default(false)
+
+  /// User-marked false positive — excluded from risk score recalculation
+  falsePositive Boolean @default(false)
+  /// Suppressed finding — hidden from UI but retained for audit
+  suppressed    Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([scanId])
+  @@index([repositoryId])
+  @@index([severity])
+  @@index([category])
+  @@index([ruleId])
+  @@index([repositoryId, createdAt])
+}
+
+/// A detection rule — either a global built-in or an org-specific custom rule.
+/// Global rules have organizationId = null.
+model Rule {
+  id String @id @default(cuid())
+
+  /// null = global rule shipped with CodeSheriff
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String
+
+  /// Raw semgrep YAML pattern. Stored as text for the rules editor.
+  semgrepPattern String @db.Text
+
+  isEnabled Boolean @default(true)
+
+  severity Severity
+  category FindingCategory
+
+  /// True when the rule specifically targets AI code anti-patterns
+  isAISpecific Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  findings Finding[]
+
+  @@index([organizationId])
+  @@index([isEnabled])
+}
+
+/// Daily snapshot of a repository's risk score for trend charts.
+/// One row per repository per day, upserted at scan completion.
+model RiskHistory {
+  id           String   @id @default(cuid())
+  repositoryId String
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  date      DateTime @db.Date
+  riskScore Int
+
+  /// Finding counts at the time of the snapshot
+  criticalCount Int @default(0)
+  highCount     Int @default(0)
+  mediumCount   Int @default(0)
+  lowCount      Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@unique([repositoryId, date])
+  @@index([repositoryId, date])
+}
+
+/// Stores VCS access tokens for GitHub/GitLab/Bitbucket App installations.
+/// Encrypted at rest using application-level encryption (AES-256-GCM).
+model VcsInstallation {
+  id String @id @default(cuid())
+
+  organizationId String
+  provider       Provider
+
+  /// Provider-specific installation or app ID
+  installationId String
+
+  /// Encrypted access token (application-level encryption)
+  encryptedToken String
+
+  /// Token expiry — null for long-lived tokens (GitHub Apps use JWT + installation tokens)
+  tokenExpiresAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, provider])
+  @@index([installationId, provider])
+}

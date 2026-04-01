@@ -1,0 +1,96 @@
+# syntax=docker/dockerfile:1.7
+# =============================================================================
+# Dockerfile.web — CodeSheriff Next.js 14 Frontend
+#
+# Relies on `output: 'standalone'` in next.config.ts which produces a
+# self-contained .next/standalone directory (no node_modules needed at runtime).
+#
+# Stages:
+#   base    — Node 20 slim + pnpm
+#   deps    — install ALL workspace deps (with BuildKit cache)
+#   builder — next build (produces .next/standalone + .next/static)
+#   runner  — minimal image, ~200 MB
+# =============================================================================
+
+ARG NODE_VERSION=20
+ARG PNPM_VERSION=9
+
+# -----------------------------------------------------------------------------
+# base
+# -----------------------------------------------------------------------------
+FROM node:${NODE_VERSION}-slim AS base
+
+RUN npm install -g pnpm@${PNPM_VERSION}
+
+WORKDIR /repo
+
+# -----------------------------------------------------------------------------
+# deps
+# -----------------------------------------------------------------------------
+FROM base AS deps
+
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY packages/shared/package.json  packages/shared/
+COPY apps/web/package.json         apps/web/
+
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
+
+COPY packages/shared/ packages/shared/
+COPY apps/web/        apps/web/
+COPY turbo.json tsconfig.base.json ./
+
+# -----------------------------------------------------------------------------
+# builder — compile shared package then run Next.js build
+# -----------------------------------------------------------------------------
+FROM deps AS builder
+
+RUN pnpm --filter @codesheriff/shared build
+
+# Build args that need to be baked into the static bundle at build time
+# (only NEXT_PUBLIC_* vars are exposed to the browser)
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+ARG NEXT_PUBLIC_APP_URL
+
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY} \
+    NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+
+# Disable Next.js telemetry during builds
+ENV NEXT_TELEMETRY_DISABLED=1
+
+WORKDIR /repo/apps/web
+
+RUN pnpm build
+
+# -----------------------------------------------------------------------------
+# runner — ultra-slim image using standalone output
+# -----------------------------------------------------------------------------
+FROM node:${NODE_VERSION}-slim AS runner
+
+WORKDIR /app
+
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser  --system --uid 1001 --ingroup nodejs nextjs
+
+# Copy the standalone server (includes all required server-side deps)
+COPY --from=builder --chown=nextjs:nodejs /repo/apps/web/.next/standalone ./
+
+# Copy static assets (served by the standalone server directly)
+COPY --from=builder --chown=nextjs:nodejs /repo/apps/web/.next/static ./apps/web/.next/static
+
+# Copy public assets
+COPY --from=builder --chown=nextjs:nodejs /repo/apps/web/public ./apps/web/public
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1 \
+    PORT=3000 \
+    HOSTNAME=0.0.0.0
+
+# The standalone entrypoint is at apps/web/server.js inside the output dir
+CMD ["node", "apps/web/server.js"]

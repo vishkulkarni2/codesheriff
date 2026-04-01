@@ -1,0 +1,73 @@
+rules:
+  # ---------------------------------------------------------------------------
+  # ai-hardcoded-role-check
+  # Detects hardcoded string comparisons used for role/permission checks.
+  #
+  # AI code generators frequently produce patterns like:
+  #   if (user.role === 'admin') { ... }
+  #   if (username === 'admin') { ... }
+  # These are brittle, bypass formal RBAC systems, and are a common source
+  # of privilege escalation vulnerabilities.
+  # ---------------------------------------------------------------------------
+
+  - id: ai-hardcoded-role-string-admin
+    patterns:
+      - pattern: $X.role === 'admin'
+      - pattern: $X.role == 'admin'
+      - pattern: $X['role'] === 'admin'
+    message: >
+      Hardcoded role string comparison detected. Use a typed Role enum and server-side
+      RBAC middleware instead of comparing string literals. This pattern is commonly
+      introduced by AI assistants and can lead to privilege escalation if roles change.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: auth
+      cwe: CWE-285
+      ai-specific: true
+
+  - id: ai-hardcoded-username-admin
+    patterns:
+      - pattern: $X.username === 'admin'
+      - pattern: $X.username == 'admin'
+      - pattern: $X === 'admin'
+      - pattern: username === 'admin'
+    message: >
+      Hardcoded admin username check detected. This is a common AI code pattern that
+      creates a backdoor-like vulnerability. Implement proper RBAC instead.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: auth
+      cwe: CWE-798
+      ai-specific: true
+
+  - id: ai-hardcoded-role-superuser
+    patterns:
+      - pattern: $X.role === 'superuser'
+      - pattern: $X.role === 'super_admin'
+      - pattern: $X.role === 'root'
+      - pattern: $X.isAdmin === true
+    message: >
+      Hardcoded privilege role check detected. Replace with an RBAC library or
+      server-side permission middleware.
+    severity: WARNING
+    languages: [javascript, typescript]
+    metadata:
+      category: auth
+      cwe: CWE-285
+      ai-specific: true
+
+  - id: ai-hardcoded-role-python
+    patterns:
+      - pattern: $X.role == "admin"
+      - pattern: $X['role'] == "admin"
+      - pattern: username == "admin"
+    message: >
+      Hardcoded role string comparison detected in Python. Use a proper RBAC system.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: auth
+      cwe: CWE-285
+      ai-specific: true

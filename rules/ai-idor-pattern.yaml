@@ -1,0 +1,86 @@
+rules:
+  # ---------------------------------------------------------------------------
+  # ai-idor-pattern
+  # Detects Insecure Direct Object Reference patterns — resource lookups using
+  # user-supplied IDs without ownership or permission verification.
+  #
+  # AI code generators often produce CRUD handlers that directly use req.params.id
+  # without checking whether the authenticated user owns that resource.
+  # ---------------------------------------------------------------------------
+
+  - id: ai-idor-prisma-findunique
+    patterns:
+      - pattern: |
+          $MODEL.findUnique({ where: { id: $REQ.params.$ID } })
+      - pattern: |
+          $MODEL.findUnique({ where: { id: $REQ.query.$ID } })
+      - pattern: |
+          $MODEL.findUnique({ where: { id: $REQ.body.$ID } })
+    pattern-not:
+      - pattern: |
+          $MODEL.findUnique({ where: { id: $REQ.params.$ID, userId: $USER } })
+      - pattern: |
+          $MODEL.findUnique({ where: { id: $REQ.params.$ID, organizationId: $ORG } })
+    message: >
+      Resource lookup by user-supplied ID without ownership check. An authenticated
+      user can access any record by guessing IDs (IDOR). Add an ownership filter:
+      { where: { id: req.params.id, userId: req.user.id } }
+    severity: HIGH
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      cwe: CWE-639
+      owasp: A01:2021 - Broken Access Control
+      ai-specific: true
+
+  - id: ai-idor-express-param-direct
+    patterns:
+      - pattern: |
+          const $ITEM = await $SERVICE.getById($REQ.params.id);
+          ...
+          res.json($ITEM);
+    pattern-not:
+      - pattern: |
+          if ($ITEM.userId !== $REQ.user.id) { ... }
+      - pattern: |
+          if ($ITEM.organizationId !== $REQ.user.organizationId) { ... }
+    message: >
+      Resource fetched by ID from request params without a visible ownership check
+      before responding. Verify the authenticated user owns this resource.
+    severity: HIGH
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      cwe: CWE-639
+      ai-specific: true
+
+  - id: ai-idor-delete-no-check
+    pattern: |
+      $MODEL.delete({ where: { id: $REQ.params.$ID } })
+    pattern-not:
+      - pattern: |
+          $MODEL.delete({ where: { id: $REQ.params.$ID, userId: $USER } })
+    message: >
+      Delete operation using user-supplied ID without ownership check.
+      Any authenticated user can delete any record by guessing IDs.
+    severity: HIGH
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      cwe: CWE-639
+      ai-specific: true
+
+  - id: ai-idor-update-no-check
+    pattern: |
+      $MODEL.update({ where: { id: $REQ.params.$ID }, data: ... })
+    pattern-not:
+      - pattern: |
+          $MODEL.update({ where: { id: $REQ.params.$ID, userId: $USER }, data: ... })
+    message: >
+      Update operation using user-supplied ID without ownership check — potential IDOR.
+    severity: HIGH
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      cwe: CWE-639
+      ai-specific: true

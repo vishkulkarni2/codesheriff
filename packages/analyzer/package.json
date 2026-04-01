@@ -1,0 +1,35 @@
+{
+  "name": "@codesheriff/analyzer",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CodeSheriff analysis pipeline — detectors, LLM calls, risk scoring",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.24.0",
+    "@codesheriff/shared": "workspace:*",
+    "ioredis": "^5.3.2",
+    "pino": "^9.2.0",
+    "crypto": "^1.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}
