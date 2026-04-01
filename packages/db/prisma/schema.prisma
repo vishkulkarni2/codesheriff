@@ -91,6 +91,12 @@ model Organization {
   /// Must be a valid https://hooks.slack.com/services/… URL.
   slackWebhookUrl String?
 
+  /// Stripe billing fields
+  stripeCustomerId         String?  @unique
+  stripeSubscriptionId     String?  @unique
+  stripeSubscriptionStatus String?
+  planUpdatedAt            DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

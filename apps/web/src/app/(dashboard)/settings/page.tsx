@@ -10,6 +10,7 @@ import { redirect } from 'next/navigation';
 import { getOrgSettings, getGitLabVcsStatus } from '@/lib/api';
 import { SlackWebhookForm } from '@/components/shared/slack-webhook-form';
 import { GitLabTokenForm } from '@/components/shared/gitlab-token-form';
+import { UpgradeButton } from '@/components/shared/upgrade-button';
 import {
   ShieldCheck,
   Building2,
@@ -151,13 +152,23 @@ export default async function SettingsPage() {
           <Row label="Current plan" value={org?.plan ?? '—'} />
           <Row label="Seat limit" value={org ? String(org.seats) : '—'} />
         </div>
-        <p className="mt-3 text-xs text-muted-foreground">
-          Contact{' '}
-          <a href="mailto:support@codesheriff.dev" className="underline hover:text-foreground">
-            support@codesheriff.dev
-          </a>{' '}
-          to upgrade or change your plan.
-        </p>
+        {org?.plan === 'FREE' && (
+          <div className="mt-4">
+            <p className="mb-3 text-xs text-muted-foreground">
+              Upgrade to Team for unlimited scans, priority support, and up to 25 seats.
+            </p>
+            <UpgradeButton />
+          </div>
+        )}
+        {org?.plan !== 'FREE' && (
+          <p className="mt-3 text-xs text-muted-foreground">
+            To manage your subscription, contact{' '}
+            <a href="mailto:support@codesheriff.dev" className="underline hover:text-foreground">
+              support@codesheriff.dev
+            </a>
+            .
+          </p>
+        )}
       </SettingsSection>
     </div>
   );

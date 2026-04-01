@@ -20,11 +20,13 @@ import { findingRoutes } from './routes/findings.js';
 import { dashboardRoutes } from './routes/dashboard.js';
 import { ruleRoutes } from './routes/rules.js';
 import { orgRoutes } from './routes/orgs.js';
+import { billingRoutes } from './routes/billing.js';
 
 // Webhook handlers
 import { githubWebhookRoutes } from './webhooks/github.js';
 import { gitlabWebhookRoutes } from './webhooks/gitlab.js';
 import { clerkWebhookRoutes } from './webhooks/clerk.js';
+import { stripeWebhookRoutes } from './webhooks/stripe.js';
 
 // Auth middleware
 import { authMiddleware } from './middleware/auth.js';
@@ -142,6 +144,7 @@ export async function buildServer(opts: ServerOptions) {
   await app.register(githubWebhookRoutes, { prefix: '/webhooks' });
   await app.register(gitlabWebhookRoutes, { prefix: '/webhooks' });
   await app.register(clerkWebhookRoutes, { prefix: '/webhooks' });
+  await app.register(stripeWebhookRoutes, { prefix: '/webhooks' });
 
   // Authenticated API routes
   await app.register(scanRoutes, { prefix: '/api/v1' });
@@ -150,6 +153,7 @@ export async function buildServer(opts: ServerOptions) {
   await app.register(dashboardRoutes, { prefix: '/api/v1' });
   await app.register(ruleRoutes, { prefix: '/api/v1' });
   await app.register(orgRoutes, { prefix: '/api/v1' });
+  await app.register(billingRoutes, { prefix: '/api/v1' });
 
   // -------------------------------------------------------------------------
   // Global error handler — structured, never leaks stack traces in prod
