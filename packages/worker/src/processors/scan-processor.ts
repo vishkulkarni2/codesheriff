@@ -169,6 +169,8 @@ export async function processScanJob(
           isAIPatternSpecific: f.isAIPatternSpecific,
           falsePositive: false,
           suppressed: false,
+          suggestedFix: (f as typeof f & { autoFix?: { suggestedCode: string } }).autoFix?.suggestedCode?.slice(0, 5000) ?? null,
+          fixConfidence: (f as typeof f & { autoFix?: { confidence: number } }).autoFix?.confidence ?? null,
         })),
         skipDuplicates: true,
       });
@@ -431,6 +433,8 @@ function buildFeatureFlags(plan: string): AnalysisFeatureFlags {
       !isFree && process.env['ENABLE_AUTH_VALIDATION'] !== 'false',
     enableLogicBugDetection:
       !isFree && process.env['ENABLE_LOGIC_BUG_DETECTION'] !== 'false',
+    // Auto-fix: LLM cost — disabled on FREE tier, can be overridden via env flag
+    enableAutoFix: !isFree && process.env['ENABLE_AUTO_FIX'] !== 'false',
     // Semgrep + TruffleHog run on all plans
     enableSecretsScanning: true,
     enableStaticAnalysis: true,

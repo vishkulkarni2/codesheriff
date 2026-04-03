@@ -48,8 +48,26 @@ export interface AnalysisFeatureFlags {
   enableLogicBugDetection: boolean;
   enableSecretsScanning: boolean;
   enableStaticAnalysis: boolean;
+  enableAutoFix?: boolean;
   maxFilesPerScan: number;
   maxLinesPerFile: number;
+}
+
+// ---------------------------------------------------------------------------
+// Auto-fix suggestion
+// ---------------------------------------------------------------------------
+
+export interface AutoFix {
+  /** Replacement lines — raw code, no markdown or backticks */
+  suggestedCode: string;
+  /** 1-2 sentences describing what changed and why */
+  explanation: string;
+  /** Self-assessed confidence score 0.0–1.0 */
+  confidence: number;
+  /** First line this fix replaces (1-indexed) */
+  lineStart: number;
+  /** Last line this fix replaces (1-indexed) */
+  lineEnd: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -72,6 +90,8 @@ export interface RawFinding {
   detector: DetectorName;
   /** Extra metadata for the explanation engine */
   metadata?: Record<string, unknown>;
+  /** AI-generated fix suggestion — populated by AutoFixGenerator (Stage 9) */
+  autoFix?: AutoFix;
 }
 
 export type DetectorName =

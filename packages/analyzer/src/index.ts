@@ -14,3 +14,5 @@ export { HallucinationDetector } from './detectors/hallucination.js';
 export { AuthFlowValidator } from './detectors/auth-flow.js';
 export { LogicBugDetector } from './detectors/logic-bug.js';
 export { ExplanationEngine } from './detectors/explanation.js';
+export { AutoFixGenerator } from './autofix/generator.js';
+export type { AutoFix } from '@codesheriff/shared';

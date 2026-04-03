@@ -54,6 +54,24 @@ Respond with a JSON array only. No explanation outside the array. Each item must
 
 If no bugs are found, respond with an empty array: []`;
 
+export const AUTOFIX_SYSTEM_PROMPT = `You are an expert software engineer. Given a security finding and the surrounding code, produce a minimal, correct fix.
+
+Rules:
+- Return ONLY the replacement code for the flagged lines. No markdown, no backticks, no explanation in the code output.
+- Keep changes minimal. Fix the specific issue, don't refactor unrelated code.
+- If the fix requires importing something new, include the import statement on a separate line first, prefixed with "// IMPORT: " so the caller can split it out.
+- Preserve the original code's style (indentation, quotes, semicolons).
+- If you cannot produce a safe, correct fix, respond with exactly: CANNOT_FIX
+
+Respond with a JSON object matching this schema:
+{
+  "suggestedCode": "<string — replacement lines only>",
+  "explanation": "<string — 1-2 sentences, what changed and why>",
+  "confidence": <number 0.0-1.0>
+}
+
+If you cannot fix it: {"cannot_fix": true, "reason": "<why>"}`;
+
 export const EXPLANATION_SYSTEM_PROMPT = `You are a security-aware senior engineer explaining code issues to a developer.
 
 For each finding, produce:
@@ -121,6 +139,37 @@ export function buildLogicBugPrompt(params: {
     code: params.code,
   };
   return `Analyze this code for logic bugs:\n\n\`\`\`json\n${JSON.stringify(payload, null, 2)}\n\`\`\``;
+}
+
+/**
+ * Build the user-facing prompt for the AutoFixGenerator.
+ * All dynamic content is embedded as JSON — never string-interpolated into prose.
+ */
+export function buildAutoFixPrompt(params: {
+  title: string;
+  description: string;
+  severity: string;
+  filePath: string;
+  lineStart: number;
+  lineEnd: number;
+  codeSnippet: string;
+  surroundingContext: string;
+  language: string;
+}): string {
+  const payload = {
+    finding: {
+      title: params.title,
+      description: params.description,
+      severity: params.severity,
+      filePath: params.filePath,
+      lineStart: params.lineStart,
+      lineEnd: params.lineEnd,
+    },
+    flaggedCode: params.codeSnippet,
+    surroundingContext: params.surroundingContext,
+    language: params.language,
+  };
+  return `Generate a fix for this security finding:\n\n\`\`\`json\n${JSON.stringify(payload, null, 2)}\n\`\`\``;
 }
 
 /**

@@ -30,6 +30,7 @@ import { AuthFlowValidator } from './detectors/auth-flow.js';
 import { LogicBugDetector } from './detectors/logic-bug.js';
 import { ExplanationEngine } from './detectors/explanation.js';
 import { SeverityScorer } from './scorer.js';
+import { AutoFixGenerator } from './autofix/generator.js';
 import { getScanLogger } from './utils/logger.js';
 
 export interface PipelineConfig {
@@ -274,6 +275,26 @@ export class AnalysisPipeline {
     // Stage 8: SeverityScorer
     // -------------------------------------------------------------------------
     const scored = this.scorer.score(findings);
+
+    // -------------------------------------------------------------------------
+    // Stage 9: AutoFixGenerator — only on PRs, only HIGH/CRITICAL, only if enabled
+    // Must run after SeverityScorer so severity is already set on all findings.
+    // -------------------------------------------------------------------------
+    if (ctx.features.enableAutoFix && ctx.prNumber) {
+      try {
+        const autoFixer = new AutoFixGenerator(this.llm);
+        await autoFixer.generateBatch(ctx.scanId, findings, files);
+      } catch (err) {
+        // Non-fatal — findings are still posted without suggestions
+        errors.push({
+          detector: 'LogicBugDetector', // closest available DetectorName
+          message: `AutoFixGenerator: ${String(err)}`,
+          fatal: false,
+        });
+        log.error({ err }, 'AutoFixGenerator failed');
+      }
+    }
+
     const durationMs = Date.now() - startTime;
 
     log.info(

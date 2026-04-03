@@ -243,6 +243,11 @@ model Finding {
   /// Suppressed finding — hidden from UI but retained for audit
   suppressed    Boolean @default(false)
 
+  /// AI-generated suggested code fix (GitHub suggestion format)
+  suggestedFix String? @db.Text
+  /// Confidence score for the suggested fix (0.0-1.0)
+  fixConfidence Float?
+
   createdAt DateTime @default(now())
 
   @@index([scanId])
@@ -306,6 +311,37 @@ model RiskHistory {
 
   @@unique([repositoryId, date])
   @@index([repositoryId, date])
+}
+
+/// Tracks developer responses to AI-generated fix suggestions (Phase 2)
+model FixOutcome {
+  id        String @id @default(cuid())
+  findingId String
+
+  suggestedFix String  @db.Text
+  actualFix    String? @db.Text
+  outcome      FixOutcomeStatus
+
+  ruleId      String?
+  patternHash String
+  language    String
+
+  acceptedAt DateTime?
+  rejectedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([findingId])
+  @@index([ruleId])
+  @@index([patternHash])
+  @@index([outcome])
+}
+
+enum FixOutcomeStatus {
+  ACCEPTED
+  REJECTED
+  MODIFIED
+  IGNORED
+  PENDING
 }
 
 /// Stores VCS access tokens for GitHub/GitLab/Bitbucket App installations.
