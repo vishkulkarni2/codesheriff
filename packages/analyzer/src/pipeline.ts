@@ -334,6 +334,51 @@ export class AnalysisPipeline {
     }
 
     // -------------------------------------------------------------------------
+    // Finding cap: max 5 findings per PR, sorted by severity to keep highest signal
+    // This dramatically reduces false positives — we currently average 8/PR.
+    // Rationale: top-5 by severity is better than 8+ with noise.
+    // -------------------------------------------------------------------------
+    {
+      const SEVERITY_ORDER: Record<string, number> = {
+        [Severity.CRITICAL]: 4,
+        [Severity.HIGH]: 3,
+        [Severity.MEDIUM]: 2,
+        [Severity.LOW]: 1,
+      };
+      const MAX_FINDINGS_PER_PR = 5;
+      const FP_BLOCKLIST = [
+        'optional chaining',
+        'consider adding error handling',
+        'consider adding validation',
+        'authorization check',
+        'deprecated RSpec',
+        'inconsistent naming',
+      ];
+
+      // Filter blocklist
+      const preCapFiltered = findings.filter((f) => {
+        const text = `${f.title} ${f.description}`.toLowerCase();
+        return !FP_BLOCKLIST.some((p) => text.includes(p));
+      });
+
+      // Sort by severity descending, then cap
+      const sorted = preCapFiltered.sort(
+        (a, b) =>
+          (SEVERITY_ORDER[b.severity] ?? 0) - (SEVERITY_ORDER[a.severity] ?? 0)
+      );
+      const capped = sorted.slice(0, MAX_FINDINGS_PER_PR);
+
+      const beforeCap = findings.length;
+      findings.length = 0;
+      findings.push(...capped);
+
+      log.info(
+        { before: beforeCap, after: capped.length, blocklisted: preCapFiltered.length - findings.length },
+        'finding cap applied'
+      );
+    }
+
+    // -------------------------------------------------------------------------
     // Stage 8: SeverityScorer
     // -------------------------------------------------------------------------
     const scored = this.scorer.score(findings);

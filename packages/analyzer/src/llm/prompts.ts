@@ -71,6 +71,14 @@ Only report a finding if you are HIGHLY CONFIDENT (>=0.80) it is ONE OF THESE:
 3. A variable that is used but provably null/undefined due to control flow in the visible code (not because an import is missing)
 4. A clear business logic error where the code does the wrong thing (wrong variable, inverted condition, wrong operator)
 5. Missing await on an async function in a context where the result is clearly needed synchronously
+6. Contract violation: method returns null when documentation/interface says it never returns null
+7. API misuse: Django negative queryset slicing, Python mutable default args, Java Optional.get() without isPresent(), TypeScript async forEach fire-and-forget
+
+Pay special attention to method calls on variables that could be nil/null/None:
+- Variables assigned from lookups (.first, .find, .get, .where().first, dict access) that may return nil
+- Used immediately without a nil/null check
+- Optional.get() called without isPresent() check
+- Return types that violate documented contracts (e.g., Javadoc says non-null but code returns null)
 
 DO NOT REPORT any of the following (these are the most common false positives):
 - Missing optional chaining (?.) or defensive null checks — these are style/preference, not bugs

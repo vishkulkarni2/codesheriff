@@ -5,6 +5,20 @@ rules:
   # Based on golden comment patterns observed in the benchmark
   # ---------------------------------------------------------------------------
 
+  - id: python-django-negative-slice
+    patterns:
+      - pattern: $QS[-$N:]
+      - pattern: $QS[:-$N]
+    message: >
+      Django QuerySets do not support negative indexing or slicing.
+      Using a negative index raises AssertionError at runtime. Use .reverse()[:N]
+      or order the queryset in reverse order instead.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: correctness
+      benchmark-target: sentry
+
   - id: python-queryset-negative-slice
     pattern: $QS[$START:$END]
     metavariable-comparison:

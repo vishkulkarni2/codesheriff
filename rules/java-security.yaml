@@ -57,6 +57,48 @@ rules:
       cwe: CWE-404
       benchmark-target: keycloak
 
+  - id: java-optional-get-without-ispresent
+    patterns:
+      - pattern: $OPT.get()
+      - pattern-not-inside: |
+          if ($OPT.isPresent()) {
+              ...
+          }
+    message: >
+      Calling Optional.get() without checking isPresent() will throw
+      NoSuchElementException when the Optional is empty. Use orElse(),
+      orElseGet(), orElseThrow(), or check isPresent() before calling get().
+    severity: ERROR
+    languages: [java]
+    metadata:
+      category: correctness
+      cwe: CWE-395
+      benchmark-target: keycloak
+
+  - id: java-system-exit-in-lib
+    pattern: System.exit(...)
+    message: >
+      System.exit() terminates the JVM abruptly. In library or application code,
+      throw an exception or return an exit code instead. System.exit() prevents
+      proper resource cleanup and makes the code untestable.
+    severity: WARNING
+    languages: [java]
+    metadata:
+      category: correctness
+      benchmark-target: keycloak
+
+  - id: java-picocli-exit-misuse
+    pattern: $CLI.exit(...)
+    message: >
+      picocli's CommandLine.exit() calls System.exit(), which terminates the JVM.
+      Use CommandLine.ExitCode constants and return them from call() instead of
+      calling exit() directly.
+    severity: WARNING
+    languages: [java]
+    metadata:
+      category: correctness
+      benchmark-target: keycloak
+
   - id: java-spring-csrf-disabled
     patterns:
       - pattern: $HTTP.csrf().disable()

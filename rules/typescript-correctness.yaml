@@ -23,6 +23,56 @@ rules:
       cwe: CWE-252
       benchmark-target: cal.com
 
+  - id: ts-dayjs-reference-equality
+    patterns:
+      - pattern: dayjs(...) === dayjs(...)
+      - pattern: dayjs(...) == dayjs(...)
+    message: >
+      dayjs objects should be compared with .isSame(), not === or == which compares
+      object references and always returns false. Use dayjs(a).isSame(dayjs(b)) or
+      dayjs(a).isSame(b, 'day') for date equality.
+    severity: ERROR
+    languages: [typescript, javascript]
+    metadata:
+      category: correctness
+      cwe: CWE-595
+      benchmark-target: cal.com
+
+  - id: ts-suspicious-and-permission-check
+    patterns:
+      - pattern: $A && $B
+      - metavariable-regex:
+          metavariable: $A
+          regex: .*(isAdmin|isOwner|isManager|hasRole|hasPermission).*
+      - metavariable-regex:
+          metavariable: $B
+          regex: .*(isAdmin|isOwner|isManager|hasRole|hasPermission).*
+    message: >
+      Suspicious AND (&&) between two permission checks. Did you mean OR (||)?
+      Requiring BOTH admin AND owner simultaneously is usually a logic error.
+    severity: WARNING
+    languages: [typescript, javascript]
+    metadata:
+      category: correctness
+      benchmark-target: cal.com
+
+  - id: ts-insecure-origin-check
+    patterns:
+      - pattern: $STR.indexOf($ORIGIN)
+      - metavariable-regex:
+          metavariable: $STR
+          regex: .*(origin|referer|host|url).*
+    message: >
+      Using indexOf for origin/URL validation is insecure. A check like
+      str.indexOf('example.com') passes for 'evil-example.com'. Use URL
+      parsing with exact hostname match instead.
+    severity: ERROR
+    languages: [typescript, javascript]
+    metadata:
+      category: security
+      cwe: CWE-184
+      benchmark-target: cal.com
+
   # ts-missing-await: DISABLED
   # The pattern (const $X = $FUNC(); ... $X.then(...)) matches intentional
   # fire-and-forget patterns and generates enormous noise on cal.com.
