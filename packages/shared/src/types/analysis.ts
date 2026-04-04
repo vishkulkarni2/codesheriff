@@ -49,6 +49,8 @@ export interface AnalysisFeatureFlags {
   enableSecretsScanning: boolean;
   enableStaticAnalysis: boolean;
   enableAutoFix?: boolean;
+  /** Enable second-pass LLM verifier that drops non-real-bug findings (default: true) */
+  enableLlmVerifier?: boolean;
   maxFilesPerScan: number;
   maxLinesPerFile: number;
 }
@@ -92,6 +94,8 @@ export interface RawFinding {
   metadata?: Record<string, unknown>;
   /** AI-generated fix suggestion — populated by AutoFixGenerator (Stage 9) */
   autoFix?: AutoFix;
+  /** Confidence score from LlmVerifier (0.0–1.0), if verifier ran */
+  verifierConfidence?: number;
 }
 
 export type DetectorName =
@@ -165,7 +169,7 @@ export interface SemgrepResult {
 }
 
 export interface SemgrepMatch {
-  checkId: string;
+  check_id: string;
   path: string;
   start: { line: number; col: number; offset: number };
   end: { line: number; col: number; offset: number };

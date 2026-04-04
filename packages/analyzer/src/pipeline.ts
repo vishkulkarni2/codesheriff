@@ -33,6 +33,7 @@ import { ExplanationEngine } from './detectors/explanation.js';
 import { SeverityScorer } from './scorer.js';
 import { AutoFixGenerator } from './autofix/generator.js';
 import { BugFocusFilter } from './filters/bug-focus.js';
+import { LlmVerifier } from './filters/llm-verifier.js';
 import { getScanLogger } from './utils/logger.js';
 
 export interface PipelineConfig {
@@ -318,6 +319,18 @@ export class AnalysisPipeline {
         { before: beforeBugFilter, after: bugFiltered.length, dropped: beforeBugFilter - bugFiltered.length },
         "bug focus filter applied"
       );
+    }
+
+    // -------------------------------------------------------------------------
+    // Stage: LLM Verifier — second-pass Claude call, drops non-real-bugs
+    // -------------------------------------------------------------------------
+    if (ctx.features.enableLlmVerifier ?? true) {
+      const verifier = new LlmVerifier(this.llm);
+      const beforeVerify = findings.length;
+      const verified = await verifier.verify(ctx.scanId, findings);
+      findings.length = 0;
+      findings.push(...verified);
+      log.info({ before: beforeVerify, after: verified.length, dropped: beforeVerify - verified.length }, "LLM verifier stage complete");
     }
 
     // -------------------------------------------------------------------------
