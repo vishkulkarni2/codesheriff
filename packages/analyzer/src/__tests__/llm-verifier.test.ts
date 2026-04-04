@@ -194,6 +194,61 @@ describe('LlmVerifier', () => {
     expect(result[1]!.ruleId).toBe('rule-3');
   });
 
+  it('keeps SECRET category findings without calling LLM', async () => {
+    const llm = mockLlm('{"verdict":"FALSE_POSITIVE","reason":"style"}');
+    const callSpy = vi.spyOn(llm, 'call');
+    const verifier = new LlmVerifier(llm);
+    const findings = [makeFinding({ category: FindingCategory.SECRET, severity: Severity.MEDIUM })];
+    const result = await verifier.verify('scan-1', findings);
+    expect(result).toHaveLength(1);
+    expect(callSpy).not.toHaveBeenCalled();
+  });
+
+  it('keeps SECURITY HIGH findings without calling LLM', async () => {
+    const llm = mockLlm('{"verdict":"FALSE_POSITIVE","reason":"style"}');
+    const callSpy = vi.spyOn(llm, 'call');
+    const verifier = new LlmVerifier(llm);
+    const findings = [makeFinding({ category: FindingCategory.SECURITY, severity: Severity.HIGH })];
+    const result = await verifier.verify('scan-1', findings);
+    expect(result).toHaveLength(1);
+    expect(callSpy).not.toHaveBeenCalled();
+  });
+
+  it('drops QUALITY LOW findings without calling LLM', async () => {
+    const llm = mockLlm('{"verdict":"REAL_BUG","reason":"bug"}');
+    const callSpy = vi.spyOn(llm, 'call');
+    const verifier = new LlmVerifier(llm);
+    const findings = [makeFinding({ category: FindingCategory.QUALITY, severity: Severity.LOW })];
+    const result = await verifier.verify('scan-1', findings);
+    expect(result).toHaveLength(0);
+    expect(callSpy).not.toHaveBeenCalled();
+  });
+
+  it('keeps low-confidence FALSE_POSITIVE (confidence < 0.5) as REAL_BUG', async () => {
+    const llm = mockLlm('{"verdict":"FALSE_POSITIVE","reason":"uncertain","confidence":0.3}');
+    const verifier = new LlmVerifier(llm);
+    const findings = [makeFinding()];
+    const result = await verifier.verify('scan-1', findings);
+    expect(result).toHaveLength(1);
+  });
+
+  it('drops high-confidence FALSE_POSITIVE (confidence >= 0.5)', async () => {
+    const llm = mockLlm('{"verdict":"FALSE_POSITIVE","reason":"style","confidence":0.9}');
+    const verifier = new LlmVerifier(llm);
+    const findings = [makeFinding()];
+    const result = await verifier.verify('scan-1', findings);
+    expect(result).toHaveLength(0);
+  });
+
+  it('attaches verifierConfidence to kept findings', async () => {
+    const llm = mockLlm('{"verdict":"REAL_BUG","reason":"bug","confidence":0.85}');
+    const verifier = new LlmVerifier(llm);
+    const findings = [makeFinding()];
+    const result = await verifier.verify('scan-1', findings);
+    expect(result).toHaveLength(1);
+    expect(result[0]!.verifierConfidence).toBe(0.85);
+  });
+
   it('respects MAX_CONCURRENCY of 5 (no more than 5 concurrent calls)', async () => {
     let concurrentCalls = 0;
     let maxConcurrent = 0;
