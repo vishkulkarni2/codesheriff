@@ -1,51 +1,51 @@
 {
-  "total_tp": 66,
-  "total_fp": 335,
-  "total_fn": 71,
-  "precision": 0.16458852867830423,
-  "recall": 0.48175182481751827,
-  "f1": 0.2453531598513011,
+  "total_tp": 87,
+  "total_fp": 342,
+  "total_fn": 50,
+  "precision": 0.20279720279720279,
+  "recall": 0.635036496350365,
+  "f1": 0.3074204946996466,
   "per_repo": {
     "keycloak": {
-      "tp": 11,
-      "fp": 22,
-      "fn": 11,
+      "tp": 13,
+      "fp": 23,
+      "fn": 9,
       "total_golden": 22
     },
     "keycloak-greptile": {
-      "tp": 0,
+      "tp": 1,
       "fp": 4,
-      "fn": 2,
+      "fn": 1,
       "total_golden": 2
     },
     "sentry": {
-      "tp": 11,
+      "tp": 12,
       "fp": 1,
-      "fn": 8,
+      "fn": 7,
       "total_golden": 19
     },
     "sentry-greptile": {
-      "tp": 4,
+      "tp": 7,
       "fp": 4,
-      "fn": 9,
+      "fn": 6,
       "total_golden": 13
     },
     "grafana": {
-      "tp": 10,
-      "fp": 20,
-      "fn": 12,
+      "tp": 14,
+      "fp": 22,
+      "fn": 8,
       "total_golden": 22
     },
     "discourse-graphite": {
-      "tp": 9,
-      "fp": 81,
-      "fn": 19,
+      "tp": 16,
+      "fp": 83,
+      "fn": 12,
       "total_golden": 28
     },
     "cal.com": {
-      "tp": 21,
-      "fp": 203,
-      "fn": 10,
+      "tp": 24,
+      "fp": 205,
+      "fn": 7,
       "total_golden": 31
     }
   },
@@ -117,15 +117,6 @@
       "pr_url": "https://github.com/keycloak/keycloak/pull/36880",
       "repo": "keycloak",
       "language": "Java",
-      "comment": "In hasPermission(ClientModel client, String scope), the resource lookup uses findByName(server, client.getId(), server.getId()), but AdminPermissionsSchema.getOrCreateResource creates per-client resources with the owner set to resourceServer.getClientId(), so this lookup will never find those resources and will always fall back to the 'all-clients' resource, effectively ignoring client-specific permissions.",
-      "severity": "High",
-      "bug_type": "incorrect_value",
-      "reasoning": "The comment describes a mismatch between how resources are created (with owner set to resourceServer.getClientId()) and how they are looked up (using client.getId() and server.getId() as parameters). This incorrect parameter value in the lookup causes it to never find the intended resources, leading to wrong behavior where client-specific permissions are ignored."
-    },
-    {
-      "pr_url": "https://github.com/keycloak/keycloak/pull/36880",
-      "repo": "keycloak",
-      "language": "Java",
       "comment": "In getClientsWithPermission(String scope), iterating resourceStore.findByType(server, AdminPermissionsSchema.CLIENTS_RESOURCE_TYPE) and returning resource.getName() will only ever consider the type-level 'Clients' resource (per-client resources have no type) and return its name, while AvailableRoleMappingResource#getRoleIdsWithPermissions expects actual client IDs to pass to realm.getClientById, which can lead to incorrect behavior or a null client and subsequent failures.",
       "severity": "High",
       "bug_type": "incorrect_value",
@@ -139,24 +130,6 @@
       "severity": "Low",
       "bug_type": "dead_code",
       "reasoning": "The comment explicitly describes dead code where ASN1Encoder instances are created and their results discarded, with the actual work being done by new instances in the return statement, making the earlier operations useless."
-    },
-    {
-      "pr_url": "https://github.com/keycloak/keycloak/pull/40940",
-      "repo": "keycloak",
-      "language": "Java",
-      "comment": "The reader thread isn\u2019t waited for; flipping deletedAll to true and asserting immediately can race and miss exceptions added just after the flag change, making this test flaky.",
-      "severity": "Medium",
-      "bug_type": "race_condition",
-      "reasoning": "The comment explicitly describes a race condition where the reader thread isn't properly synchronized with the main thread. The flag change and assertion can race with exceptions being added, causing test flakiness due to concurrent access without proper synchronization."
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/keycloak-greptile/pull/1",
-      "repo": "keycloak-greptile",
-      "language": "Java",
-      "comment": "ConditionalPasskeysEnabled() called without UserModel parameter",
-      "severity": "Medium",
-      "bug_type": "api_misuse",
-      "reasoning": "The comment indicates that a function ConditionalPasskeysEnabled() is being called without a required UserModel parameter, which is incorrect API usage - the function signature expects a parameter that is not being provided."
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/keycloak-greptile/pull/1",
@@ -184,15 +157,6 @@
       "severity": "Low",
       "bug_type": "race_condition",
       "reasoning": "The comment addresses timing-related flakiness in tests caused by fixed sleep durations. Using condition-based waiting instead of fixed sleeps is a standard solution for race conditions where the timing of concurrent operations is unpredictable."
-    },
-    {
-      "pr_url": "https://github.com/getsentry/sentry/pull/93824",
-      "repo": "sentry",
-      "language": "Python",
-      "comment": "Because flusher processes are created via multiprocessing.get_context('spawn').Process, they are instances of multiprocessing.context.SpawnProcess, which on POSIX is not a subclass of multiprocessing.Process, so this isinstance check will always be false and hung processes won't be killed here.",
-      "severity": "High",
-      "bug_type": "type_error",
-      "reasoning": "The comment describes an isinstance check that fails because SpawnProcess (created via multiprocessing.get_context('spawn').Process) is not a subclass of multiprocessing.Process on POSIX systems. This is a type checking error where the wrong type is being checked, causing the condition to always be false."
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/5",
@@ -225,28 +189,10 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/1",
       "repo": "sentry-greptile",
       "language": "Python",
-      "comment": "Importing non-existent OptimizedCursorPaginator",
-      "severity": "Low",
-      "bug_type": "api_misuse",
-      "reasoning": "The comment indicates importing a class or module that doesn't exist (OptimizedCursorPaginator), which is an incorrect usage of the import/module API that will cause an ImportError at runtime."
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/1",
-      "repo": "sentry-greptile",
-      "language": "Python",
       "comment": "Django querysets do not support negative slicing",
       "severity": "High",
       "bug_type": "api_misuse",
       "reasoning": "The comment points out incorrect usage of Django's queryset API - attempting to use negative slicing which is not supported by the framework, indicating misuse of the Django ORM API."
-    },
-    {
-      "pr_url": "https://github.com/grafana/grafana/pull/97529",
-      "repo": "grafana",
-      "language": "Go",
-      "comment": "Calling s.search.TotalDocs() here may race with concurrent index creation: TotalDocs iterates b.cache without synchronization, and the event watcher goroutine started just above could trigger BuildIndex writes concurrently, potentially causing a concurrent map read/write panic.",
-      "severity": "High",
-      "bug_type": "race_condition",
-      "reasoning": "The comment explicitly describes a race condition where TotalDocs() iterates a map without synchronization while a concurrent goroutine could be writing to the same map, potentially causing a concurrent map read/write panic."
     },
     {
       "pr_url": "https://github.com/getsentry/sentry/pull/80528",
@@ -306,24 +252,6 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/3",
       "repo": "sentry-greptile",
       "language": "Python",
-      "comment": "sample_rate = 0.0 is falsy and skipped",
-      "severity": "Low",
-      "bug_type": "logic_error",
-      "reasoning": "The comment points out that using a falsy check on sample_rate would incorrectly skip the value 0.0, which is a valid sample rate. This is a logic error where the condition doesn't properly handle edge cases of valid input values."
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/3",
-      "repo": "sentry-greptile",
-      "language": "Python",
-      "comment": "Using Python\u2019s built-in hash() to build cache keys is non-deterministic across processes (hash randomization), so keys won\u2019t match across workers and invalidate_upsampling_cache may fail to delete them. Use a deterministic serialization of project_ids for the cache key.",
-      "severity": "Low",
-      "bug_type": "api_misuse",
-      "reasoning": "The comment identifies incorrect usage of Python's hash() function for cache keys, which has non-deterministic behavior across processes due to hash randomization. This is a misuse of the hash() API for a purpose it's not suitable for (cross-process cache key generation)."
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/3",
-      "repo": "sentry-greptile",
-      "language": "Python",
       "comment": "The upsampling eligibility check passes the outer dataset instead of the actual dataset used by scoped_dataset. In paths where the query ultimately runs against discover (e.g., dashboard split) while the original dataset is metrics, upsampling may be skipped even when all projects are allowlisted.",
       "severity": "Medium",
       "bug_type": "incorrect_value",
@@ -339,15 +267,6 @@
       "reasoning": "The comment points out a mismatch between what the test comment claims (permissions 'allow access') and what the code actually does (stores false, meaning access is not allowed). This is an incorrect value being set in the test data that contradicts the test's documented intent."
     },
     {
-      "pr_url": "https://github.com/grafana/grafana/pull/94942",
-      "repo": "grafana",
-      "language": "Go",
-      "comment": "Several methods such as NewInMemoryDB().RunCommands and db.QueryFramesInto return 'not implemented'.",
-      "severity": "High",
-      "bug_type": "dead_code",
-      "reasoning": "The comment points out that several methods return 'not implemented', indicating stub or placeholder code that doesn't actually perform its intended function. This is essentially dead/incomplete code that needs to be implemented."
-    },
-    {
       "pr_url": "https://github.com/grafana/grafana/pull/80329",
       "repo": "grafana",
       "language": "Go",
@@ -355,15 +274,6 @@
       "severity": "Low",
       "bug_type": "incorrect_value",
       "reasoning": "The comment identifies that the wrong log level (Error) is being used when Debug or Info would be more appropriate. This is an incorrect value/configuration issue where the severity level parameter is set incorrectly for the type of information being logged."
-    },
-    {
-      "pr_url": "https://github.com/grafana/grafana/pull/90045",
-      "repo": "grafana",
-      "language": "Go",
-      "comment": "The context is being created with d.Log instead of the log variable that was initialized with additional context values (name, kind, method). This means those values won't be propagated to the logging context.",
-      "severity": "Medium",
-      "bug_type": "incorrect_value",
-      "reasoning": "The comment describes using the wrong variable (d.Log instead of log) which causes context values to not be propagated. This is passing an incorrect value/variable to a function, resulting in missing expected data in the logging context."
     },
     {
       "pr_url": "https://github.com/grafana/grafana/pull/90045",
@@ -382,15 +292,6 @@
       "severity": "Medium",
       "bug_type": "api_misuse",
       "reasoning": "Missing the required 'key' prop for React list items is a misuse of the React API. React requires unique keys for list items to properly track and reconcile elements during re-renders."
-    },
-    {
-      "pr_url": "https://github.com/grafana/grafana/pull/106778",
-      "repo": "grafana",
-      "language": "Go",
-      "comment": "RuleActionsButtons is invoked with only promRule, but SilenceGrafanaRuleDrawer inside RuleActionsButtons still depends on a Grafana Ruler rule being present, so for Grafana rules coming from list views the 'Silence notifications' menu entry (now driven by Grafana Prom abilities) will toggle showSilenceDrawer without ever rendering the drawer. This means clicking 'Silence notifications' for these rules has no visible effect, even when abilities indicate silencing is allowed.",
-      "severity": "High",
-      "bug_type": "logic_error",
-      "reasoning": "The comment describes a logical inconsistency where the UI shows a 'Silence notifications' option based on one condition (Grafana Prom abilities), but the actual drawer rendering depends on a different condition (Grafana Ruler rule being present). This mismatch causes the menu action to have no visible effect, which is a logic error in the component's conditional rendering flow."
     },
     {
       "pr_url": "https://github.com/grafana/grafana/pull/107534",
@@ -450,15 +351,6 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/10",
       "repo": "discourse-graphite",
       "language": "Ruby",
-      "comment": "The update and destroy methods in Admin::EmbeddableHostsController do not validate the existence of the EmbeddableHost record retrieved by ID. If EmbeddableHost.where(id: params[:id]).first returns nil (i.e., the host does not exist), attempting to call methods on the nil object (e.g., save_host or destroy) will result in a NoMethodError.",
-      "severity": "Medium",
-      "bug_type": "null_reference",
-      "reasoning": "The comment describes a scenario where a database query returns nil and subsequent method calls on that nil object will cause a NoMethodError. This is a classic null reference error where the code fails to check if the retrieved record exists before operating on it."
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/10",
-      "repo": "discourse-graphite",
-      "language": "Ruby",
       "comment": "record_for_host compares lower(host) = ? but does not normalize the parameter\u2019s case, so mixed\u2011case referer hosts may fail to match even though comparison intends to be case\u2011insensitive.",
       "severity": "Medium",
       "bug_type": "incorrect_value",
@@ -492,24 +384,6 @@
       "reasoning": "The comment identifies that a CSS variable value was changed from 70% to 30% lightness, which is an incorrect value that makes text darker than the intended design specification."
     },
     {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/8",
-      "repo": "discourse-graphite",
-      "language": "Ruby",
-      "comment": "In the next action, capping the next offset at user_count can produce an empty page (e.g., total equal to limit results in offset == total, showing 2/2 with no members). This can cause confusing UX on the last page.",
-      "severity": "Medium",
-      "bug_type": "logic_error",
-      "reasoning": "The comment describes a boundary condition issue where capping the offset at user_count can result in an empty page being displayed when the total equals the limit. This is a logic error in the pagination calculation that produces incorrect/confusing behavior at edge cases."
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/8",
-      "repo": "discourse-graphite",
-      "language": "Ruby",
-      "comment": "HTTP method mismatch in .remove_member - test uses PUT but remove_member action expects DELETE",
-      "severity": "Medium",
-      "bug_type": "api_misuse",
-      "reasoning": "The comment identifies an HTTP method mismatch where a test uses PUT but the API endpoint expects DELETE. This is a classic case of incorrect API usage - using the wrong HTTP verb to call an endpoint."
-    },
-    {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/5",
       "repo": "discourse-graphite",
       "language": "Ruby",
@@ -528,15 +402,6 @@
       "reasoning": "The comment points out that an incorrect CSS vendor prefix property name is being used. '-ms-align-items' is not a valid property - the correct property for IE/Edge compatibility is '-ms-flex-align'. This is an incorrect value/property name issue."
     },
     {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/6",
-      "repo": "discourse-graphite",
-      "language": "Ruby",
-      "comment": "The include_website_name method is missing the required ? suffix. Rails serializers expect include_ methods to end with ? for conditional attribute inclusion, a convention followed by other methods in this serializer. Without it, the website_name attribute may not be conditionally included as intended. Additionally, the '.' << website_host string concatenation should be replaced with '.' + website_host or '.#{website_host}' to avoid mutating string literals, which can lead to issues.",
-      "severity": "Medium",
-      "bug_type": "api_misuse",
-      "reasoning": "The comment identifies that the method is missing the required '?' suffix that Rails serializers expect for conditional attribute inclusion methods. This is a violation of the Rails serializer API convention, making it an API misuse issue."
-    },
-    {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
       "repo": "discourse-graphite",
       "language": "Ruby",
@@ -544,33 +409,6 @@
       "severity": "Critical",
       "bug_type": "security",
       "reasoning": "SSRF (Server-Side Request Forgery) is a security vulnerability where an attacker can make the server perform requests to unintended locations. Using open(url) without validation allows attackers to access internal resources or make malicious requests."
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "language": "Ruby",
-      "comment": "postMessage targetOrigin should be the origin (scheme+host+port), not the full referrer URL; using the full URL will cause the message to be dropped and prevent resizing.",
-      "severity": "Medium",
-      "bug_type": "api_misuse",
-      "reasoning": "The comment describes incorrect usage of the postMessage API - specifically passing a full referrer URL instead of just the origin (scheme+host+port) for the targetOrigin parameter, which will cause the API call to fail silently."
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "language": "Ruby",
-      "comment": "The code sets X-Frame-Options: ALLOWALL which completely disables clickjacking protection. The referer validation can be bypassed (referer headers are easily spoofed), and the fallback to empty string for nil referer masks validation failures.",
-      "severity": "Medium",
-      "bug_type": "security",
-      "reasoning": "The comment describes multiple security vulnerabilities: disabled clickjacking protection via X-Frame-Options: ALLOWALL, bypassable referer validation (security headers can be spoofed), and masking of validation failures. These are all security-related issues that could allow attacks like clickjacking."
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "language": "Ruby",
-      "comment": "The ERB block closes with end if, which is invalid Ruby/ERB and will raise at render; it should just be end to close the if block.",
-      "severity": "Medium",
-      "bug_type": "logic_error",
-      "reasoning": "The comment identifies invalid Ruby/ERB syntax where 'end if' is used instead of 'end' to close an if block. This is a syntax/logic error that will cause the template to fail at render time."
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/1",
@@ -618,15 +456,6 @@
       "reasoning": "The comment explicitly identifies unreachable code branches - the else if and final else conditions can never be executed because authConditions is always truthy, making those code paths dead code."
     },
     {
-      "pr_url": "https://github.com/calcom/cal.com/pull/22345",
-      "repo": "cal.com",
-      "language": "TypeScript",
-      "comment": "Fetching userIdsFromOrg only when teamsFromOrg.length > 0 can exclude org-level members for orgs without child teams; consider deriving from teamIds (which includes orgId) or removing the guard so org-only orgs still include member user bookings.",
-      "severity": "Medium",
-      "bug_type": "logic_error",
-      "reasoning": "The comment describes a conditional logic flaw where the guard condition (teamsFromOrg.length > 0) incorrectly excludes valid cases - specifically org-level members for organizations without child teams. This is a logical error in the business logic that causes incorrect behavior for certain valid scenarios."
-    },
-    {
       "pr_url": "https://github.com/calcom/cal.com/pull/14740",
       "repo": "cal.com",
       "language": "TypeScript",
@@ -661,24 +490,6 @@
       "severity": "High",
       "bug_type": "logic_error",
       "reasoning": "The comment describes a logical flaw where the search condition is incorrectly comparing a value to itself (externalId === externalCalendarId), which will always fail to find the intended calendar. This is a clear logic error in the search/filtering logic."
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
-      "repo": "cal.com",
-      "language": "TypeScript",
-      "comment": "Logic inversion in organization creation: The slug property is now conditionally set when IS_TEAM_BILLING_ENABLED is true, instead of when it's false as originally intended. This change, combined with requestedSlug still being set when IS_TEAM_BILLING_ENABLED is true, results in both properties being set when billing is enabled, and neither when disabled",
-      "severity": "Medium",
-      "bug_type": "logic_error",
-      "reasoning": "The comment describes a logic inversion where a conditional check was flipped from checking when IS_TEAM_BILLING_ENABLED is false to when it's true, causing incorrect behavior in both enabled and disabled states. This is a classic logic error involving inverted boolean conditions."
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
-      "repo": "cal.com",
-      "language": "TypeScript",
-      "comment": "The Calendar interface now requires createEvent(event, credentialId), but some implementations (e.g., Lark/Office365) still declare createEvent(event) only\u2014this breaks the interface contract (also applies to other locations in the PR).",
-      "severity": "Low",
-      "bug_type": "api_misuse",
-      "reasoning": "The comment describes implementations that don't conform to an interface contract - some implementations have the wrong method signature (missing credentialId parameter). This is a violation of the interface/API contract, which falls under api_misuse."
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/8087",
@@ -720,6 +531,11 @@
       "pr_url": "https://github.com/keycloak/keycloak/pull/38446",
       "repo": "keycloak",
       "candidate": "Unsafe cast from AuthenticatorFactory to ConfigurableAuthenticatorFactory without type checking"
+    },
+    {
+      "pr_url": "https://github.com/keycloak/keycloak/pull/38446",
+      "repo": "keycloak",
+      "candidate": "Unsafe cast from FormActionFactory to ConfigurableAuthenticatorFactory without type checking"
     },
     {
       "pr_url": "https://github.com/keycloak/keycloak/pull/36880",
@@ -879,6 +695,11 @@
     {
       "pr_url": "https://github.com/grafana/grafana/pull/90939",
       "repo": "grafana",
+      "candidate": "Race condition: after releasing RLock and before acquiring Lock, another goroutine could modify entryPointAssetsCache, causing the cached value 'ret' to become stale or the cache state to change"
+    },
+    {
+      "pr_url": "https://github.com/grafana/grafana/pull/90939",
+      "repo": "grafana",
       "candidate": "Potential null pointer dereference: 'ret' captures entryPointAssetsCache under RLock but could be nil, and is returned without validation when cfg.Env != setting.Dev"
     },
     {
@@ -925,6 +746,11 @@
       "pr_url": "https://github.com/grafana/grafana/pull/107534",
       "repo": "grafana",
       "candidate": "Expected expression includes regex pattern '20|10' but mock data returns string values that would be sorted as ['1', '10', '2', '20', '3'], making the first two values '1' and '10' instead of the expected '20' and '10'"
+    },
+    {
+      "pr_url": "https://github.com/grafana/grafana/pull/79265",
+      "repo": "grafana",
+      "candidate": "SQL injection vulnerability in updateDevice function - query string is concatenated with user-controlled parameters and passed to Exec without proper parameter binding"
     },
     {
       "pr_url": "https://github.com/grafana/grafana/pull/79265",
@@ -1020,6 +846,11 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
       "repo": "discourse-graphite",
       "candidate": "Email validation with 'email: true' only runs when email changes, but presence and uniqueness validations always run, creating inconsistent validation behavior"
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
+      "repo": "discourse-graphite",
+      "candidate": "Race condition in should_block? method - multiple concurrent requests for the same email could create inconsistent match_count values due to read-modify-write operation without proper locking"
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
@@ -1264,6 +1095,11 @@
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/1",
       "repo": "discourse-graphite",
+      "candidate": "Duplicate method definition - two methods named 'downsize' with different parameter signatures will cause the second definition to overwrite the first"
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/1",
+      "repo": "discourse-graphite",
       "candidate": "Regular expression match against potentially nil value - if 'from' is nil, the regex match will raise NoMethodError"
     },
     {
@@ -1470,6 +1306,11 @@
       "pr_url": "https://github.com/calcom/cal.com/pull/14943",
       "repo": "cal.com",
       "candidate": "OR condition deletes SMS reminders with retryCount > 1, conflicting with retry logic that increments retryCount on failures"
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/14943",
+      "repo": "cal.com",
+      "candidate": "Duplicate retry count increment logic - retryCount is incremented both in the 'else' block for failed SMS and in the catch block for exceptions, potentially double-counting failures"
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/14943",
@@ -1845,6 +1686,11 @@
       "pr_url": "https://github.com/calcom/cal.com/pull/7232",
       "repo": "cal.com",
       "candidate": "External API calls are made sequentially without error handling per request, and if any API call fails, corresponding database record won't be deleted"
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/7232",
+      "repo": "cal.com",
+      "candidate": "Database deletion occurs even when Twilio cancellation fails, potentially leaving inconsistent state"
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/7232",
@@ -2388,8 +2234,8 @@
       "pr_url": "https://github.com/keycloak/keycloak/pull/38446",
       "repo": "keycloak",
       "golden": "Unsafe raw List deserialization without type safety. Calling Optional.get() directly on the Optional returned by RecoveryAuthnCodesUtils.getCredential(user) without checking isPresent() can lead to a NoSuchElementException if the Optional is empty.",
-      "candidate": "Unsafe cast from FormActionFactory to ConfigurableAuthenticatorFactory without type checking",
-      "similarity": 0.3518116169544741,
+      "candidate": "Optional.get() called directly on Optional returned by RecoveryAuthnCodesUtils.getCredential() without calling isPresent() first - will throw NoSuchElementException when credential is absent",
+      "similarity": 0.5292307692307692,
       "severity": "Medium"
     },
     {
@@ -2406,6 +2252,14 @@
       "golden": "Inconsistent feature flag bug causing orphaned permissions. The AdminPermissions event listener, responsible for cleaning up permissions upon role, client, or group removal, is incorrectly guarded by the ADMIN_FINE_GRAINED_AUTHZ (V1) feature flag. This is inconsistent with other methods in the class that use ADMIN_FINE_GRAINED_AUTHZ_V2. Consequently, if ADMIN_FINE_GRAINED_AUTHZ_V2 is enabled but V1 is not, the permission cleanup logic will not execute, leading to orphaned permission data. Cleanup should occur regardless of which fine-grained authorization version is enabled.",
       "candidate": "Feature flag inconsistency causes orphaned permissions: AdminPermissions event listener cleans up permissions when feature is disabled, but another code path creates permissions without checking the flag, leaving orphaned permissions",
       "similarity": 0.3623081201334817,
+      "severity": "High"
+    },
+    {
+      "pr_url": "https://github.com/keycloak/keycloak/pull/36880",
+      "repo": "keycloak",
+      "golden": "In hasPermission(ClientModel client, String scope), the resource lookup uses findByName(server, client.getId(), server.getId()), but AdminPermissionsSchema.getOrCreateResource creates per-client resources with the owner set to resourceServer.getClientId(), so this lookup will never find those resources and will always fall back to the 'all-clients' resource, effectively ignoring client-specific permissions.",
+      "candidate": "hasPermission uses findByName with wrong arguments - wrong resource name convention causes resource lookup to fail, making permission checks incorrectly return false for valid permissions",
+      "similarity": 0.345773711725168,
       "severity": "High"
     },
     {
@@ -2441,6 +2295,30 @@
       "severity": "Critical"
     },
     {
+      "pr_url": "https://github.com/keycloak/keycloak/pull/40940",
+      "repo": "keycloak",
+      "golden": "The reader thread isn\u2019t waited for; flipping deletedAll to true and asserting immediately can race and miss exceptions added just after the flag change, making this test flaky.",
+      "candidate": "Reader thread is not awaited before assertion - flipping deletedAll to true and immediately asserting races with the reader thread adding exceptions, causing flaky test failures",
+      "similarity": 0.5429285714285714,
+      "severity": "Medium"
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/keycloak-greptile/pull/1",
+      "repo": "keycloak-greptile",
+      "golden": "ConditionalPasskeysEnabled() called without UserModel parameter",
+      "candidate": "ConditionalPasskeysEnabled() is called without the required UserModel parameter - the method signature requires a user argument but is invoked without one, causing a compilation error or NullPointerException",
+      "similarity": 0.7226630186958503,
+      "severity": "Medium"
+    },
+    {
+      "pr_url": "https://github.com/getsentry/sentry/pull/93824",
+      "repo": "sentry",
+      "golden": "Because flusher processes are created via multiprocessing.get_context('spawn').Process, they are instances of multiprocessing.context.SpawnProcess, which on POSIX is not a subclass of multiprocessing.Process, so this isinstance check will always be false and hung processes won't be killed here.",
+      "candidate": "flusher processes created via multiprocessing.get_context(spawn).Process are instances of SpawnProcess which on POSIX is not a subclass of multiprocessing.Process - isinstance checks will fail and process management may break",
+      "similarity": 0.7230902255639098,
+      "severity": "High"
+    },
+    {
       "pr_url": "https://github.com/getsentry/sentry/pull/93824",
       "repo": "sentry",
       "golden": "Breaking out of the loop when the deadline has elapsed can skip terminating remaining flusher processes, potentially leaving them running after shutdown; consider ensuring termination is attempted even if the deadline is exceeded.",
@@ -2467,9 +2345,25 @@
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/1",
       "repo": "sentry-greptile",
+      "golden": "Importing non-existent OptimizedCursorPaginator",
+      "candidate": "Importing OptimizedCursorPaginator which does not exist in the sentry codebase - this import will fail at runtime with ImportError",
+      "similarity": 0.3151764705882353,
+      "severity": "Low"
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/1",
+      "repo": "sentry-greptile",
       "golden": "get_item_key assumes a numeric key, but the paginator is used with order_by=-datetime in the audit logs endpoint; calling math.floor/ceil on a datetime will raise a TypeError.",
       "candidate": "Math.floor/ceil applied to potentially non-numeric values without type checking will raise TypeError",
       "similarity": 0.2624792626728111,
+      "severity": "High"
+    },
+    {
+      "pr_url": "https://github.com/grafana/grafana/pull/97529",
+      "repo": "grafana",
+      "golden": "Calling s.search.TotalDocs() here may race with concurrent index creation: TotalDocs iterates b.cache without synchronization, and the event watcher goroutine started just above could trigger BuildIndex writes concurrently, potentially causing a concurrent map read/write panic.",
+      "candidate": "Race condition: s.search.TotalDocs() iterates the cache without synchronization while the event watcher goroutine concurrently modifies it - concurrent map read/write causes panic in Go",
+      "similarity": 0.6335164753794891,
       "severity": "High"
     },
     {
@@ -2545,6 +2439,22 @@
       "severity": "High"
     },
     {
+      "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/3",
+      "repo": "sentry-greptile",
+      "golden": "Using Python\u2019s built-in hash() to build cache keys is non-deterministic across processes (hash randomization), so keys won\u2019t match across workers and invalidate_upsampling_cache may fail to delete them. Use a deterministic serialization of project_ids for the cache key.",
+      "candidate": "Python's built-in hash() is non-deterministic across processes due to PYTHONHASHSEED - cache keys built with hash() will not match across workers, causing cache misses in distributed environments",
+      "similarity": 0.5792916666666666,
+      "severity": "Low"
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/3",
+      "repo": "sentry-greptile",
+      "golden": "sample_rate = 0.0 is falsy and skipped",
+      "candidate": "sample_rate = 0.0 is falsy in Python - the condition if client_sample_rate evaluates to False for 0.0, silently skipping the zero sample rate case",
+      "similarity": 0.49140229885057474,
+      "severity": "Low"
+    },
+    {
       "pr_url": "https://github.com/grafana/grafana/pull/103633",
       "repo": "grafana",
       "golden": "The Check operation exhibits asymmetric cache trust logic: cached permission grants are trusted and returned immediately, but cached denials from the same permission cache are ignored, leading to a fresh database lookup. This allows stale cached grants to provide access to revoked resources, posing a security risk. ",
@@ -2595,6 +2505,14 @@
     {
       "pr_url": "https://github.com/grafana/grafana/pull/94942",
       "repo": "grafana",
+      "golden": "Several methods such as NewInMemoryDB().RunCommands and db.QueryFramesInto return 'not implemented'.",
+      "candidate": "Dead code: NewInMemoryDB().RunCommands and db.QueryFramesInto always return \"not implemented\" - these exported methods are unusable; either implement them or remove them to avoid confusion",
+      "similarity": 0.6944558667139312,
+      "severity": "High"
+    },
+    {
+      "pr_url": "https://github.com/grafana/grafana/pull/94942",
+      "repo": "grafana",
       "golden": "The enableSqlExpressions function has flawed logic that always returns false, effectively disabling SQL expressions unconditionally:",
       "candidate": "Function always returns false regardless of feature flag state due to inverted logic and incorrect control flow",
       "similarity": 0.4980869565217391,
@@ -2612,8 +2530,16 @@
       "pr_url": "https://github.com/grafana/grafana/pull/90939",
       "repo": "grafana",
       "golden": "The GetWebAssets function implements an incomplete double-checked locking pattern for caching web assets. The function first checks if the cache is populated using a read lock (RLock), and if the cache is empty, it acquires a write lock to populate it. However, it fails to re-check whether the cache was populated by another goroutine while waiting to acquire the write lock.",
-      "candidate": "Race condition: after releasing RLock and before acquiring Lock, another goroutine could modify entryPointAssetsCache, causing the cached value 'ret' to become stale or the cache state to change",
-      "similarity": 0.27900737100737105,
+      "candidate": "Incomplete double-checked locking for caching: cache is checked without the lock, then locked to set, but no second check after acquiring lock - concurrent goroutines can both see nil and both fetch the assets",
+      "similarity": 0.3643566533040217,
+      "severity": "Medium"
+    },
+    {
+      "pr_url": "https://github.com/grafana/grafana/pull/90045",
+      "repo": "grafana",
+      "golden": "The context is being created with d.Log instead of the log variable that was initialized with additional context values (name, kind, method). This means those values won't be propagated to the logging context.",
+      "candidate": "Context created with d.Log instead of the log variable that was initialized with additional context values - log entries will be missing the name, kind, and method fields",
+      "similarity": 0.8139440854711789,
       "severity": "Medium"
     },
     {
@@ -2622,6 +2548,14 @@
       "golden": "Bug: calling recordLegacyDuration when storage operation fails should be recordStorageDuration.",
       "candidate": "Bug: recordLegacyDuration is called when storage operation fails but the correct function to call for storage failures is recordStorageDuration - wrong metric is being recorded on error path",
       "similarity": 0.5089574175824175,
+      "severity": "High"
+    },
+    {
+      "pr_url": "https://github.com/grafana/grafana/pull/106778",
+      "repo": "grafana",
+      "golden": "RuleActionsButtons is invoked with only promRule, but SilenceGrafanaRuleDrawer inside RuleActionsButtons still depends on a Grafana Ruler rule being present, so for Grafana rules coming from list views the 'Silence notifications' menu entry (now driven by Grafana Prom abilities) will toggle showSilenceDrawer without ever rendering the drawer. This means clicking 'Silence notifications' for these rules has no visible effect, even when abilities indicate silencing is allowed.",
+      "candidate": "RuleActionsButtons is invoked with only promRule argument but SilenceGrafanaRuleDrawer inside requires a Grafana Ruler rule - passing only a Prometheus rule will cause missing prop error or incorrect drawer behavior",
+      "similarity": 0.412488038277512,
       "severity": "High"
     },
     {
@@ -2636,8 +2570,8 @@
       "pr_url": "https://github.com/grafana/grafana/pull/79265",
       "repo": "grafana",
       "golden": "This call won\u2019t compile: dbSession.Exec(args...) is given a []interface{} where the first element is the query, but Exec\u2019s signature requires a first parameter of type string (not an interface{} splat).",
-      "candidate": "SQL injection vulnerability in updateDevice function - query string is concatenated with user-controlled parameters and passed to Exec without proper parameter binding",
-      "similarity": 0.2850439882697947,
+      "candidate": "Type error: dbSession.Exec(args...) spreads a []interface{} where the first element is the query string, but Exec expects the query as a separate first argument - this will panic at runtime",
+      "similarity": 0.5449090909090909,
       "severity": "Medium"
     },
     {
@@ -2659,6 +2593,14 @@
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/10",
       "repo": "discourse-graphite",
+      "golden": "The update and destroy methods in Admin::EmbeddableHostsController do not validate the existence of the EmbeddableHost record retrieved by ID. If EmbeddableHost.where(id: params[:id]).first returns nil (i.e., the host does not exist), attempting to call methods on the nil object (e.g., save_host or destroy) will result in a NoMethodError.",
+      "candidate": "EmbeddableHostsController update and destroy methods do not validate record existence - EmbeddableHost.where(id: params[:id]).first returns nil when record not found, calling update or destroy on nil raises NoMethodError",
+      "similarity": 0.6137821211505421,
+      "severity": "Medium"
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/10",
+      "repo": "discourse-graphite",
       "golden": "NoMethodError before_validation in EmbeddableHost",
       "candidate": "NoMethodError in EmbeddableHost before_validation callback - calling a method on a nil object before validation will raise NoMethodError and prevent record from being saved",
       "similarity": 0.4444615384615385,
@@ -2675,10 +2617,34 @@
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/8",
       "repo": "discourse-graphite",
+      "golden": "HTTP method mismatch in .remove_member - test uses PUT but remove_member action expects DELETE",
+      "candidate": "HTTP method mismatch: remove_member test uses PUT but the remove_member controller action expects DELETE - test will always fail with 404 or 405",
+      "similarity": 0.868183361629881,
+      "severity": "Medium"
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/8",
+      "repo": "discourse-graphite",
+      "golden": "In the next action, capping the next offset at user_count can produce an empty page (e.g., total equal to limit results in offset == total, showing 2/2 with no members). This can cause confusing UX on the last page.",
+      "candidate": "Capping next offset at user_count produces empty page when total equals limit - offset equals total, causing the next page to return 0 results when there should be a final page",
+      "similarity": 0.5118181818181818,
+      "severity": "Medium"
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/8",
+      "repo": "discourse-graphite",
       "golden": " The findMembers() call is now asynchronous and unhandled. The controller may not have member data immediately available, creating a race condition.",
       "candidate": "findMembers() is now asynchronous and its result is not awaited - the controller returns before member data is available, causing the response to contain empty or stale member information",
       "similarity": 0.501825,
       "severity": "High"
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
+      "repo": "discourse-graphite",
+      "golden": "BlockedEmail.should_block_email? method has side effects during a read operation - it updates statistics even when just checking if an email should be blocked. This could cause race conditions in concurrent environments and makes the method name misleading.",
+      "candidate": "BlockedEmail.should_block_email? has side effects during a read operation - it updates statistics even when only checking whether an email should be blocked, causing unexpected DB writes on reads",
+      "similarity": 0.6039545454545454,
+      "severity": "Medium"
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
@@ -2689,11 +2655,35 @@
       "severity": "Medium"
     },
     {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
+      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/6",
       "repo": "discourse-graphite",
-      "golden": "BlockedEmail.should_block_email? method has side effects during a read operation - it updates statistics even when just checking if an email should be blocked. This could cause race conditions in concurrent environments and makes the method name misleading.",
-      "candidate": "Race condition in should_block? method - multiple concurrent requests for the same email could create inconsistent match_count values due to read-modify-write operation without proper locking",
-      "similarity": 0.3857142857142857,
+      "golden": "The include_website_name method is missing the required ? suffix. Rails serializers expect include_ methods to end with ? for conditional attribute inclusion, a convention followed by other methods in this serializer. Without it, the website_name attribute may not be conditionally included as intended. Additionally, the '.' << website_host string concatenation should be replaced with '.' + website_host or '.#{website_host}' to avoid mutating string literals, which can lead to issues.",
+      "candidate": "include_website_name method is missing the required ? suffix - Rails serializers expect include_ conditional methods to end with ? otherwise the attribute is always serialized",
+      "similarity": 0.5781300672761773,
+      "severity": "Medium"
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
+      "repo": "discourse-graphite",
+      "golden": "postMessage targetOrigin should be the origin (scheme+host+port), not the full referrer URL; using the full URL will cause the message to be dropped and prevent resizing.",
+      "candidate": "postMessage targetOrigin should be the origin (scheme+host+port), not the full referrer URL - using the full URL causes the message to be silently dropped by the browser",
+      "similarity": 0.8788070829450139,
+      "severity": "Medium"
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
+      "repo": "discourse-graphite",
+      "golden": "The ERB block closes with end if, which is invalid Ruby/ERB and will raise at render; it should just be end to close the if block.",
+      "candidate": "ERB block closes with \"end if\" which is invalid Ruby ERB syntax - this will raise a SyntaxError at render time; it should be \"end\" to close the if block",
+      "similarity": 0.8565756823821339,
+      "severity": "Medium"
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
+      "repo": "discourse-graphite",
+      "golden": "The code sets X-Frame-Options: ALLOWALL which completely disables clickjacking protection. The referer validation can be bypassed (referer headers are easily spoofed), and the fallback to empty string for nil referer masks validation failures.",
+      "candidate": "X-Frame-Options set to ALLOWALL completely disables clickjacking protection - referer header validation can be spoofed, leaving the endpoint vulnerable to iframe-based attacks",
+      "similarity": 0.4921318373071529,
       "severity": "Medium"
     },
     {
@@ -2716,8 +2706,8 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/1",
       "repo": "discourse-graphite",
       "golden": "The downsize method is defined twice. The second definition, which expects a single dimensions string parameter, overrides the first, which expected separate max_width and max_height parameters. This makes the original method unreachable and breaks existing code that calls it with separate width and height arguments.",
-      "candidate": "Duplicate method definition - two methods named 'downsize' with different parameter signatures will cause the second definition to overwrite the first",
-      "similarity": 0.3810233918128655,
+      "candidate": "The downsize method is defined twice - the second definition overrides the first, causing dead code and potentially breaking behavior that depended on the original two-argument signature",
+      "similarity": 0.4828721804511278,
       "severity": "Medium"
     },
     {
@@ -2755,18 +2745,26 @@
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/14943",
       "repo": "cal.com",
+      "golden": "Using retryCount: reminder.retryCount + 1 reads a possibly stale value and can lose increments under concurrency; consider an atomic increment via Prisma (increment: 1) to avoid race conditions (also applies to the similar update in the catch block).",
+      "candidate": "retryCount reads a possibly stale value with reminder.retryCount + 1 - concurrent requests can both increment from the same base, losing increments; use atomic increment via Prisma update",
+      "similarity": 0.660591577540107,
+      "severity": "High"
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/14943",
+      "repo": "cal.com",
       "golden": "The deletion logic in scheduleSMSReminders.ts incorrectly deletes non-SMS workflow reminders (e.g., Email, WhatsApp) that have retryCount > 1. This occurs because the retryCount condition within the OR clause for deletion lacks a method: WorkflowMethods.SMS filter, causing it to apply to all reminder types instead of only SMS reminders, which is the intended scope of this function.",
       "candidate": "scheduleSMSReminders.ts deletion logic incorrectly deletes non-SMS workflow reminders (Email, WhatsApp) that share the same workflow - the filter condition is too broad and removes reminders of unintended types",
       "similarity": 0.570473321858864,
       "severity": "High"
     },
     {
-      "pr_url": "https://github.com/calcom/cal.com/pull/14943",
+      "pr_url": "https://github.com/calcom/cal.com/pull/22345",
       "repo": "cal.com",
-      "golden": "Using retryCount: reminder.retryCount + 1 reads a possibly stale value and can lose increments under concurrency; consider an atomic increment via Prisma (increment: 1) to avoid race conditions (also applies to the similar update in the catch block).",
-      "candidate": "Duplicate retry count increment logic - retryCount is incremented both in the 'else' block for failed SMS and in the catch block for exceptions, potentially double-counting failures",
-      "similarity": 0.2892808441558442,
-      "severity": "High"
+      "golden": "Fetching userIdsFromOrg only when teamsFromOrg.length > 0 can exclude org-level members for orgs without child teams; consider deriving from teamIds (which includes orgId) or removing the guard so org-only orgs still include member user bookings.",
+      "candidate": "Logic error: fetching userIdsFromOrg only when teamsFromOrg.length > 0 excludes org-level members for organizations without child teams - org members not in any team will be incorrectly excluded from results",
+      "similarity": 0.5038235294117647,
+      "severity": "Medium"
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/11059",
@@ -2811,18 +2809,18 @@
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/7232",
       "repo": "cal.com",
-      "golden": "When immediateDelete is true, the deleteScheduledEmailReminder function cancels the SendGrid email but fails to delete the corresponding WorkflowReminder record from the database. This creates orphaned database entries and is inconsistent with the immediateDelete: false path, which marks the record as cancelled. The SendGrid DELETE API call is also omitted in this path.",
-      "candidate": "Function returns early without cleaning up database record when immediateDelete is true, leaving orphaned data",
-      "similarity": 0.40103715415019764,
-      "severity": "High"
+      "golden": "Asynchronous functions deleteScheduledEmailReminder and deleteScheduledSMSReminder are called without await inside forEach loops. This occurs during booking rescheduling/cancellation, and workflow/workflow step deletion/updates. Consequently, scheduled workflow reminders may not be reliably cancelled, potentially leaving them active.",
+      "candidate": "deleteScheduledEmailReminder and deleteScheduledSMSReminder are async functions called without await inside forEach loops - reminder deletions fire-and-forget, errors are silently lost, and cleanup may be incomplete",
+      "similarity": 0.4977485910316099,
+      "severity": "Medium"
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/7232",
       "repo": "cal.com",
-      "golden": "Asynchronous functions deleteScheduledEmailReminder and deleteScheduledSMSReminder are called without await inside forEach loops. This occurs during booking rescheduling/cancellation, and workflow/workflow step deletion/updates. Consequently, scheduled workflow reminders may not be reliably cancelled, potentially leaving them active.",
-      "candidate": "Database deletion occurs even when Twilio cancellation fails, potentially leaving inconsistent state",
-      "similarity": 0.369832884097035,
-      "severity": "Medium"
+      "golden": "When immediateDelete is true, the deleteScheduledEmailReminder function cancels the SendGrid email but fails to delete the corresponding WorkflowReminder record from the database. This creates orphaned database entries and is inconsistent with the immediateDelete: false path, which marks the record as cancelled. The SendGrid DELETE API call is also omitted in this path.",
+      "candidate": "Function returns early without cleaning up database record when immediateDelete is true, leaving orphaned data",
+      "similarity": 0.40103715415019764,
+      "severity": "High"
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/14740",
@@ -2883,6 +2881,22 @@
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/10967",
       "repo": "cal.com",
+      "golden": "The Calendar interface now requires createEvent(event, credentialId), but some implementations (e.g., Lark/Office365) still declare createEvent(event) only\u2014this breaks the interface contract (also applies to other locations in the PR).",
+      "candidate": "Calendar interface now requires createEvent(event, credentialId) but implementations like Lark and Office365 still declare createEvent(event) without credentialId - TypeScript interface mismatch causes runtime errors",
+      "similarity": 0.7368582995951417,
+      "severity": "Low"
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
+      "repo": "cal.com",
+      "golden": "Logic inversion in organization creation: The slug property is now conditionally set when IS_TEAM_BILLING_ENABLED is true, instead of when it's false as originally intended. This change, combined with requestedSlug still being set when IS_TEAM_BILLING_ENABLED is true, results in both properties being set when billing is enabled, and neither when disabled",
+      "candidate": "Logic inversion in organization creation: slug property is conditionally set when IS_TEAM_BILLING_ENABLED is true instead of false - organizations created without billing enabled will be missing the slug field",
+      "similarity": 0.7014014801110083,
+      "severity": "Medium"
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
+      "repo": "cal.com",
       "golden": "Potential null reference if mainHostDestinationCalendar is undefined if evt.destinationCalendar is null or an empty array ",
       "candidate": "Destructuring assignment with empty array fallback could mask undefined/null destinationCalendar - mainHostDestinationCalendar will be undefined if destinationCalendar is null, undefined, or an empty array",
       "similarity": 0.5685576923076923,
@@ -2898,21 +2912,21 @@
     }
   ],
   "per_bug_type_fn": {
-    "incorrect_value": 22,
+    "incorrect_value": 20,
     "missing_validation": 4,
     "other": 8,
-    "api_misuse": 14,
-    "null_reference": 2,
-    "dead_code": 4,
-    "race_condition": 4,
-    "logic_error": 9,
-    "type_error": 2,
-    "security": 2
+    "api_misuse": 7,
+    "null_reference": 1,
+    "dead_code": 3,
+    "logic_error": 3,
+    "race_condition": 2,
+    "type_error": 1,
+    "security": 1
   },
   "per_severity_fn": {
-    "Medium": 26,
-    "Low": 35,
-    "High": 9,
+    "Medium": 14,
+    "Low": 31,
+    "High": 4,
     "Critical": 1
   },
   "all_pr_results": [
@@ -2956,15 +2970,15 @@
       "repo": "keycloak",
       "language": "Java",
       "tp": 1,
-      "fp": 3,
+      "fp": 4,
       "fn": 1,
       "n_golden": 2,
-      "n_candidates": 4,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "Unsafe raw List deserialization without type safety. Calling Optional.get() directly on the Optional returned by RecoveryAuthnCodesUtils.getCredential(user) without checking isPresent() can lead to a NoSuchElementException if the Optional is empty.",
-          "candidate": "Unsafe cast from FormActionFactory to ConfigurableAuthenticatorFactory without type checking",
-          "similarity": 0.3518116169544741,
+          "candidate": "Optional.get() called directly on Optional returned by RecoveryAuthnCodesUtils.getCredential() without calling isPresent() first - will throw NoSuchElementException when credential is absent",
+          "similarity": 0.5292307692307692,
           "severity": "Medium"
         }
       ]
@@ -2991,16 +3005,22 @@
       "pr_url": "https://github.com/keycloak/keycloak/pull/36880",
       "repo": "keycloak",
       "language": "Java",
-      "tp": 1,
+      "tp": 2,
       "fp": 3,
-      "fn": 2,
+      "fn": 1,
       "n_golden": 3,
-      "n_candidates": 4,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "Inconsistent feature flag bug causing orphaned permissions. The AdminPermissions event listener, responsible for cleaning up permissions upon role, client, or group removal, is incorrectly guarded by the ADMIN_FINE_GRAINED_AUTHZ (V1) feature flag. This is inconsistent with other methods in the class that use ADMIN_FINE_GRAINED_AUTHZ_V2. Consequently, if ADMIN_FINE_GRAINED_AUTHZ_V2 is enabled but V1 is not, the permission cleanup logic will not execute, leading to orphaned permission data. Cleanup should occur regardless of which fine-grained authorization version is enabled.",
           "candidate": "Feature flag inconsistency causes orphaned permissions: AdminPermissions event listener cleans up permissions when feature is disabled, but another code path creates permissions without checking the flag, leaving orphaned permissions",
           "similarity": 0.3623081201334817,
+          "severity": "High"
+        },
+        {
+          "golden": "In hasPermission(ClientModel client, String scope), the resource lookup uses findByName(server, client.getId(), server.getId()), but AdminPermissionsSchema.getOrCreateResource creates per-client resources with the owner set to resourceServer.getClientId(), so this lookup will never find those resources and will always fall back to the 'all-clients' resource, effectively ignoring client-specific permissions.",
+          "candidate": "hasPermission uses findByName with wrong arguments - wrong resource name convention causes resource lookup to fail, making permission checks incorrectly return false for valid permissions",
+          "similarity": 0.345773711725168,
           "severity": "High"
         }
       ]
@@ -3051,17 +3071,23 @@
       "pr_url": "https://github.com/keycloak/keycloak/pull/40940",
       "repo": "keycloak",
       "language": "Java",
-      "tp": 1,
+      "tp": 2,
       "fp": 3,
-      "fn": 1,
+      "fn": 0,
       "n_golden": 2,
-      "n_candidates": 4,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "Returning null from getSubGroupsCount() violates the GroupModel contract (Javadoc says it never returns null) and may lead to NPEs in callers that expect a non-null count.",
           "candidate": "Returning null from getSubGroupsCount() violates the GroupModel contract - Javadoc declares the method never returns null but this implementation returns null, causing NullPointerException in callers that invoke methods on the result",
           "similarity": 0.7041565506184151,
           "severity": "Critical"
+        },
+        {
+          "golden": "The reader thread isn\u2019t waited for; flipping deletedAll to true and asserting immediately can race and miss exceptions added just after the flag change, making this test flaky.",
+          "candidate": "Reader thread is not awaited before assertion - flipping deletedAll to true and immediately asserting races with the reader thread adding exceptions, causing flaky test failures",
+          "similarity": 0.5429285714285714,
+          "severity": "Medium"
         }
       ]
     },
@@ -3069,23 +3095,36 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/keycloak-greptile/pull/1",
       "repo": "keycloak-greptile",
       "language": "Java",
-      "tp": 0,
+      "tp": 1,
       "fp": 4,
-      "fn": 2,
+      "fn": 1,
       "n_golden": 2,
-      "n_candidates": 4,
-      "matches": []
+      "n_candidates": 5,
+      "matches": [
+        {
+          "golden": "ConditionalPasskeysEnabled() called without UserModel parameter",
+          "candidate": "ConditionalPasskeysEnabled() is called without the required UserModel parameter - the method signature requires a user argument but is invoked without one, causing a compilation error or NullPointerException",
+          "similarity": 0.7226630186958503,
+          "severity": "Medium"
+        }
+      ]
     },
     {
       "pr_url": "https://github.com/getsentry/sentry/pull/93824",
       "repo": "sentry",
       "language": "Python",
-      "tp": 2,
+      "tp": 3,
       "fp": 0,
-      "fn": 3,
+      "fn": 2,
       "n_golden": 5,
-      "n_candidates": 2,
+      "n_candidates": 3,
       "matches": [
+        {
+          "golden": "Because flusher processes are created via multiprocessing.get_context('spawn').Process, they are instances of multiprocessing.context.SpawnProcess, which on POSIX is not a subclass of multiprocessing.Process, so this isinstance check will always be false and hung processes won't be killed here.",
+          "candidate": "flusher processes created via multiprocessing.get_context(spawn).Process are instances of SpawnProcess which on POSIX is not a subclass of multiprocessing.Process - isinstance checks will fail and process management may break",
+          "similarity": 0.7230902255639098,
+          "severity": "High"
+        },
         {
           "golden": "Breaking out of the loop when the deadline has elapsed can skip terminating remaining flusher processes, potentially leaving them running after shutdown; consider ensuring termination is attempted even if the deadline is exceeded.",
           "candidate": "Breaking out of the loop when deadline is elapsed skips terminating remaining flusher processes, potentially leaking process handles and causing resource exhaustion",
@@ -3115,17 +3154,23 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/1",
       "repo": "sentry-greptile",
       "language": "Python",
-      "tp": 2,
+      "tp": 3,
       "fp": 1,
-      "fn": 2,
+      "fn": 1,
       "n_golden": 4,
-      "n_candidates": 3,
+      "n_candidates": 4,
       "matches": [
         {
           "golden": "When requests are authenticated with API keys or org auth tokens (which have user_id=None), organization_context.member is None. Line 71 attempts to access organization_context.member.has_global_access without checking if member is None, causing an AttributeError crash when optimized_pagination=true is used, even though the request passed all permission checks with valid org:write scope.",
           "candidate": "When requests are authenticated with API keys or org auth tokens, organization_context.member is None and accessing .has_global_access() on None will raise AttributeError",
           "similarity": 0.5570954310929136,
           "severity": "High"
+        },
+        {
+          "golden": "Importing non-existent OptimizedCursorPaginator",
+          "candidate": "Importing OptimizedCursorPaginator which does not exist in the sentry codebase - this import will fail at runtime with ImportError",
+          "similarity": 0.3151764705882353,
+          "severity": "Low"
         },
         {
           "golden": "get_item_key assumes a numeric key, but the paginator is used with order_by=-datetime in the audit logs endpoint; calling math.floor/ceil on a datetime will raise a TypeError.",
@@ -3139,12 +3184,18 @@
       "pr_url": "https://github.com/grafana/grafana/pull/97529",
       "repo": "grafana",
       "language": "Go",
-      "tp": 1,
+      "tp": 2,
       "fp": 2,
-      "fn": 1,
+      "fn": 0,
       "n_golden": 2,
-      "n_candidates": 3,
+      "n_candidates": 4,
       "matches": [
+        {
+          "golden": "Calling s.search.TotalDocs() here may race with concurrent index creation: TotalDocs iterates b.cache without synchronization, and the event watcher goroutine started just above could trigger BuildIndex writes concurrently, potentially causing a concurrent map read/write panic.",
+          "candidate": "Race condition: s.search.TotalDocs() iterates the cache without synchronization while the event watcher goroutine concurrently modifies it - concurrent map read/write causes panic in Go",
+          "similarity": 0.6335164753794891,
+          "severity": "High"
+        },
         {
           "golden": "A race condition in BuildIndex allows multiple goroutines to concurrently build the same expensive index for the same key. This is caused by moving the b.cacheMu lock from protecting the entire function to only protecting the final cache assignment. ",
           "candidate": "Race condition in BuildIndex: multiple goroutines can concurrently build the same index for the same key without synchronization, wasting resources and potentially causing data corruption",
@@ -3265,12 +3316,25 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/3",
       "repo": "sentry-greptile",
       "language": "Python",
-      "tp": 0,
+      "tp": 2,
       "fp": 1,
-      "fn": 3,
+      "fn": 1,
       "n_golden": 3,
-      "n_candidates": 1,
-      "matches": []
+      "n_candidates": 3,
+      "matches": [
+        {
+          "golden": "Using Python\u2019s built-in hash() to build cache keys is non-deterministic across processes (hash randomization), so keys won\u2019t match across workers and invalidate_upsampling_cache may fail to delete them. Use a deterministic serialization of project_ids for the cache key.",
+          "candidate": "Python's built-in hash() is non-deterministic across processes due to PYTHONHASHSEED - cache keys built with hash() will not match across workers, causing cache misses in distributed environments",
+          "similarity": 0.5792916666666666,
+          "severity": "Low"
+        },
+        {
+          "golden": "sample_rate = 0.0 is falsy and skipped",
+          "candidate": "sample_rate = 0.0 is falsy in Python - the condition if client_sample_rate evaluates to False for 0.0, silently skipping the zero sample rate case",
+          "similarity": 0.49140229885057474,
+          "severity": "Low"
+        }
+      ]
     },
     {
       "pr_url": "https://github.com/grafana/grafana/pull/103633",
@@ -3348,12 +3412,18 @@
       "pr_url": "https://github.com/grafana/grafana/pull/94942",
       "repo": "grafana",
       "language": "Go",
-      "tp": 1,
+      "tp": 2,
       "fp": 1,
-      "fn": 1,
+      "fn": 0,
       "n_golden": 2,
-      "n_candidates": 2,
+      "n_candidates": 3,
       "matches": [
+        {
+          "golden": "Several methods such as NewInMemoryDB().RunCommands and db.QueryFramesInto return 'not implemented'.",
+          "candidate": "Dead code: NewInMemoryDB().RunCommands and db.QueryFramesInto always return \"not implemented\" - these exported methods are unusable; either implement them or remove them to avoid confusion",
+          "similarity": 0.6944558667139312,
+          "severity": "High"
+        },
         {
           "golden": "The enableSqlExpressions function has flawed logic that always returns false, effectively disabling SQL expressions unconditionally:",
           "candidate": "Function always returns false regardless of feature flag state due to inverted logic and incorrect control flow",
@@ -3367,10 +3437,10 @@
       "repo": "grafana",
       "language": "Go",
       "tp": 2,
-      "fp": 1,
+      "fp": 2,
       "fn": 0,
       "n_golden": 2,
-      "n_candidates": 3,
+      "n_candidates": 4,
       "matches": [
         {
           "golden": "In addition to the missing double-check, the function has a critical flaw in its error handling: it unconditionally assigns the fetch result to the cache (line 69: entryPointAssetsCache = result) regardless of whether the fetch succeeded or failed. When an error occurs during asset fetching, result is nil, and this nil value overwrites any previously valid cache entry.",
@@ -3380,8 +3450,8 @@
         },
         {
           "golden": "The GetWebAssets function implements an incomplete double-checked locking pattern for caching web assets. The function first checks if the cache is populated using a read lock (RLock), and if the cache is empty, it acquires a write lock to populate it. However, it fails to re-check whether the cache was populated by another goroutine while waiting to acquire the write lock.",
-          "candidate": "Race condition: after releasing RLock and before acquiring Lock, another goroutine could modify entryPointAssetsCache, causing the cached value 'ret' to become stale or the cache state to change",
-          "similarity": 0.27900737100737105,
+          "candidate": "Incomplete double-checked locking for caching: cache is checked without the lock, then locked to set, but no second check after acquiring lock - concurrent goroutines can both see nil and both fetch the assets",
+          "similarity": 0.3643566533040217,
           "severity": "Medium"
         }
       ]
@@ -3401,12 +3471,18 @@
       "pr_url": "https://github.com/grafana/grafana/pull/90045",
       "repo": "grafana",
       "language": "Go",
-      "tp": 1,
+      "tp": 2,
       "fp": 3,
-      "fn": 2,
+      "fn": 1,
       "n_golden": 3,
-      "n_candidates": 4,
+      "n_candidates": 5,
       "matches": [
+        {
+          "golden": "The context is being created with d.Log instead of the log variable that was initialized with additional context values (name, kind, method). This means those values won't be propagated to the logging context.",
+          "candidate": "Context created with d.Log instead of the log variable that was initialized with additional context values - log entries will be missing the name, kind, and method fields",
+          "similarity": 0.8139440854711789,
+          "severity": "Medium"
+        },
         {
           "golden": "Bug: calling recordLegacyDuration when storage operation fails should be recordStorageDuration.",
           "candidate": "Bug: recordLegacyDuration is called when storage operation fails but the correct function to call for storage failures is recordStorageDuration - wrong metric is being recorded on error path",
@@ -3419,12 +3495,19 @@
       "pr_url": "https://github.com/grafana/grafana/pull/106778",
       "repo": "grafana",
       "language": "Go",
-      "tp": 0,
+      "tp": 1,
       "fp": 2,
-      "fn": 2,
+      "fn": 1,
       "n_golden": 2,
-      "n_candidates": 2,
-      "matches": []
+      "n_candidates": 3,
+      "matches": [
+        {
+          "golden": "RuleActionsButtons is invoked with only promRule, but SilenceGrafanaRuleDrawer inside RuleActionsButtons still depends on a Grafana Ruler rule being present, so for Grafana rules coming from list views the 'Silence notifications' menu entry (now driven by Grafana Prom abilities) will toggle showSilenceDrawer without ever rendering the drawer. This means clicking 'Silence notifications' for these rules has no visible effect, even when abilities indicate silencing is allowed.",
+          "candidate": "RuleActionsButtons is invoked with only promRule argument but SilenceGrafanaRuleDrawer inside requires a Grafana Ruler rule - passing only a Prometheus rule will cause missing prop error or incorrect drawer behavior",
+          "similarity": 0.412488038277512,
+          "severity": "High"
+        }
+      ]
     },
     {
       "pr_url": "https://github.com/grafana/grafana/pull/107534",
@@ -3442,10 +3525,10 @@
       "repo": "grafana",
       "language": "Go",
       "tp": 3,
-      "fp": 2,
+      "fp": 3,
       "fn": 2,
       "n_golden": 5,
-      "n_candidates": 5,
+      "n_candidates": 6,
       "matches": [
         {
           "golden": "Race condition: Multiple concurrent requests could pass the device count check simultaneously and create devices beyond the limit. Consider using a database transaction or lock.",
@@ -3455,8 +3538,8 @@
         },
         {
           "golden": "This call won\u2019t compile: dbSession.Exec(args...) is given a []interface{} where the first element is the query, but Exec\u2019s signature requires a first parameter of type string (not an interface{} splat).",
-          "candidate": "SQL injection vulnerability in updateDevice function - query string is concatenated with user-controlled parameters and passed to Exec without proper parameter binding",
-          "similarity": 0.2850439882697947,
+          "candidate": "Type error: dbSession.Exec(args...) spreads a []interface{} where the first element is the query string, but Exec expects the query as a separate first argument - this will panic at runtime",
+          "similarity": 0.5449090909090909,
           "severity": "Medium"
         },
         {
@@ -3500,12 +3583,18 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/10",
       "repo": "discourse-graphite",
       "language": "Ruby",
-      "tp": 2,
+      "tp": 3,
       "fp": 2,
-      "fn": 2,
+      "fn": 1,
       "n_golden": 4,
-      "n_candidates": 4,
+      "n_candidates": 5,
       "matches": [
+        {
+          "golden": "The update and destroy methods in Admin::EmbeddableHostsController do not validate the existence of the EmbeddableHost record retrieved by ID. If EmbeddableHost.where(id: params[:id]).first returns nil (i.e., the host does not exist), attempting to call methods on the nil object (e.g., save_host or destroy) will result in a NoMethodError.",
+          "candidate": "EmbeddableHostsController update and destroy methods do not validate record existence - EmbeddableHost.where(id: params[:id]).first returns nil when record not found, calling update or destroy on nil raises NoMethodError",
+          "similarity": 0.6137821211505421,
+          "severity": "Medium"
+        },
         {
           "golden": "NoMethodError before_validation in EmbeddableHost",
           "candidate": "NoMethodError in EmbeddableHost before_validation callback - calling a method on a nil object before validation will raise NoMethodError and prevent record from being saved",
@@ -3535,12 +3624,24 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/8",
       "repo": "discourse-graphite",
       "language": "Ruby",
-      "tp": 1,
+      "tp": 3,
       "fp": 3,
-      "fn": 2,
+      "fn": 0,
       "n_golden": 3,
-      "n_candidates": 4,
+      "n_candidates": 6,
       "matches": [
+        {
+          "golden": "HTTP method mismatch in .remove_member - test uses PUT but remove_member action expects DELETE",
+          "candidate": "HTTP method mismatch: remove_member test uses PUT but the remove_member controller action expects DELETE - test will always fail with 404 or 405",
+          "similarity": 0.868183361629881,
+          "severity": "Medium"
+        },
+        {
+          "golden": "In the next action, capping the next offset at user_count can produce an empty page (e.g., total equal to limit results in offset == total, showing 2/2 with no members). This can cause confusing UX on the last page.",
+          "candidate": "Capping next offset at user_count produces empty page when total equals limit - offset equals total, causing the next page to return 0 results when there should be a final page",
+          "similarity": 0.5118181818181818,
+          "severity": "Medium"
+        },
         {
           "golden": " The findMembers() call is now asynchronous and unhandled. The controller may not have member data immediately available, creating a race condition.",
           "candidate": "findMembers() is now asynchronous and its result is not awaited - the controller returns before member data is available, causing the response to contain empty or stale member information",
@@ -3554,21 +3655,21 @@
       "repo": "discourse-graphite",
       "language": "Ruby",
       "tp": 2,
-      "fp": 12,
+      "fp": 13,
       "fn": 0,
       "n_golden": 2,
-      "n_candidates": 14,
+      "n_candidates": 15,
       "matches": [
+        {
+          "golden": "BlockedEmail.should_block_email? method has side effects during a read operation - it updates statistics even when just checking if an email should be blocked. This could cause race conditions in concurrent environments and makes the method name misleading.",
+          "candidate": "BlockedEmail.should_block_email? has side effects during a read operation - it updates statistics even when only checking whether an email should be blocked, causing unexpected DB writes on reads",
+          "similarity": 0.6039545454545454,
+          "severity": "Medium"
+        },
         {
           "golden": "Regex pattern @(#{domains}) only matches domain suffixes, not full domains. evil.example.com would match whitelist entry example.com.",
           "candidate": "Regex pattern allows partial domain matches (e.g., 'evil.com' matches whitelist entry 'vil.com')",
           "similarity": 0.5137006993006993,
-          "severity": "Medium"
-        },
-        {
-          "golden": "BlockedEmail.should_block_email? method has side effects during a read operation - it updates statistics even when just checking if an email should be blocked. This could cause race conditions in concurrent environments and makes the method name misleading.",
-          "candidate": "Race condition in should_block? method - multiple concurrent requests for the same email could create inconsistent match_count values due to read-modify-write operation without proper locking",
-          "similarity": 0.3857142857142857,
           "severity": "Medium"
         }
       ]
@@ -3588,23 +3689,48 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/6",
       "repo": "discourse-graphite",
       "language": "Ruby",
-      "tp": 0,
+      "tp": 1,
       "fp": 2,
-      "fn": 1,
+      "fn": 0,
       "n_golden": 1,
-      "n_candidates": 2,
-      "matches": []
+      "n_candidates": 3,
+      "matches": [
+        {
+          "golden": "The include_website_name method is missing the required ? suffix. Rails serializers expect include_ methods to end with ? for conditional attribute inclusion, a convention followed by other methods in this serializer. Without it, the website_name attribute may not be conditionally included as intended. Additionally, the '.' << website_host string concatenation should be replaced with '.' + website_host or '.#{website_host}' to avoid mutating string literals, which can lead to issues.",
+          "candidate": "include_website_name method is missing the required ? suffix - Rails serializers expect include_ conditional methods to end with ? otherwise the attribute is always serialized",
+          "similarity": 0.5781300672761773,
+          "severity": "Medium"
+        }
+      ]
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
       "repo": "discourse-graphite",
       "language": "Ruby",
-      "tp": 2,
+      "tp": 5,
       "fp": 40,
-      "fn": 4,
+      "fn": 1,
       "n_golden": 6,
-      "n_candidates": 42,
+      "n_candidates": 45,
       "matches": [
+        {
+          "golden": "postMessage targetOrigin should be the origin (scheme+host+port), not the full referrer URL; using the full URL will cause the message to be dropped and prevent resizing.",
+          "candidate": "postMessage targetOrigin should be the origin (scheme+host+port), not the full referrer URL - using the full URL causes the message to be silently dropped by the browser",
+          "similarity": 0.8788070829450139,
+          "severity": "Medium"
+        },
+        {
+          "golden": "The ERB block closes with end if, which is invalid Ruby/ERB and will raise at render; it should just be end to close the if block.",
+          "candidate": "ERB block closes with \"end if\" which is invalid Ruby ERB syntax - this will raise a SyntaxError at render time; it should be \"end\" to close the if block",
+          "similarity": 0.8565756823821339,
+          "severity": "Medium"
+        },
+        {
+          "golden": "The code sets X-Frame-Options: ALLOWALL which completely disables clickjacking protection. The referer validation can be bypassed (referer headers are easily spoofed), and the fallback to empty string for nil referer masks validation failures.",
+          "candidate": "X-Frame-Options set to ALLOWALL completely disables clickjacking protection - referer header validation can be spoofed, leaving the endpoint vulnerable to iframe-based attacks",
+          "similarity": 0.4921318373071529,
+          "severity": "Medium"
+        },
         {
           "golden": "The current origin validation using indexOf is insufficient and can be bypassed. An attacker could use a malicious domain like evil-discourseUrl.com to pass this check.",
           "candidate": "Security vulnerability: indexOf check for origin validation is insufficient and can be bypassed by malicious domains that contain the discourse URL as a substring",
@@ -3624,15 +3750,15 @@
       "repo": "discourse-graphite",
       "language": "Ruby",
       "tp": 1,
-      "fp": 11,
+      "fp": 12,
       "fn": 2,
       "n_golden": 3,
-      "n_candidates": 12,
+      "n_candidates": 13,
       "matches": [
         {
           "golden": "The downsize method is defined twice. The second definition, which expects a single dimensions string parameter, overrides the first, which expected separate max_width and max_height parameters. This makes the original method unreachable and breaks existing code that calls it with separate width and height arguments.",
-          "candidate": "Duplicate method definition - two methods named 'downsize' with different parameter signatures will cause the second definition to overwrite the first",
-          "similarity": 0.3810233918128655,
+          "candidate": "The downsize method is defined twice - the second definition overrides the first, causing dead code and potentially breaking behavior that depended on the original two-argument signature",
+          "similarity": 0.4828721804511278,
           "severity": "Medium"
         }
       ]
@@ -3702,21 +3828,21 @@
       "repo": "cal.com",
       "language": "TypeScript",
       "tp": 2,
-      "fp": 2,
+      "fp": 3,
       "fn": 0,
       "n_golden": 2,
-      "n_candidates": 4,
+      "n_candidates": 5,
       "matches": [
+        {
+          "golden": "Using retryCount: reminder.retryCount + 1 reads a possibly stale value and can lose increments under concurrency; consider an atomic increment via Prisma (increment: 1) to avoid race conditions (also applies to the similar update in the catch block).",
+          "candidate": "retryCount reads a possibly stale value with reminder.retryCount + 1 - concurrent requests can both increment from the same base, losing increments; use atomic increment via Prisma update",
+          "similarity": 0.660591577540107,
+          "severity": "High"
+        },
         {
           "golden": "The deletion logic in scheduleSMSReminders.ts incorrectly deletes non-SMS workflow reminders (e.g., Email, WhatsApp) that have retryCount > 1. This occurs because the retryCount condition within the OR clause for deletion lacks a method: WorkflowMethods.SMS filter, causing it to apply to all reminder types instead of only SMS reminders, which is the intended scope of this function.",
           "candidate": "scheduleSMSReminders.ts deletion logic incorrectly deletes non-SMS workflow reminders (Email, WhatsApp) that share the same workflow - the filter condition is too broad and removes reminders of unintended types",
           "similarity": 0.570473321858864,
-          "severity": "High"
-        },
-        {
-          "golden": "Using retryCount: reminder.retryCount + 1 reads a possibly stale value and can lose increments under concurrency; consider an atomic increment via Prisma (increment: 1) to avoid race conditions (also applies to the similar update in the catch block).",
-          "candidate": "Duplicate retry count increment logic - retryCount is incremented both in the 'else' block for failed SMS and in the catch block for exceptions, potentially double-counting failures",
-          "similarity": 0.2892808441558442,
           "severity": "High"
         }
       ]
@@ -3725,12 +3851,19 @@
       "pr_url": "https://github.com/calcom/cal.com/pull/22345",
       "repo": "cal.com",
       "language": "TypeScript",
-      "tp": 0,
+      "tp": 1,
       "fp": 3,
-      "fn": 2,
+      "fn": 1,
       "n_golden": 2,
-      "n_candidates": 3,
-      "matches": []
+      "n_candidates": 4,
+      "matches": [
+        {
+          "golden": "Fetching userIdsFromOrg only when teamsFromOrg.length > 0 can exclude org-level members for orgs without child teams; consider deriving from teamIds (which includes orgId) or removing the guard so org-only orgs still include member user bookings.",
+          "candidate": "Logic error: fetching userIdsFromOrg only when teamsFromOrg.length > 0 excludes org-level members for organizations without child teams - org members not in any team will be incorrectly excluded from results",
+          "similarity": 0.5038235294117647,
+          "severity": "Medium"
+        }
+      ]
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/11059",
@@ -3779,22 +3912,22 @@
       "repo": "cal.com",
       "language": "TypeScript",
       "tp": 2,
-      "fp": 18,
+      "fp": 19,
       "fn": 0,
       "n_golden": 2,
-      "n_candidates": 20,
+      "n_candidates": 21,
       "matches": [
+        {
+          "golden": "Asynchronous functions deleteScheduledEmailReminder and deleteScheduledSMSReminder are called without await inside forEach loops. This occurs during booking rescheduling/cancellation, and workflow/workflow step deletion/updates. Consequently, scheduled workflow reminders may not be reliably cancelled, potentially leaving them active.",
+          "candidate": "deleteScheduledEmailReminder and deleteScheduledSMSReminder are async functions called without await inside forEach loops - reminder deletions fire-and-forget, errors are silently lost, and cleanup may be incomplete",
+          "similarity": 0.4977485910316099,
+          "severity": "Medium"
+        },
         {
           "golden": "When immediateDelete is true, the deleteScheduledEmailReminder function cancels the SendGrid email but fails to delete the corresponding WorkflowReminder record from the database. This creates orphaned database entries and is inconsistent with the immediateDelete: false path, which marks the record as cancelled. The SendGrid DELETE API call is also omitted in this path.",
           "candidate": "Function returns early without cleaning up database record when immediateDelete is true, leaving orphaned data",
           "similarity": 0.40103715415019764,
           "severity": "High"
-        },
-        {
-          "golden": "Asynchronous functions deleteScheduledEmailReminder and deleteScheduledSMSReminder are called without await inside forEach loops. This occurs during booking rescheduling/cancellation, and workflow/workflow step deletion/updates. Consequently, scheduled workflow reminders may not be reliably cancelled, potentially leaving them active.",
-          "candidate": "Database deletion occurs even when Twilio cancellation fails, potentially leaving inconsistent state",
-          "similarity": 0.369832884097035,
-          "severity": "Medium"
         }
       ]
     },
@@ -3868,12 +4001,24 @@
       "pr_url": "https://github.com/calcom/cal.com/pull/10967",
       "repo": "cal.com",
       "language": "TypeScript",
-      "tp": 1,
+      "tp": 3,
       "fp": 23,
-      "fn": 4,
+      "fn": 2,
       "n_golden": 5,
-      "n_candidates": 24,
+      "n_candidates": 26,
       "matches": [
+        {
+          "golden": "The Calendar interface now requires createEvent(event, credentialId), but some implementations (e.g., Lark/Office365) still declare createEvent(event) only\u2014this breaks the interface contract (also applies to other locations in the PR).",
+          "candidate": "Calendar interface now requires createEvent(event, credentialId) but implementations like Lark and Office365 still declare createEvent(event) without credentialId - TypeScript interface mismatch causes runtime errors",
+          "similarity": 0.7368582995951417,
+          "severity": "Low"
+        },
+        {
+          "golden": "Logic inversion in organization creation: The slug property is now conditionally set when IS_TEAM_BILLING_ENABLED is true, instead of when it's false as originally intended. This change, combined with requestedSlug still being set when IS_TEAM_BILLING_ENABLED is true, results in both properties being set when billing is enabled, and neither when disabled",
+          "candidate": "Logic inversion in organization creation: slug property is conditionally set when IS_TEAM_BILLING_ENABLED is true instead of false - organizations created without billing enabled will be missing the slug field",
+          "similarity": 0.7014014801110083,
+          "severity": "Medium"
+        },
         {
           "golden": "Potential null reference if mainHostDestinationCalendar is undefined if evt.destinationCalendar is null or an empty array ",
           "candidate": "Destructuring assignment with empty array fallback could mask undefined/null destinationCalendar - mainHostDestinationCalendar will be undefined if destinationCalendar is null, undefined, or an empty array",
