@@ -56,6 +56,17 @@ export interface VerifyResult {
   bypassed?: boolean;
 }
 
+/** Structured telemetry emitted after each verify() call */
+export interface VerifierTelemetry {
+  scanId: string;
+  totalFindings: number;
+  verified: number;
+  dropped: number;
+  bypassedAlwaysKeep: number;
+  bypassedAlwaysDrop: number;
+  avgConfidence: number | undefined;
+}
+
 /**
  * Verify a single finding using the LLM.
  * Exported for testability — does NOT apply bypass rules.

@@ -16,5 +16,5 @@ export { LogicBugDetector } from './detectors/logic-bug.js';
 export { ExplanationEngine } from './detectors/explanation.js';
 export { AutoFixGenerator } from './autofix/generator.js';
 export { LlmVerifier } from './filters/llm-verifier.js';
-export type { VerifyResult } from './filters/llm-verifier.js';
+export type { VerifyResult, VerifierTelemetry } from './filters/llm-verifier.js';
 export type { AutoFix } from '@codesheriff/shared';
