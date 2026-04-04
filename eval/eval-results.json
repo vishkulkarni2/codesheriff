@@ -1,51 +1,51 @@
 {
-  "total_tp": 87,
-  "total_fp": 342,
-  "total_fn": 50,
-  "precision": 0.20279720279720279,
-  "recall": 0.635036496350365,
-  "f1": 0.3074204946996466,
+  "total_tp": 108,
+  "total_fp": 349,
+  "total_fn": 29,
+  "precision": 0.2363238512035011,
+  "recall": 0.7883211678832117,
+  "f1": 0.36363636363636365,
   "per_repo": {
     "keycloak": {
-      "tp": 13,
-      "fp": 23,
-      "fn": 9,
+      "tp": 19,
+      "fp": 25,
+      "fn": 3,
       "total_golden": 22
     },
     "keycloak-greptile": {
-      "tp": 1,
+      "tp": 2,
       "fp": 4,
-      "fn": 1,
+      "fn": 0,
       "total_golden": 2
     },
     "sentry": {
-      "tp": 12,
+      "tp": 15,
       "fp": 1,
-      "fn": 7,
+      "fn": 4,
       "total_golden": 19
     },
     "sentry-greptile": {
-      "tp": 7,
+      "tp": 9,
       "fp": 4,
-      "fn": 6,
+      "fn": 4,
       "total_golden": 13
     },
     "grafana": {
-      "tp": 14,
-      "fp": 22,
-      "fn": 8,
+      "tp": 16,
+      "fp": 23,
+      "fn": 6,
       "total_golden": 22
     },
     "discourse-graphite": {
-      "tp": 16,
+      "tp": 21,
       "fp": 83,
-      "fn": 12,
+      "fn": 7,
       "total_golden": 28
     },
     "cal.com": {
-      "tp": 24,
-      "fp": 205,
-      "fn": 7,
+      "tp": 26,
+      "fp": 209,
+      "fn": 5,
       "total_golden": 31
     }
   },
@@ -54,37 +54,10 @@
       "pr_url": "https://github.com/keycloak/keycloak/pull/37429",
       "repo": "keycloak",
       "language": "Java",
-      "comment": "The translation is in Italian instead of Lithuanian. This should be translated to Lithuanian to match the file's locale (messages_lt.properties).",
-      "severity": "Medium",
-      "bug_type": "incorrect_value",
-      "reasoning": "The comment identifies that a translation string contains the wrong language (Italian instead of Lithuanian), which is an incorrect value for the locale-specific properties file."
-    },
-    {
-      "pr_url": "https://github.com/keycloak/keycloak/pull/37429",
-      "repo": "keycloak",
-      "language": "Java",
-      "comment": "The totpStep1 value uses Traditional Chinese terms in the Simplified Chinese file (zh_CN), which is likely incorrect for this locale. Please verify the locale\u2011appropriate translation.",
-      "severity": "Medium",
-      "bug_type": "incorrect_value",
-      "reasoning": "The comment identifies that a translation value is using the wrong locale variant (Traditional Chinese instead of Simplified Chinese), which is an incorrect value for the zh_CN locale file."
-    },
-    {
-      "pr_url": "https://github.com/keycloak/keycloak/pull/37429",
-      "repo": "keycloak",
-      "language": "Java",
       "comment": "The anchor sanitization logic has a potential issue where it consumes English matcher groups without proper validation. If the translated text has more anchor tags than the English text, this could lead to incorrect validation results.",
       "severity": "Low",
       "bug_type": "missing_validation",
       "reasoning": "The comment describes a validation gap where the code doesn't properly check if translated text has more anchor tags than English text, leading to incorrect validation results due to missing input validation."
-    },
-    {
-      "pr_url": "https://github.com/keycloak/keycloak/pull/37429",
-      "repo": "keycloak",
-      "language": "Java",
-      "comment": "The method name 'santizeAnchors' should be 'sanitizeAnchors' (missing 'i').",
-      "severity": "Low",
-      "bug_type": "other",
-      "reasoning": "This is a typo/spelling error in a method name ('santize' should be 'sanitize'). It's not a functional bug but a naming convention issue that affects code readability and maintainability."
     },
     {
       "pr_url": "https://github.com/keycloak/keycloak/pull/37634",
@@ -96,15 +69,6 @@
       "reasoning": "This is a documentation inconsistency issue where the Javadoc description doesn't accurately reflect the actual implementation patterns. It's not a code bug but rather a documentation maintenance issue."
     },
     {
-      "pr_url": "https://github.com/keycloak/keycloak/pull/37634",
-      "repo": "keycloak",
-      "language": "Java",
-      "comment": " Catching generic RuntimeException is too broad. The implementation throws IllegalArgumentException specifically - catch that instead for more precise testing.",
-      "severity": "Low",
-      "bug_type": "api_misuse",
-      "reasoning": "The comment addresses catching too broad an exception type (RuntimeException) when a more specific exception (IllegalArgumentException) should be caught. This is about proper exception handling patterns and API usage rather than a logic error or missing validation."
-    },
-    {
       "pr_url": "https://github.com/keycloak/keycloak/pull/38446",
       "repo": "keycloak",
       "language": "Java",
@@ -112,42 +76,6 @@
       "severity": "Low",
       "bug_type": "null_reference",
       "reasoning": "The comment identifies that getId() will return null because the id field is never set after creating the credential model. This null value will cause downstream operations like removeStoredCredentialById to fail when they try to use the null id."
-    },
-    {
-      "pr_url": "https://github.com/keycloak/keycloak/pull/36880",
-      "repo": "keycloak",
-      "language": "Java",
-      "comment": "In getClientsWithPermission(String scope), iterating resourceStore.findByType(server, AdminPermissionsSchema.CLIENTS_RESOURCE_TYPE) and returning resource.getName() will only ever consider the type-level 'Clients' resource (per-client resources have no type) and return its name, while AvailableRoleMappingResource#getRoleIdsWithPermissions expects actual client IDs to pass to realm.getClientById, which can lead to incorrect behavior or a null client and subsequent failures.",
-      "severity": "High",
-      "bug_type": "incorrect_value",
-      "reasoning": "The code returns resource names instead of actual client IDs that the calling method expects. This is a semantic mismatch where the wrong values are being returned - the type-level resource name 'Clients' instead of individual client IDs, leading to incorrect behavior when the caller tries to use these values with realm.getClientById."
-    },
-    {
-      "pr_url": "https://github.com/keycloak/keycloak/pull/33832",
-      "repo": "keycloak",
-      "language": "Java",
-      "comment": "Dead code exists where ASN1Encoder instances are created and written to, but their results are immediately discarded. The actual encoding is performed by new ASN1Encoder instances created in the subsequent return statement, rendering the earlier operations useless.",
-      "severity": "Low",
-      "bug_type": "dead_code",
-      "reasoning": "The comment explicitly describes dead code where ASN1Encoder instances are created and their results discarded, with the actual work being done by new instances in the return statement, making the earlier operations useless."
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/keycloak-greptile/pull/1",
-      "repo": "keycloak-greptile",
-      "language": "Java",
-      "comment": "With isConditionalPasskeysEnabled(UserModel user) requiring user != null, authenticate(...) will not call webauthnAuth.fillContextForm(context) on the initial login page where context.getUser() is still null, so conditional passkey UI will not be set up for first-time passkey login. Consider whether this should also be enabled when no user has been selected yet so ID-less passkey authentication on the initial login form continues to work.",
-      "severity": "Medium",
-      "bug_type": "logic_error",
-      "reasoning": "The comment describes a logical flaw where the null check on user prevents conditional passkey UI from being set up during initial login when no user is selected yet. This breaks ID-less passkey authentication functionality because the condition is too restrictive, not because of a null reference crash but because of incorrect business logic flow."
-    },
-    {
-      "pr_url": "https://github.com/getsentry/sentry/pull/93824",
-      "repo": "sentry",
-      "language": "Python",
-      "comment": "Inconsistent metric tagging with 'shard' and 'shards'",
-      "severity": "Medium",
-      "bug_type": "incorrect_value",
-      "reasoning": "The comment points out inconsistent naming between 'shard' and 'shards' in metric tags, which is an incorrect value/naming issue that could cause problems with metric aggregation and querying."
     },
     {
       "pr_url": "https://github.com/getsentry/sentry/pull/93824",
@@ -204,24 +132,6 @@
       "reasoning": "This is a performance issue where the code makes redundant database queries instead of using already available data. It's not a logic error per se, but an inefficiency/optimization issue that doesn't fit the other specific categories."
     },
     {
-      "pr_url": "https://github.com/getsentry/sentry/pull/77754",
-      "repo": "sentry",
-      "language": "Python",
-      "comment": "The method name has a typo: test_from_dict_inalid_data should be test_from_dict_invalid_data.",
-      "severity": "Low",
-      "bug_type": "other",
-      "reasoning": "This is a typo in a method name ('inalid' should be 'invalid'), which is a naming/spelling issue rather than a functional bug category. It doesn't affect logic, types, security, or validation - it's purely a cosmetic/readability issue."
-    },
-    {
-      "pr_url": "https://github.com/getsentry/sentry/pull/77754",
-      "repo": "sentry",
-      "language": "Python",
-      "comment": "Method name says 'empty_array' but tests empty dict - consider renaming to 'test_from_dict_empty_dict' for clarity.",
-      "severity": "Low",
-      "bug_type": "other",
-      "reasoning": "This is a naming/documentation issue where the method name doesn't match what it actually tests. It's about code clarity and maintainability rather than a functional bug."
-    },
-    {
       "pr_url": "https://github.com/getsentry/sentry/pull/95633",
       "repo": "sentry",
       "language": "Python",
@@ -240,24 +150,6 @@
       "reasoning": "This is a documentation issue where the test's docstring doesn't accurately describe what the test actually does. It's not a code bug but rather a documentation/comment mismatch issue."
     },
     {
-      "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/2",
-      "repo": "sentry-greptile",
-      "language": "Python",
-      "comment": "OptimizedCursorPaginator.get_item_key uses floor/ceil on a datetime key (order_by='-datetime'), causing TypeError.",
-      "severity": "High",
-      "bug_type": "type_error",
-      "reasoning": "The comment explicitly describes a TypeError occurring when floor/ceil mathematical operations are applied to a datetime object, which is an incompatible type for those operations."
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/3",
-      "repo": "sentry-greptile",
-      "language": "Python",
-      "comment": "The upsampling eligibility check passes the outer dataset instead of the actual dataset used by scoped_dataset. In paths where the query ultimately runs against discover (e.g., dashboard split) while the original dataset is metrics, upsampling may be skipped even when all projects are allowlisted.",
-      "severity": "Medium",
-      "bug_type": "incorrect_value",
-      "reasoning": "The comment describes passing the wrong variable (outer dataset instead of actual dataset used by scoped_dataset) to a function, which causes incorrect behavior in the upsampling eligibility check. This is a case of using an incorrect value/variable rather than a logic error in the algorithm itself."
-    },
-    {
       "pr_url": "https://github.com/grafana/grafana/pull/103633",
       "repo": "grafana",
       "language": "Go",
@@ -274,24 +166,6 @@
       "severity": "Low",
       "bug_type": "incorrect_value",
       "reasoning": "The comment identifies that the wrong log level (Error) is being used when Debug or Info would be more appropriate. This is an incorrect value/configuration issue where the severity level parameter is set incorrectly for the type of information being logged."
-    },
-    {
-      "pr_url": "https://github.com/grafana/grafana/pull/90045",
-      "repo": "grafana",
-      "language": "Go",
-      "comment": "Inconsistency: using name instead of options.Kind for metrics recording differs from other methods.",
-      "severity": "Medium",
-      "bug_type": "incorrect_value",
-      "reasoning": "The comment points out that the wrong variable (name instead of options.Kind) is being used for metrics recording, which is inconsistent with other methods. This is an incorrect value being passed to a function."
-    },
-    {
-      "pr_url": "https://github.com/grafana/grafana/pull/106778",
-      "repo": "grafana",
-      "language": "Go",
-      "comment": "The rendered GrafanaRuleListItem is missing the required key prop for React list items. This can cause rendering issues when the list order changes.",
-      "severity": "Medium",
-      "bug_type": "api_misuse",
-      "reasoning": "Missing the required 'key' prop for React list items is a misuse of the React API. React requires unique keys for list items to properly track and reconcile elements during re-renders."
     },
     {
       "pr_url": "https://github.com/grafana/grafana/pull/107534",
@@ -324,15 +198,6 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/9",
       "repo": "discourse-graphite",
       "language": "Ruby",
-      "comment": "Thread-safety issue with lazy @loaded_locales",
-      "severity": "Low",
-      "bug_type": "race_condition",
-      "reasoning": "The comment explicitly mentions 'Thread-safety issue' with a lazy-loaded variable (@loaded_locales), which indicates a race condition where multiple threads could potentially access or modify the shared state concurrently without proper synchronization."
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/9",
-      "repo": "discourse-graphite",
-      "language": "Ruby",
       "comment": "Consider normalizing the input locale (e.g., to a symbol) when checking/loading here to avoid double-loading if the same locale is passed as a String vs Symbol (also applies to other locations in the PR).",
       "severity": "Low",
       "bug_type": "missing_validation",
@@ -346,15 +211,6 @@
       "severity": "Low",
       "bug_type": "incorrect_value",
       "reasoning": "The comment describes a regression where traceID logging was accidentally removed during refactoring. The new middleware doesn't include the traceID information that was previously present, resulting in missing/incorrect log output. This is about missing expected data in the output rather than a logic error in computation."
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/10",
-      "repo": "discourse-graphite",
-      "language": "Ruby",
-      "comment": "record_for_host compares lower(host) = ? but does not normalize the parameter\u2019s case, so mixed\u2011case referer hosts may fail to match even though comparison intends to be case\u2011insensitive.",
-      "severity": "Medium",
-      "bug_type": "incorrect_value",
-      "reasoning": "The comment describes a case sensitivity mismatch where the database query uses lower(host) but the parameter passed to it is not normalized to lowercase, causing incorrect comparison results for mixed-case inputs."
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/7",
@@ -411,33 +267,6 @@
       "reasoning": "SSRF (Server-Side Request Forgery) is a security vulnerability where an attacker can make the server perform requests to unintended locations. Using open(url) without validation allows attackers to access internal resources or make malicious requests."
     },
     {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/1",
-      "repo": "discourse-graphite",
-      "language": "Ruby",
-      "comment": "Hardcoding maxSizeKB = 10 * 1024 ignores Discourse.SiteSettings['max_' + type + '_size_kb'], so the client-side limit can diverge from server-side and per-type settings (also applies to the 413 handler below).",
-      "severity": "Low",
-      "bug_type": "incorrect_value",
-      "reasoning": "The comment points out that a hardcoded value (10 * 1024) is being used instead of reading from the proper configuration settings, which causes the client-side limit to be incorrect compared to server-side settings. This is a case of using an incorrect/hardcoded value rather than the proper dynamic configuration value."
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/1",
-      "repo": "discourse-graphite",
-      "language": "Ruby",
-      "comment": "Passing 80% as the dimensions can fail for animated GIFs when allow_animated_thumbnails is true, since the animated path uses gifsicle --resize-fit which expects WxH geometry, not a percentage; downsizing would then silently fail.",
-      "severity": "Medium",
-      "bug_type": "api_misuse",
-      "reasoning": "The comment describes passing a percentage value (80%) to gifsicle's --resize-fit option which expects WxH geometry format, not percentages. This is incorrect usage of the gifsicle API/command-line interface."
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/2",
-      "repo": "discourse-graphite",
-      "language": "Ruby",
-      "comment": "Typo in property name: 'stopNotificiationsText' should be 'stopNotificationsText' (missing 'n' in 'Notifications')",
-      "severity": "Low",
-      "bug_type": "incorrect_value",
-      "reasoning": "This is a typo in a property name where 'stopNotificiationsText' should be 'stopNotificationsText'. This represents an incorrect string value that could cause property lookup failures or inconsistencies."
-    },
-    {
       "pr_url": "https://github.com/calcom/cal.com/pull/8330",
       "repo": "cal.com",
       "language": "TypeScript",
@@ -454,24 +283,6 @@
       "severity": "Low",
       "bug_type": "dead_code",
       "reasoning": "The comment explicitly identifies unreachable code branches - the else if and final else conditions can never be executed because authConditions is always truthy, making those code paths dead code."
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
-      "repo": "cal.com",
-      "language": "TypeScript",
-      "comment": "This calls the email sender with the original guests, so existing attendees included in the input will be treated as new when sending notifications, leading to incorrect emails.",
-      "severity": "Medium",
-      "bug_type": "incorrect_value",
-      "reasoning": "The comment describes passing the wrong data (original guests instead of filtered/processed guests) to the email sender function, causing existing attendees to incorrectly receive 'new attendee' notifications. This is passing an incorrect value to a function."
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
-      "repo": "cal.com",
-      "language": "TypeScript",
-      "comment": "uniqueGuests filters out existing attendees and blacklisted emails but does not deduplicate duplicates within the input; createMany can insert duplicate attendee rows if the client submits repeated emails.",
-      "severity": "Medium",
-      "bug_type": "missing_validation",
-      "reasoning": "The comment identifies that the code fails to validate/deduplicate duplicate entries within the input array itself, allowing duplicate attendee rows to be inserted when the client submits repeated emails."
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/10967",
@@ -553,6 +364,11 @@
       "candidate": "Race condition in lazy initialization where multiple threads can simultaneously check 'clientPermissions != null' and both create new instances, causing the first instance to be lost"
     },
     {
+      "pr_url": "https://github.com/keycloak/keycloak/pull/36880",
+      "repo": "keycloak",
+      "candidate": "Feature flag inconsistency causes orphaned permissions: AdminPermissions event listener cleans up permissions when feature is disabled, but another code path creates permissions without checking the flag, leaving orphaned permissions"
+    },
+    {
       "pr_url": "https://github.com/keycloak/keycloak/pull/37038",
       "repo": "keycloak",
       "candidate": "Authorization bypass in getGroupIdsWithViewPermission() - returns empty set when user has view permission, which may grant access to all groups instead of restricting access"
@@ -576,6 +392,11 @@
       "pr_url": "https://github.com/keycloak/keycloak/pull/37038",
       "repo": "keycloak",
       "candidate": "Potential StringIndexOutOfBoundsException when Location header path doesn't contain '/' character"
+    },
+    {
+      "pr_url": "https://github.com/keycloak/keycloak/pull/37038",
+      "repo": "keycloak",
+      "candidate": "In getGroupIdsWithViewPermission, hasPermission is called with groupResource.getId() for both resource and scope parameters - scope should differ from resource ID, causing incorrect permission evaluation and potentially granting wrong access"
     },
     {
       "pr_url": "https://github.com/keycloak/keycloak/pull/33832",
@@ -746,6 +567,11 @@
       "pr_url": "https://github.com/grafana/grafana/pull/107534",
       "repo": "grafana",
       "candidate": "Expected expression includes regex pattern '20|10' but mock data returns string values that would be sorted as ['1', '10', '2', '20', '3'], making the first two values '1' and '10' instead of the expected '20' and '10'"
+    },
+    {
+      "pr_url": "https://github.com/grafana/grafana/pull/79265",
+      "repo": "grafana",
+      "candidate": "Anonymous authentication always succeeds and returns a valid identity without proper authorization checks, potentially allowing unauthorized access"
     },
     {
       "pr_url": "https://github.com/grafana/grafana/pull/79265",
@@ -1260,6 +1086,11 @@
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/22532",
       "repo": "cal.com",
+      "candidate": "Race condition potential - if cache statuses are updated between the getCacheStatusByCredentialIds call and the map creation, the cacheStatusMap may contain stale data"
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/22532",
+      "repo": "cal.com",
       "candidate": "Missing comma after setDestinationCalendarHandler procedure, which will cause a syntax error when the deleteCache procedure is added"
     },
     {
@@ -1590,6 +1421,11 @@
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/11059",
       "repo": "cal.com",
+      "candidate": "Raw Response object returned instead of parsed data - inconsistent return type between branches"
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
+      "repo": "cal.com",
       "candidate": "Missing refresh_token property validation - the minimumTokenResponseSchema doesn't require refresh_token but the code assumes it exists"
     },
     {
@@ -1875,6 +1711,11 @@
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/10600",
       "repo": "cal.com",
+      "candidate": "No input sanitization or validation pattern for backup code format - accepts any characters instead of expected alphanumeric format"
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
+      "repo": "cal.com",
       "candidate": "Backup code input not configured to prevent autocomplete which could lead to credential exposure in browser storage"
     },
     {
@@ -1926,6 +1767,11 @@
       "pr_url": "https://github.com/calcom/cal.com/pull/10600",
       "repo": "cal.com",
       "candidate": "Missing null/undefined check for user.backupCodes before accessing its length property"
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
+      "repo": "cal.com",
+      "candidate": "Logic allows backup code authentication even when TOTP code might be required first"
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/10600",
@@ -2215,12 +2061,44 @@
   ],
   "tp_details": [
     {
+      "pr_url": "https://github.com/keycloak/keycloak/pull/37429",
+      "repo": "keycloak",
+      "golden": "The method name 'santizeAnchors' should be 'sanitizeAnchors' (missing 'i').",
+      "candidate": "Method named 'santizeAnchors' should be 'sanitizeAnchors' - missing 'i' in the method name is a typo that may prevent callers from finding the method and cause runtime errors",
+      "similarity": 0.8266666666666667,
+      "severity": "Low"
+    },
+    {
+      "pr_url": "https://github.com/keycloak/keycloak/pull/37429",
+      "repo": "keycloak",
+      "golden": "The totpStep1 value uses Traditional Chinese terms in the Simplified Chinese file (zh_CN), which is likely incorrect for this locale. Please verify the locale\u2011appropriate translation.",
+      "candidate": "Simplified Chinese locale file zh_CN uses Traditional Chinese terms in totpStep1 - incorrect character set for the locale, showing Traditional Chinese to Simplified Chinese users",
+      "similarity": 0.6344247901456919,
+      "severity": "Medium"
+    },
+    {
+      "pr_url": "https://github.com/keycloak/keycloak/pull/37429",
+      "repo": "keycloak",
+      "golden": "The translation is in Italian instead of Lithuanian. This should be translated to Lithuanian to match the file's locale (messages_lt.properties).",
+      "candidate": "Translation file messages_lt.properties contains Italian text instead of Lithuanian - the locale file has wrong language content, causing Lithuanian users to see Italian interface text",
+      "similarity": 0.46692001365343044,
+      "severity": "Medium"
+    },
+    {
       "pr_url": "https://github.com/keycloak/keycloak/pull/37634",
       "repo": "keycloak",
       "golden": "Wrong parameter in null check (grantType vs. rawTokenId)",
       "candidate": "Wrong parameter in null check: method checks grantType for null instead of rawTokenId, causing the null guard to be ineffective and allowing NullPointerException when rawTokenId is null",
       "similarity": 0.7536892601162593,
       "severity": "Critical"
+    },
+    {
+      "pr_url": "https://github.com/keycloak/keycloak/pull/37634",
+      "repo": "keycloak",
+      "golden": " Catching generic RuntimeException is too broad. The implementation throws IllegalArgumentException specifically - catch that instead for more precise testing.",
+      "candidate": "Catching generic RuntimeException is too broad - the implementation throws IllegalArgumentException specifically; catching only RuntimeException hides the specific exception type and makes error handling less precise",
+      "similarity": 0.6643571428571429,
+      "severity": "Low"
     },
     {
       "pr_url": "https://github.com/keycloak/keycloak/pull/37634",
@@ -2249,9 +2127,17 @@
     {
       "pr_url": "https://github.com/keycloak/keycloak/pull/36880",
       "repo": "keycloak",
+      "golden": "In getClientsWithPermission(String scope), iterating resourceStore.findByType(server, AdminPermissionsSchema.CLIENTS_RESOURCE_TYPE) and returning resource.getName() will only ever consider the type-level 'Clients' resource (per-client resources have no type) and return its name, while AvailableRoleMappingResource#getRoleIdsWithPermissions expects actual client IDs to pass to realm.getClientById, which can lead to incorrect behavior or a null client and subsequent failures.",
+      "candidate": "In getClientsWithPermission, iterating CLIENTS_RESOURCE_TYPE resources and returning resource IDs returns the wrong set - should return client IDs associated with those resources, not the resource IDs themselves",
+      "similarity": 0.4347177835051546,
+      "severity": "High"
+    },
+    {
+      "pr_url": "https://github.com/keycloak/keycloak/pull/36880",
+      "repo": "keycloak",
       "golden": "Inconsistent feature flag bug causing orphaned permissions. The AdminPermissions event listener, responsible for cleaning up permissions upon role, client, or group removal, is incorrectly guarded by the ADMIN_FINE_GRAINED_AUTHZ (V1) feature flag. This is inconsistent with other methods in the class that use ADMIN_FINE_GRAINED_AUTHZ_V2. Consequently, if ADMIN_FINE_GRAINED_AUTHZ_V2 is enabled but V1 is not, the permission cleanup logic will not execute, leading to orphaned permission data. Cleanup should occur regardless of which fine-grained authorization version is enabled.",
-      "candidate": "Feature flag inconsistency causes orphaned permissions: AdminPermissions event listener cleans up permissions when feature is disabled, but another code path creates permissions without checking the flag, leaving orphaned permissions",
-      "similarity": 0.3623081201334817,
+      "candidate": "Feature flag inconsistency causes orphaned permissions: AdminPermissions event listener cleans up permissions when feature is disabled but another code path creates permissions without checking the flag",
+      "similarity": 0.36667657683331667,
       "severity": "High"
     },
     {
@@ -2287,6 +2173,14 @@
       "severity": "High"
     },
     {
+      "pr_url": "https://github.com/keycloak/keycloak/pull/33832",
+      "repo": "keycloak",
+      "golden": "Dead code exists where ASN1Encoder instances are created and written to, but their results are immediately discarded. The actual encoding is performed by new ASN1Encoder instances created in the subsequent return statement, rendering the earlier operations useless.",
+      "candidate": "Dead code: ASN1Encoder instances are created and written to but their results are immediately discarded - the actual encoding is performed elsewhere, making these encoder operations unnecessary and confusing",
+      "similarity": 0.6722321428571428,
+      "severity": "Low"
+    },
+    {
       "pr_url": "https://github.com/keycloak/keycloak/pull/40940",
       "repo": "keycloak",
       "golden": "Returning null from getSubGroupsCount() violates the GroupModel contract (Javadoc says it never returns null) and may lead to NPEs in callers that expect a non-null count.",
@@ -2311,12 +2205,28 @@
       "severity": "Medium"
     },
     {
+      "pr_url": "https://github.com/ai-code-review-evaluation/keycloak-greptile/pull/1",
+      "repo": "keycloak-greptile",
+      "golden": "With isConditionalPasskeysEnabled(UserModel user) requiring user != null, authenticate(...) will not call webauthnAuth.fillContextForm(context) on the initial login page where context.getUser() is still null, so conditional passkey UI will not be set up for first-time passkey login. Consider whether this should also be enabled when no user has been selected yet so ID-less passkey authentication on the initial login form continues to work.",
+      "candidate": "With isConditionalPasskeysEnabled(UserModel user) requiring user != null, authenticate() will not call webauthnAuth.fillContextForm(context) on the correct branch when user is null, causing passkey authentication to silently fail",
+      "similarity": 0.6007198777566074,
+      "severity": "Medium"
+    },
+    {
       "pr_url": "https://github.com/getsentry/sentry/pull/93824",
       "repo": "sentry",
       "golden": "Because flusher processes are created via multiprocessing.get_context('spawn').Process, they are instances of multiprocessing.context.SpawnProcess, which on POSIX is not a subclass of multiprocessing.Process, so this isinstance check will always be false and hung processes won't be killed here.",
       "candidate": "flusher processes created via multiprocessing.get_context(spawn).Process are instances of SpawnProcess which on POSIX is not a subclass of multiprocessing.Process - isinstance checks will fail and process management may break",
       "similarity": 0.7230902255639098,
       "severity": "High"
+    },
+    {
+      "pr_url": "https://github.com/getsentry/sentry/pull/93824",
+      "repo": "sentry",
+      "golden": "Inconsistent metric tagging with 'shard' and 'shards'",
+      "candidate": "Inconsistent metric tagging: some calls use tag 'shard' while others use 'shards' - metrics will be split across two different tag values, making aggregation and dashboards incorrect",
+      "similarity": 0.6602713178294574,
+      "severity": "Medium"
     },
     {
       "pr_url": "https://github.com/getsentry/sentry/pull/93824",
@@ -2409,6 +2319,22 @@
     {
       "pr_url": "https://github.com/getsentry/sentry/pull/77754",
       "repo": "sentry",
+      "golden": "The method name has a typo: test_from_dict_inalid_data should be test_from_dict_invalid_data.",
+      "candidate": "Method name typo: test_from_dict_inalid_data is missing a letter and should be test_from_dict_invalid_data - the test may not be discovered by test runners that filter by name pattern",
+      "similarity": 0.6239238095238094,
+      "severity": "Low"
+    },
+    {
+      "pr_url": "https://github.com/getsentry/sentry/pull/77754",
+      "repo": "sentry",
+      "golden": "Method name says 'empty_array' but tests empty dict - consider renaming to 'test_from_dict_empty_dict' for clarity.",
+      "candidate": "Method named 'empty_array' but tests an empty dict - test name does not match what is being tested, making the test suite misleading and harder to maintain",
+      "similarity": 0.5934124847001223,
+      "severity": "Low"
+    },
+    {
+      "pr_url": "https://github.com/getsentry/sentry/pull/77754",
+      "repo": "sentry",
       "golden": "Shared mutable default in dataclass timestamp",
       "candidate": "Mutable default argument in dataclass field - using a mutable object as default value for timestamp field shares state across instances, causing subtle data corruption bugs",
       "similarity": 0.4931904761904762,
@@ -2439,6 +2365,14 @@
       "severity": "High"
     },
     {
+      "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/2",
+      "repo": "sentry-greptile",
+      "golden": "OptimizedCursorPaginator.get_item_key uses floor/ceil on a datetime key (order_by='-datetime'), causing TypeError.",
+      "candidate": "OptimizedCursorPaginator.get_item_key applies floor and ceil to a datetime key when order_by is -datetime - math.floor and math.ceil raise TypeError when given a datetime object instead of a number",
+      "similarity": 0.6940199146514935,
+      "severity": "High"
+    },
+    {
       "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/3",
       "repo": "sentry-greptile",
       "golden": "Using Python\u2019s built-in hash() to build cache keys is non-deterministic across processes (hash randomization), so keys won\u2019t match across workers and invalidate_upsampling_cache may fail to delete them. Use a deterministic serialization of project_ids for the cache key.",
@@ -2453,6 +2387,14 @@
       "candidate": "sample_rate = 0.0 is falsy in Python - the condition if client_sample_rate evaluates to False for 0.0, silently skipping the zero sample rate case",
       "similarity": 0.49140229885057474,
       "severity": "Low"
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/3",
+      "repo": "sentry-greptile",
+      "golden": "The upsampling eligibility check passes the outer dataset instead of the actual dataset used by scoped_dataset. In paths where the query ultimately runs against discover (e.g., dashboard split) while the original dataset is metrics, upsampling may be skipped even when all projects are allowlisted.",
+      "candidate": "Upsampling eligibility check passes the outer dataset instead of the scoped_dataset actually used by the query - when both datasets differ, the eligibility check is performed on wrong data and may incorrectly enable or disable upsampling",
+      "similarity": 0.4805604395604396,
+      "severity": "Medium"
     },
     {
       "pr_url": "https://github.com/grafana/grafana/pull/103633",
@@ -2551,6 +2493,22 @@
       "severity": "High"
     },
     {
+      "pr_url": "https://github.com/grafana/grafana/pull/90045",
+      "repo": "grafana",
+      "golden": "Inconsistency: using name instead of options.Kind for metrics recording differs from other methods.",
+      "candidate": "Inconsistency: metrics recorded using name instead of options.Kind - other methods in this file use options.Kind for metric dimensions, causing this method to emit metrics with a different label format",
+      "similarity": 0.4254278624601206,
+      "severity": "Medium"
+    },
+    {
+      "pr_url": "https://github.com/grafana/grafana/pull/106778",
+      "repo": "grafana",
+      "golden": "The rendered GrafanaRuleListItem is missing the required key prop for React list items. This can cause rendering issues when the list order changes.",
+      "candidate": "GrafanaRuleListItem rendered in a list is missing the required React key prop - missing key causes React reconciliation issues when list order changes, leading to incorrect DOM updates",
+      "similarity": 0.6302392556490918,
+      "severity": "Medium"
+    },
+    {
       "pr_url": "https://github.com/grafana/grafana/pull/106778",
       "repo": "grafana",
       "golden": "RuleActionsButtons is invoked with only promRule, but SilenceGrafanaRuleDrawer inside RuleActionsButtons still depends on a Grafana Ruler rule being present, so for Grafana rules coming from list views the 'Silence notifications' menu entry (now driven by Grafana Prom abilities) will toggle showSilenceDrawer without ever rendering the drawer. This means clicking 'Silence notifications' for these rules has no visible effect, even when abilities indicate silencing is allowed.",
@@ -2569,18 +2527,26 @@
     {
       "pr_url": "https://github.com/grafana/grafana/pull/79265",
       "repo": "grafana",
+      "golden": "Anonymous authentication now fails entirely if anonDeviceService.TagDevice returns ErrDeviceLimitReached. Previously, device tagging was asynchronous and non-blocking. This change prevents anonymous users from authenticating when the device limit is reached.",
+      "candidate": "Anonymous authentication now fails entirely when ErrDeviceLimitReached - previously device tagging was asynchronous and non-blocking, now it blocks authentication for users over the device limit",
+      "similarity": 0.683028846153846,
+      "severity": "Medium"
+    },
+    {
+      "pr_url": "https://github.com/grafana/grafana/pull/79265",
+      "repo": "grafana",
       "golden": "This call won\u2019t compile: dbSession.Exec(args...) is given a []interface{} where the first element is the query, but Exec\u2019s signature requires a first parameter of type string (not an interface{} splat).",
       "candidate": "Type error: dbSession.Exec(args...) spreads a []interface{} where the first element is the query string, but Exec expects the query as a separate first argument - this will panic at runtime",
       "similarity": 0.5449090909090909,
       "severity": "Medium"
     },
     {
-      "pr_url": "https://github.com/grafana/grafana/pull/79265",
-      "repo": "grafana",
-      "golden": "Anonymous authentication now fails entirely if anonDeviceService.TagDevice returns ErrDeviceLimitReached. Previously, device tagging was asynchronous and non-blocking. This change prevents anonymous users from authenticating when the device limit is reached.",
-      "candidate": "Anonymous authentication always succeeds and returns a valid identity without proper authorization checks, potentially allowing unauthorized access",
-      "similarity": 0.23440450928381962,
-      "severity": "Medium"
+      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/9",
+      "repo": "discourse-graphite",
+      "golden": "Thread-safety issue with lazy @loaded_locales",
+      "candidate": "Thread-safety issue with lazy @loaded_locales - multiple threads can simultaneously check and set the instance variable without synchronization, causing duplicate locale loading or data corruption",
+      "similarity": 0.7555174686882002,
+      "severity": "Low"
     },
     {
       "pr_url": "https://github.com/grafana/grafana/pull/76186",
@@ -2589,6 +2555,14 @@
       "candidate": "ContextualLoggerMiddleware methods (QueryData, CallResource, CheckHealth, CollectMetrics) will panic when passed a nil request - dereferencing nil pointer before nil check causes runtime panic",
       "similarity": 0.5276802507836991,
       "severity": "High"
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/10",
+      "repo": "discourse-graphite",
+      "golden": "record_for_host compares lower(host) = ? but does not normalize the parameter\u2019s case, so mixed\u2011case referer hosts may fail to match even though comparison intends to be case\u2011insensitive.",
+      "candidate": "record_for_host compares lower(host) = ? but does not normalize the parameter case - mixed-case referer hosts like Example.COM will fail to match even though they are equivalent",
+      "similarity": 0.8254545454545454,
+      "severity": "Medium"
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/10",
@@ -2705,10 +2679,34 @@
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/1",
       "repo": "discourse-graphite",
+      "golden": "Hardcoding maxSizeKB = 10 * 1024 ignores Discourse.SiteSettings['max_' + type + '_size_kb'], so the client-side limit can diverge from server-side and per-type settings (also applies to the 413 handler below).",
+      "candidate": "Hardcoding maxSizeKB = 10 * 1024 ignores Discourse.SiteSettings max_type_size_kb - client-side limit can diverge from server-side configuration, allowing uploads that exceed the server limit",
+      "similarity": 0.6894948979591836,
+      "severity": "Low"
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/1",
+      "repo": "discourse-graphite",
+      "golden": "Passing 80% as the dimensions can fail for animated GIFs when allow_animated_thumbnails is true, since the animated path uses gifsicle --resize-fit which expects WxH geometry, not a percentage; downsizing would then silently fail.",
+      "candidate": "Passing 80% as dimensions to gifsicle fails for animated GIFs - the animated path requires absolute pixel dimensions, not percentages, causing animated thumbnail generation to fail",
+      "similarity": 0.5081609907120743,
+      "severity": "Medium"
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/1",
+      "repo": "discourse-graphite",
       "golden": "The downsize method is defined twice. The second definition, which expects a single dimensions string parameter, overrides the first, which expected separate max_width and max_height parameters. This makes the original method unreachable and breaks existing code that calls it with separate width and height arguments.",
       "candidate": "The downsize method is defined twice - the second definition overrides the first, causing dead code and potentially breaking behavior that depended on the original two-argument signature",
       "similarity": 0.4828721804511278,
       "severity": "Medium"
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/2",
+      "repo": "discourse-graphite",
+      "golden": "Typo in property name: 'stopNotificiationsText' should be 'stopNotificationsText' (missing 'n' in 'Notifications')",
+      "candidate": "Typo in property name: 'stopNotificiationsText' should be 'stopNotificationsText' (missing 'n' in Notifications) - the property will never be found causing silent undefined access",
+      "similarity": 0.9729230769230768,
+      "severity": "Low"
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/2",
@@ -2730,8 +2728,8 @@
       "pr_url": "https://github.com/calcom/cal.com/pull/22532",
       "repo": "cal.com",
       "golden": "The updateManyByCredentialId call uses an empty data object, which prevents Prisma's @updatedAt decorator from updating the updatedAt timestamp. This results in inaccurate cache status tracking, as the timestamp isn't updated when the cache is refreshed. To fix this, explicitly set the updatedAt field.",
-      "candidate": "Race condition potential - if cache statuses are updated between the getCacheStatusByCredentialIds call and the map creation, the cacheStatusMap may contain stale data",
-      "similarity": 0.26875213675213677,
+      "candidate": "updateManyByCredentialId called with empty data object {} - Prisma @updatedAt decorator only fires when the record has actual field changes, so the updatedAt timestamp will not be updated on cache invalidation",
+      "similarity": 0.5166219488878975,
       "severity": "Medium"
     },
     {
@@ -2785,6 +2783,14 @@
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/11059",
       "repo": "cal.com",
+      "golden": "When APP_CREDENTIAL_SHARING_ENABLED and CALCOM_CREDENTIAL_SYNC_ENDPOINT are set, the refreshFunction helper returns the fetch Response, but several callers (for example GoogleCalendarService.refreshAccessToken expecting res.data, and HubspotCalendarService.refreshAccessToken expecting a HubspotToken) assume it returns the integration-specific token object. That mismatch will cause runtime errors in the sync-enabled path unless the return type or those call sites are adjusted.",
+      "candidate": "refreshFunction helper returns a fetch Response object when the sync endpoint path is used, but callers expect a credential object with access_token - res.data does not exist on Response, returning undefined and breaking token refresh silently",
+      "similarity": 0.4261737066919791,
+      "severity": "High"
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
+      "repo": "cal.com",
       "golden": "Invalid Zod schema syntax. Computed property keys like [z.string().toString()] are not valid in Zod object schemas and will cause runtime errors. ",
       "candidate": "Invalid Zod schema syntax - `z.string().toString()` creates a string literal 'string' as a key, not a dynamic string key pattern",
       "similarity": 0.41337551020408164,
@@ -2796,14 +2802,6 @@
       "golden": "The parseRefreshTokenResponse function incorrectly sets refresh_token to the hardcoded string 'refresh_token' when it's missing from the OAuth refresh token response. This invalidates the token, breaking subsequent token refreshes and causing authentication failures.",
       "candidate": "Hardcoded fallback refresh token 'refresh_token' when actual refresh token is missing, potentially allowing unauthorized access with a predictable token",
       "similarity": 0.33707749712973595,
-      "severity": "High"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "golden": "When APP_CREDENTIAL_SHARING_ENABLED and CALCOM_CREDENTIAL_SYNC_ENDPOINT are set, the refreshFunction helper returns the fetch Response, but several callers (for example GoogleCalendarService.refreshAccessToken expecting res.data, and HubspotCalendarService.refreshAccessToken expecting a HubspotToken) assume it returns the integration-specific token object. That mismatch will cause runtime errors in the sync-enabled path unless the return type or those call sites are adjusted.",
-      "candidate": "Raw Response object returned instead of parsed data - inconsistent return type between branches",
-      "similarity": 0.2587980645798361,
       "severity": "High"
     },
     {
@@ -2833,6 +2831,22 @@
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/14740",
       "repo": "cal.com",
+      "golden": "uniqueGuests filters out existing attendees and blacklisted emails but does not deduplicate duplicates within the input; createMany can insert duplicate attendee rows if the client submits repeated emails.",
+      "candidate": "uniqueGuests filters out existing attendees and blacklisted emails but does not deduplicate within the input itself - createMany can insert duplicate guest records if the same email appears multiple times",
+      "similarity": 0.7231820499745029,
+      "severity": "Medium"
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
+      "repo": "cal.com",
+      "golden": "This calls the email sender with the original guests, so existing attendees included in the input will be treated as new when sending notifications, leading to incorrect emails.",
+      "candidate": "Email sender called with original guests list - existing attendees included in the input are treated as new invitees, sending duplicate invitations to guests who are already attending",
+      "similarity": 0.6938709677419355,
+      "severity": "Medium"
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
+      "repo": "cal.com",
       "golden": "The logic for checking team admin/owner permissions is incorrect. This condition uses AND (&&) which requires both isTeamAdmin AND isTeamOwner to be true, but it should use OR (||) since a user needs to be either an admin OR an owner to have permission.",
       "candidate": "Logic error using AND (&&) instead of OR (||) to check if user is team admin OR owner - currently requires user to be BOTH admin AND owner, which is incorrect",
       "similarity": 0.4738564964447317,
@@ -2849,6 +2863,22 @@
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/10600",
       "repo": "cal.com",
+      "golden": "Backup code validation is case-sensitive due to the use of indexOf(). This causes validation to fail if a user enters uppercase hex characters, as backup codes should be case-insensitive for a better user experience.",
+      "candidate": "Backup code validation is case-sensitive due to indexOf() - users entering uppercase hex characters will fail validation even though backup codes should be case-insensitive",
+      "similarity": 0.7726223776223776,
+      "severity": "Medium"
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
+      "repo": "cal.com",
+      "golden": "Error message mentions 'backup code login' but this is a disable endpoint, not login",
+      "candidate": "Error message says 'backup code login' but this endpoint disables 2FA - the message incorrectly describes the action, confusing users about what operation is being performed",
+      "similarity": 0.6414204545454544,
+      "severity": "Low"
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
+      "repo": "cal.com",
       "golden": "Because backupCodes are decrypted and mutated in memory before being written back, two concurrent login requests using the same backupCode could both pass this check and update, so a single backup code may effectively be accepted more than once if used concurrently, weakening the intended one-time-use semantics.",
       "candidate": "Race condition in backup code validation: backup codes are decrypted and mutated in memory before being written back - two concurrent login requests can both read the same unused code and both succeed, allowing code reuse",
       "similarity": 0.6372125435540069,
@@ -2857,25 +2887,9 @@
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/10600",
       "repo": "cal.com",
-      "golden": "Backup code validation is case-sensitive due to the use of indexOf(). This causes validation to fail if a user enters uppercase hex characters, as backup codes should be case-insensitive for a better user experience.",
-      "candidate": "No input sanitization or validation pattern for backup code format - accepts any characters instead of expected alphanumeric format",
-      "similarity": 0.34808452950558216,
-      "severity": "Medium"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
       "golden": "The exported function TwoFactor handles backup codes and is in BackupCode.tsx. Inconsistent naming.",
       "candidate": "All backup codes are deleted regardless of which authentication path was taken, including when backup codes were not used",
       "similarity": 0.2356323529411765,
-      "severity": "Low"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "golden": "Error message mentions 'backup code login' but this is a disable endpoint, not login",
-      "candidate": "Logic allows backup code authentication even when TOTP code might be required first",
-      "similarity": 0.23174999999999998,
       "severity": "Low"
     },
     {
@@ -2912,21 +2926,20 @@
     }
   ],
   "per_bug_type_fn": {
-    "incorrect_value": 20,
-    "missing_validation": 4,
-    "other": 8,
-    "api_misuse": 7,
+    "missing_validation": 3,
+    "other": 5,
     "null_reference": 1,
-    "dead_code": 3,
-    "logic_error": 3,
-    "race_condition": 2,
-    "type_error": 1,
-    "security": 1
+    "race_condition": 1,
+    "api_misuse": 4,
+    "incorrect_value": 10,
+    "logic_error": 2,
+    "security": 1,
+    "dead_code": 2
   },
   "per_severity_fn": {
-    "Medium": 14,
-    "Low": 31,
-    "High": 4,
+    "Low": 23,
+    "Medium": 3,
+    "High": 2,
     "Critical": 1
   },
   "all_pr_results": [
@@ -2934,28 +2947,53 @@
       "pr_url": "https://github.com/keycloak/keycloak/pull/37429",
       "repo": "keycloak",
       "language": "Java",
-      "tp": 0,
+      "tp": 3,
       "fp": 1,
-      "fn": 4,
+      "fn": 1,
       "n_golden": 4,
-      "n_candidates": 1,
-      "matches": []
+      "n_candidates": 4,
+      "matches": [
+        {
+          "golden": "The method name 'santizeAnchors' should be 'sanitizeAnchors' (missing 'i').",
+          "candidate": "Method named 'santizeAnchors' should be 'sanitizeAnchors' - missing 'i' in the method name is a typo that may prevent callers from finding the method and cause runtime errors",
+          "similarity": 0.8266666666666667,
+          "severity": "Low"
+        },
+        {
+          "golden": "The totpStep1 value uses Traditional Chinese terms in the Simplified Chinese file (zh_CN), which is likely incorrect for this locale. Please verify the locale\u2011appropriate translation.",
+          "candidate": "Simplified Chinese locale file zh_CN uses Traditional Chinese terms in totpStep1 - incorrect character set for the locale, showing Traditional Chinese to Simplified Chinese users",
+          "similarity": 0.6344247901456919,
+          "severity": "Medium"
+        },
+        {
+          "golden": "The translation is in Italian instead of Lithuanian. This should be translated to Lithuanian to match the file's locale (messages_lt.properties).",
+          "candidate": "Translation file messages_lt.properties contains Italian text instead of Lithuanian - the locale file has wrong language content, causing Lithuanian users to see Italian interface text",
+          "similarity": 0.46692001365343044,
+          "severity": "Medium"
+        }
+      ]
     },
     {
       "pr_url": "https://github.com/keycloak/keycloak/pull/37634",
       "repo": "keycloak",
       "language": "Java",
-      "tp": 2,
+      "tp": 3,
       "fp": 2,
-      "fn": 2,
+      "fn": 1,
       "n_golden": 4,
-      "n_candidates": 4,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "Wrong parameter in null check (grantType vs. rawTokenId)",
           "candidate": "Wrong parameter in null check: method checks grantType for null instead of rawTokenId, causing the null guard to be ineffective and allowing NullPointerException when rawTokenId is null",
           "similarity": 0.7536892601162593,
           "severity": "Critical"
+        },
+        {
+          "golden": " Catching generic RuntimeException is too broad. The implementation throws IllegalArgumentException specifically - catch that instead for more precise testing.",
+          "candidate": "Catching generic RuntimeException is too broad - the implementation throws IllegalArgumentException specifically; catching only RuntimeException hides the specific exception type and makes error handling less precise",
+          "similarity": 0.6643571428571429,
+          "severity": "Low"
         },
         {
           "golden": "In isAccessTokenId, the substring for the grant shortcut and the equality check look inverted: the grant shortcut occupies indices 4\u20135 (substring(4,6)), and a match should return true (combined with UUID check), not false.",
@@ -3005,16 +3043,22 @@
       "pr_url": "https://github.com/keycloak/keycloak/pull/36880",
       "repo": "keycloak",
       "language": "Java",
-      "tp": 2,
-      "fp": 3,
-      "fn": 1,
+      "tp": 3,
+      "fp": 4,
+      "fn": 0,
       "n_golden": 3,
-      "n_candidates": 5,
+      "n_candidates": 7,
       "matches": [
         {
+          "golden": "In getClientsWithPermission(String scope), iterating resourceStore.findByType(server, AdminPermissionsSchema.CLIENTS_RESOURCE_TYPE) and returning resource.getName() will only ever consider the type-level 'Clients' resource (per-client resources have no type) and return its name, while AvailableRoleMappingResource#getRoleIdsWithPermissions expects actual client IDs to pass to realm.getClientById, which can lead to incorrect behavior or a null client and subsequent failures.",
+          "candidate": "In getClientsWithPermission, iterating CLIENTS_RESOURCE_TYPE resources and returning resource IDs returns the wrong set - should return client IDs associated with those resources, not the resource IDs themselves",
+          "similarity": 0.4347177835051546,
+          "severity": "High"
+        },
+        {
           "golden": "Inconsistent feature flag bug causing orphaned permissions. The AdminPermissions event listener, responsible for cleaning up permissions upon role, client, or group removal, is incorrectly guarded by the ADMIN_FINE_GRAINED_AUTHZ (V1) feature flag. This is inconsistent with other methods in the class that use ADMIN_FINE_GRAINED_AUTHZ_V2. Consequently, if ADMIN_FINE_GRAINED_AUTHZ_V2 is enabled but V1 is not, the permission cleanup logic will not execute, leading to orphaned permission data. Cleanup should occur regardless of which fine-grained authorization version is enabled.",
-          "candidate": "Feature flag inconsistency causes orphaned permissions: AdminPermissions event listener cleans up permissions when feature is disabled, but another code path creates permissions without checking the flag, leaving orphaned permissions",
-          "similarity": 0.3623081201334817,
+          "candidate": "Feature flag inconsistency causes orphaned permissions: AdminPermissions event listener cleans up permissions when feature is disabled but another code path creates permissions without checking the flag",
+          "similarity": 0.36667657683331667,
           "severity": "High"
         },
         {
@@ -3030,10 +3074,10 @@
       "repo": "keycloak",
       "language": "Java",
       "tp": 2,
-      "fp": 5,
+      "fp": 6,
       "fn": 0,
       "n_golden": 2,
-      "n_candidates": 7,
+      "n_candidates": 8,
       "matches": [
         {
           "golden": "Incorrect permission check in canManage() method",
@@ -3053,17 +3097,23 @@
       "pr_url": "https://github.com/keycloak/keycloak/pull/33832",
       "repo": "keycloak",
       "language": "Java",
-      "tp": 1,
+      "tp": 2,
       "fp": 3,
-      "fn": 1,
+      "fn": 0,
       "n_golden": 2,
-      "n_candidates": 4,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "Returns wrong provider (default keystore instead of BouncyCastle)",
           "candidate": "Method returns wrong provider - returns default keystore provider instead of BouncyCastle provider, causing callers to use incorrect cryptographic implementation",
           "similarity": 0.7762957042957044,
           "severity": "High"
+        },
+        {
+          "golden": "Dead code exists where ASN1Encoder instances are created and written to, but their results are immediately discarded. The actual encoding is performed by new ASN1Encoder instances created in the subsequent return statement, rendering the earlier operations useless.",
+          "candidate": "Dead code: ASN1Encoder instances are created and written to but their results are immediately discarded - the actual encoding is performed elsewhere, making these encoder operations unnecessary and confusing",
+          "similarity": 0.6722321428571428,
+          "severity": "Low"
         }
       ]
     },
@@ -3095,16 +3145,22 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/keycloak-greptile/pull/1",
       "repo": "keycloak-greptile",
       "language": "Java",
-      "tp": 1,
+      "tp": 2,
       "fp": 4,
-      "fn": 1,
+      "fn": 0,
       "n_golden": 2,
-      "n_candidates": 5,
+      "n_candidates": 6,
       "matches": [
         {
           "golden": "ConditionalPasskeysEnabled() called without UserModel parameter",
           "candidate": "ConditionalPasskeysEnabled() is called without the required UserModel parameter - the method signature requires a user argument but is invoked without one, causing a compilation error or NullPointerException",
           "similarity": 0.7226630186958503,
+          "severity": "Medium"
+        },
+        {
+          "golden": "With isConditionalPasskeysEnabled(UserModel user) requiring user != null, authenticate(...) will not call webauthnAuth.fillContextForm(context) on the initial login page where context.getUser() is still null, so conditional passkey UI will not be set up for first-time passkey login. Consider whether this should also be enabled when no user has been selected yet so ID-less passkey authentication on the initial login form continues to work.",
+          "candidate": "With isConditionalPasskeysEnabled(UserModel user) requiring user != null, authenticate() will not call webauthnAuth.fillContextForm(context) on the correct branch when user is null, causing passkey authentication to silently fail",
+          "similarity": 0.6007198777566074,
           "severity": "Medium"
         }
       ]
@@ -3113,17 +3169,23 @@
       "pr_url": "https://github.com/getsentry/sentry/pull/93824",
       "repo": "sentry",
       "language": "Python",
-      "tp": 3,
+      "tp": 4,
       "fp": 0,
-      "fn": 2,
+      "fn": 1,
       "n_golden": 5,
-      "n_candidates": 3,
+      "n_candidates": 4,
       "matches": [
         {
           "golden": "Because flusher processes are created via multiprocessing.get_context('spawn').Process, they are instances of multiprocessing.context.SpawnProcess, which on POSIX is not a subclass of multiprocessing.Process, so this isinstance check will always be false and hung processes won't be killed here.",
           "candidate": "flusher processes created via multiprocessing.get_context(spawn).Process are instances of SpawnProcess which on POSIX is not a subclass of multiprocessing.Process - isinstance checks will fail and process management may break",
           "similarity": 0.7230902255639098,
           "severity": "High"
+        },
+        {
+          "golden": "Inconsistent metric tagging with 'shard' and 'shards'",
+          "candidate": "Inconsistent metric tagging: some calls use tag 'shard' while others use 'shards' - metrics will be split across two different tag values, making aggregation and dashboards incorrect",
+          "similarity": 0.6602713178294574,
+          "severity": "Medium"
         },
         {
           "golden": "Breaking out of the loop when the deadline has elapsed can skip terminating remaining flusher processes, potentially leaving them running after shutdown; consider ensuring termination is attempted even if the deadline is exceeded.",
@@ -3250,17 +3312,29 @@
       "pr_url": "https://github.com/getsentry/sentry/pull/77754",
       "repo": "sentry",
       "language": "Python",
-      "tp": 2,
+      "tp": 4,
       "fp": 0,
-      "fn": 2,
+      "fn": 0,
       "n_golden": 4,
-      "n_candidates": 2,
+      "n_candidates": 4,
       "matches": [
         {
           "golden": "to_dict() returns a datetime for queued; if this dict is passed in task kwargs (e.g., via apply_async), JSON serialization may fail depending on the serializer, which can cause enqueue errors.",
           "candidate": "to_dict() returns a datetime object for the queued field - if this dict is passed as task kwargs to apply_async(), JSON serialization will fail since datetime is not JSON-serializable by default",
           "similarity": 0.726465802537231,
           "severity": "Medium"
+        },
+        {
+          "golden": "The method name has a typo: test_from_dict_inalid_data should be test_from_dict_invalid_data.",
+          "candidate": "Method name typo: test_from_dict_inalid_data is missing a letter and should be test_from_dict_invalid_data - the test may not be discovered by test runners that filter by name pattern",
+          "similarity": 0.6239238095238094,
+          "severity": "Low"
+        },
+        {
+          "golden": "Method name says 'empty_array' but tests empty dict - consider renaming to 'test_from_dict_empty_dict' for clarity.",
+          "candidate": "Method named 'empty_array' but tests an empty dict - test name does not match what is being tested, making the test suite misleading and harder to maintain",
+          "similarity": 0.5934124847001223,
+          "severity": "Low"
         },
         {
           "golden": "Shared mutable default in dataclass timestamp",
@@ -3292,11 +3366,11 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/2",
       "repo": "sentry-greptile",
       "language": "Python",
-      "tp": 2,
+      "tp": 3,
       "fp": 2,
-      "fn": 1,
+      "fn": 0,
       "n_golden": 3,
-      "n_candidates": 4,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "OptimizedCursorPaginator negative-offset branch slices QuerySet with a negative start index",
@@ -3309,6 +3383,12 @@
           "candidate": "BasePaginator negative-offset branch slices QuerySet with a negative start index - Django raises AssertionError when negative slice indices are used on QuerySets",
           "similarity": 0.930622119815668,
           "severity": "High"
+        },
+        {
+          "golden": "OptimizedCursorPaginator.get_item_key uses floor/ceil on a datetime key (order_by='-datetime'), causing TypeError.",
+          "candidate": "OptimizedCursorPaginator.get_item_key applies floor and ceil to a datetime key when order_by is -datetime - math.floor and math.ceil raise TypeError when given a datetime object instead of a number",
+          "similarity": 0.6940199146514935,
+          "severity": "High"
         }
       ]
     },
@@ -3316,11 +3396,11 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/3",
       "repo": "sentry-greptile",
       "language": "Python",
-      "tp": 2,
+      "tp": 3,
       "fp": 1,
-      "fn": 1,
+      "fn": 0,
       "n_golden": 3,
-      "n_candidates": 3,
+      "n_candidates": 4,
       "matches": [
         {
           "golden": "Using Python\u2019s built-in hash() to build cache keys is non-deterministic across processes (hash randomization), so keys won\u2019t match across workers and invalidate_upsampling_cache may fail to delete them. Use a deterministic serialization of project_ids for the cache key.",
@@ -3333,6 +3413,12 @@
           "candidate": "sample_rate = 0.0 is falsy in Python - the condition if client_sample_rate evaluates to False for 0.0, silently skipping the zero sample rate case",
           "similarity": 0.49140229885057474,
           "severity": "Low"
+        },
+        {
+          "golden": "The upsampling eligibility check passes the outer dataset instead of the actual dataset used by scoped_dataset. In paths where the query ultimately runs against discover (e.g., dashboard split) while the original dataset is metrics, upsampling may be skipped even when all projects are allowlisted.",
+          "candidate": "Upsampling eligibility check passes the outer dataset instead of the scoped_dataset actually used by the query - when both datasets differ, the eligibility check is performed on wrong data and may incorrectly enable or disable upsampling",
+          "similarity": 0.4805604395604396,
+          "severity": "Medium"
         }
       ]
     },
@@ -3471,11 +3557,11 @@
       "pr_url": "https://github.com/grafana/grafana/pull/90045",
       "repo": "grafana",
       "language": "Go",
-      "tp": 2,
+      "tp": 3,
       "fp": 3,
-      "fn": 1,
+      "fn": 0,
       "n_golden": 3,
-      "n_candidates": 5,
+      "n_candidates": 6,
       "matches": [
         {
           "golden": "The context is being created with d.Log instead of the log variable that was initialized with additional context values (name, kind, method). This means those values won't be propagated to the logging context.",
@@ -3488,6 +3574,12 @@
           "candidate": "Bug: recordLegacyDuration is called when storage operation fails but the correct function to call for storage failures is recordStorageDuration - wrong metric is being recorded on error path",
           "similarity": 0.5089574175824175,
           "severity": "High"
+        },
+        {
+          "golden": "Inconsistency: using name instead of options.Kind for metrics recording differs from other methods.",
+          "candidate": "Inconsistency: metrics recorded using name instead of options.Kind - other methods in this file use options.Kind for metric dimensions, causing this method to emit metrics with a different label format",
+          "similarity": 0.4254278624601206,
+          "severity": "Medium"
         }
       ]
     },
@@ -3495,12 +3587,18 @@
       "pr_url": "https://github.com/grafana/grafana/pull/106778",
       "repo": "grafana",
       "language": "Go",
-      "tp": 1,
+      "tp": 2,
       "fp": 2,
-      "fn": 1,
+      "fn": 0,
       "n_golden": 2,
-      "n_candidates": 3,
+      "n_candidates": 4,
       "matches": [
+        {
+          "golden": "The rendered GrafanaRuleListItem is missing the required key prop for React list items. This can cause rendering issues when the list order changes.",
+          "candidate": "GrafanaRuleListItem rendered in a list is missing the required React key prop - missing key causes React reconciliation issues when list order changes, leading to incorrect DOM updates",
+          "similarity": 0.6302392556490918,
+          "severity": "Medium"
+        },
         {
           "golden": "RuleActionsButtons is invoked with only promRule, but SilenceGrafanaRuleDrawer inside RuleActionsButtons still depends on a Grafana Ruler rule being present, so for Grafana rules coming from list views the 'Silence notifications' menu entry (now driven by Grafana Prom abilities) will toggle showSilenceDrawer without ever rendering the drawer. This means clicking 'Silence notifications' for these rules has no visible effect, even when abilities indicate silencing is allowed.",
           "candidate": "RuleActionsButtons is invoked with only promRule argument but SilenceGrafanaRuleDrawer inside requires a Grafana Ruler rule - passing only a Prometheus rule will cause missing prop error or incorrect drawer behavior",
@@ -3525,10 +3623,10 @@
       "repo": "grafana",
       "language": "Go",
       "tp": 3,
-      "fp": 3,
+      "fp": 4,
       "fn": 2,
       "n_golden": 5,
-      "n_candidates": 6,
+      "n_candidates": 7,
       "matches": [
         {
           "golden": "Race condition: Multiple concurrent requests could pass the device count check simultaneously and create devices beyond the limit. Consider using a database transaction or lock.",
@@ -3537,15 +3635,15 @@
           "severity": "High"
         },
         {
-          "golden": "This call won\u2019t compile: dbSession.Exec(args...) is given a []interface{} where the first element is the query, but Exec\u2019s signature requires a first parameter of type string (not an interface{} splat).",
-          "candidate": "Type error: dbSession.Exec(args...) spreads a []interface{} where the first element is the query string, but Exec expects the query as a separate first argument - this will panic at runtime",
-          "similarity": 0.5449090909090909,
+          "golden": "Anonymous authentication now fails entirely if anonDeviceService.TagDevice returns ErrDeviceLimitReached. Previously, device tagging was asynchronous and non-blocking. This change prevents anonymous users from authenticating when the device limit is reached.",
+          "candidate": "Anonymous authentication now fails entirely when ErrDeviceLimitReached - previously device tagging was asynchronous and non-blocking, now it blocks authentication for users over the device limit",
+          "similarity": 0.683028846153846,
           "severity": "Medium"
         },
         {
-          "golden": "Anonymous authentication now fails entirely if anonDeviceService.TagDevice returns ErrDeviceLimitReached. Previously, device tagging was asynchronous and non-blocking. This change prevents anonymous users from authenticating when the device limit is reached.",
-          "candidate": "Anonymous authentication always succeeds and returns a valid identity without proper authorization checks, potentially allowing unauthorized access",
-          "similarity": 0.23440450928381962,
+          "golden": "This call won\u2019t compile: dbSession.Exec(args...) is given a []interface{} where the first element is the query, but Exec\u2019s signature requires a first parameter of type string (not an interface{} splat).",
+          "candidate": "Type error: dbSession.Exec(args...) spreads a []interface{} where the first element is the query string, but Exec expects the query as a separate first argument - this will panic at runtime",
+          "similarity": 0.5449090909090909,
           "severity": "Medium"
         }
       ]
@@ -3554,12 +3652,19 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/9",
       "repo": "discourse-graphite",
       "language": "Ruby",
-      "tp": 0,
+      "tp": 1,
       "fp": 3,
-      "fn": 2,
+      "fn": 1,
       "n_golden": 2,
-      "n_candidates": 3,
-      "matches": []
+      "n_candidates": 4,
+      "matches": [
+        {
+          "golden": "Thread-safety issue with lazy @loaded_locales",
+          "candidate": "Thread-safety issue with lazy @loaded_locales - multiple threads can simultaneously check and set the instance variable without synchronization, causing duplicate locale loading or data corruption",
+          "similarity": 0.7555174686882002,
+          "severity": "Low"
+        }
+      ]
     },
     {
       "pr_url": "https://github.com/grafana/grafana/pull/76186",
@@ -3583,12 +3688,18 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/10",
       "repo": "discourse-graphite",
       "language": "Ruby",
-      "tp": 3,
+      "tp": 4,
       "fp": 2,
-      "fn": 1,
+      "fn": 0,
       "n_golden": 4,
-      "n_candidates": 5,
+      "n_candidates": 6,
       "matches": [
+        {
+          "golden": "record_for_host compares lower(host) = ? but does not normalize the parameter\u2019s case, so mixed\u2011case referer hosts may fail to match even though comparison intends to be case\u2011insensitive.",
+          "candidate": "record_for_host compares lower(host) = ? but does not normalize the parameter case - mixed-case referer hosts like Example.COM will fail to match even though they are equivalent",
+          "similarity": 0.8254545454545454,
+          "severity": "Medium"
+        },
         {
           "golden": "The update and destroy methods in Admin::EmbeddableHostsController do not validate the existence of the EmbeddableHost record retrieved by ID. If EmbeddableHost.where(id: params[:id]).first returns nil (i.e., the host does not exist), attempting to call methods on the nil object (e.g., save_host or destroy) will result in a NoMethodError.",
           "candidate": "EmbeddableHostsController update and destroy methods do not validate record existence - EmbeddableHost.where(id: params[:id]).first returns nil when record not found, calling update or destroy on nil raises NoMethodError",
@@ -3749,12 +3860,24 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/1",
       "repo": "discourse-graphite",
       "language": "Ruby",
-      "tp": 1,
+      "tp": 3,
       "fp": 12,
-      "fn": 2,
+      "fn": 0,
       "n_golden": 3,
-      "n_candidates": 13,
+      "n_candidates": 15,
       "matches": [
+        {
+          "golden": "Hardcoding maxSizeKB = 10 * 1024 ignores Discourse.SiteSettings['max_' + type + '_size_kb'], so the client-side limit can diverge from server-side and per-type settings (also applies to the 413 handler below).",
+          "candidate": "Hardcoding maxSizeKB = 10 * 1024 ignores Discourse.SiteSettings max_type_size_kb - client-side limit can diverge from server-side configuration, allowing uploads that exceed the server limit",
+          "similarity": 0.6894948979591836,
+          "severity": "Low"
+        },
+        {
+          "golden": "Passing 80% as the dimensions can fail for animated GIFs when allow_animated_thumbnails is true, since the animated path uses gifsicle --resize-fit which expects WxH geometry, not a percentage; downsizing would then silently fail.",
+          "candidate": "Passing 80% as dimensions to gifsicle fails for animated GIFs - the animated path requires absolute pixel dimensions, not percentages, causing animated thumbnail generation to fail",
+          "similarity": 0.5081609907120743,
+          "severity": "Medium"
+        },
         {
           "golden": "The downsize method is defined twice. The second definition, which expects a single dimensions string parameter, overrides the first, which expected separate max_width and max_height parameters. This makes the original method unreachable and breaks existing code that calls it with separate width and height arguments.",
           "candidate": "The downsize method is defined twice - the second definition overrides the first, causing dead code and potentially breaking behavior that depended on the original two-argument signature",
@@ -3767,12 +3890,18 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/2",
       "repo": "discourse-graphite",
       "language": "Ruby",
-      "tp": 1,
+      "tp": 2,
       "fp": 8,
-      "fn": 1,
+      "fn": 0,
       "n_golden": 2,
-      "n_candidates": 9,
+      "n_candidates": 10,
       "matches": [
+        {
+          "golden": "Typo in property name: 'stopNotificiationsText' should be 'stopNotificationsText' (missing 'n' in 'Notifications')",
+          "candidate": "Typo in property name: 'stopNotificiationsText' should be 'stopNotificationsText' (missing 'n' in Notifications) - the property will never be found causing silent undefined access",
+          "similarity": 0.9729230769230768,
+          "severity": "Low"
+        },
         {
           "golden": "logic: Potential nil pointer exception - if no TopicUser record exists, tu will be nil and calling methods on it will crash",
           "candidate": "Potential null pointer exception when current_user is nil - TopicUser.find_by will return nil but code assumes tu exists",
@@ -3786,10 +3915,10 @@
       "repo": "cal.com",
       "language": "TypeScript",
       "tp": 2,
-      "fp": 15,
+      "fp": 16,
       "fn": 0,
       "n_golden": 2,
-      "n_candidates": 17,
+      "n_candidates": 18,
       "matches": [
         {
           "golden": "logic: macOS-specific sed syntax with empty string after -i flag will fail on Linux systems",
@@ -3799,8 +3928,8 @@
         },
         {
           "golden": "The updateManyByCredentialId call uses an empty data object, which prevents Prisma's @updatedAt decorator from updating the updatedAt timestamp. This results in inaccurate cache status tracking, as the timestamp isn't updated when the cache is refreshed. To fix this, explicitly set the updatedAt field.",
-          "candidate": "Race condition potential - if cache statuses are updated between the getCacheStatusByCredentialIds call and the map creation, the cacheStatusMap may contain stale data",
-          "similarity": 0.26875213675213677,
+          "candidate": "updateManyByCredentialId called with empty data object {} - Prisma @updatedAt decorator only fires when the record has actual field changes, so the updatedAt timestamp will not be updated on cache invalidation",
+          "similarity": 0.5166219488878975,
           "severity": "Medium"
         }
       ]
@@ -3870,10 +3999,10 @@
       "repo": "cal.com",
       "language": "TypeScript",
       "tp": 5,
-      "fp": 57,
+      "fp": 58,
       "fn": 0,
       "n_golden": 5,
-      "n_candidates": 62,
+      "n_candidates": 63,
       "matches": [
         {
           "golden": "parseRefreshTokenResponse returns a Zod safeParse result ({ success, data, error }), not the credential key object. Persisting that as key stores the wrapper instead of the token payload; we should store the parsed data or use schema parse.",
@@ -3888,6 +4017,12 @@
           "severity": "High"
         },
         {
+          "golden": "When APP_CREDENTIAL_SHARING_ENABLED and CALCOM_CREDENTIAL_SYNC_ENDPOINT are set, the refreshFunction helper returns the fetch Response, but several callers (for example GoogleCalendarService.refreshAccessToken expecting res.data, and HubspotCalendarService.refreshAccessToken expecting a HubspotToken) assume it returns the integration-specific token object. That mismatch will cause runtime errors in the sync-enabled path unless the return type or those call sites are adjusted.",
+          "candidate": "refreshFunction helper returns a fetch Response object when the sync endpoint path is used, but callers expect a credential object with access_token - res.data does not exist on Response, returning undefined and breaking token refresh silently",
+          "similarity": 0.4261737066919791,
+          "severity": "High"
+        },
+        {
           "golden": "Invalid Zod schema syntax. Computed property keys like [z.string().toString()] are not valid in Zod object schemas and will cause runtime errors. ",
           "candidate": "Invalid Zod schema syntax - `z.string().toString()` creates a string literal 'string' as a key, not a dynamic string key pattern",
           "similarity": 0.41337551020408164,
@@ -3897,12 +4032,6 @@
           "golden": "The parseRefreshTokenResponse function incorrectly sets refresh_token to the hardcoded string 'refresh_token' when it's missing from the OAuth refresh token response. This invalidates the token, breaking subsequent token refreshes and causing authentication failures.",
           "candidate": "Hardcoded fallback refresh token 'refresh_token' when actual refresh token is missing, potentially allowing unauthorized access with a predictable token",
           "similarity": 0.33707749712973595,
-          "severity": "High"
-        },
-        {
-          "golden": "When APP_CREDENTIAL_SHARING_ENABLED and CALCOM_CREDENTIAL_SYNC_ENDPOINT are set, the refreshFunction helper returns the fetch Response, but several callers (for example GoogleCalendarService.refreshAccessToken expecting res.data, and HubspotCalendarService.refreshAccessToken expecting a HubspotToken) assume it returns the integration-specific token object. That mismatch will cause runtime errors in the sync-enabled path unless the return type or those call sites are adjusted.",
-          "candidate": "Raw Response object returned instead of parsed data - inconsistent return type between branches",
-          "similarity": 0.2587980645798361,
           "severity": "High"
         }
       ]
@@ -3935,17 +4064,29 @@
       "pr_url": "https://github.com/calcom/cal.com/pull/14740",
       "repo": "cal.com",
       "language": "TypeScript",
-      "tp": 3,
+      "tp": 5,
       "fp": 17,
-      "fn": 2,
+      "fn": 0,
       "n_golden": 5,
-      "n_candidates": 20,
+      "n_candidates": 22,
       "matches": [
         {
           "golden": "Case sensitivity bypass in email blacklist",
           "candidate": "Case sensitivity bypass in email blacklist: comparison does not normalize email case, allowing BLOCKED@example.com to bypass a blacklist entry for blocked@example.com",
           "similarity": 0.8783076923076922,
           "severity": "High"
+        },
+        {
+          "golden": "uniqueGuests filters out existing attendees and blacklisted emails but does not deduplicate duplicates within the input; createMany can insert duplicate attendee rows if the client submits repeated emails.",
+          "candidate": "uniqueGuests filters out existing attendees and blacklisted emails but does not deduplicate within the input itself - createMany can insert duplicate guest records if the same email appears multiple times",
+          "similarity": 0.7231820499745029,
+          "severity": "Medium"
+        },
+        {
+          "golden": "This calls the email sender with the original guests, so existing attendees included in the input will be treated as new when sending notifications, leading to incorrect emails.",
+          "candidate": "Email sender called with original guests list - existing attendees included in the input are treated as new invitees, sending duplicate invitations to guests who are already attending",
+          "similarity": 0.6938709677419355,
+          "severity": "Medium"
         },
         {
           "golden": "The logic for checking team admin/owner permissions is incorrect. This condition uses AND (&&) which requires both isTeamAdmin AND isTeamOwner to be true, but it should use OR (||) since a user needs to be either an admin OR an owner to have permission.",
@@ -3966,11 +4107,23 @@
       "repo": "cal.com",
       "language": "TypeScript",
       "tp": 4,
-      "fp": 44,
+      "fp": 46,
       "fn": 0,
       "n_golden": 4,
-      "n_candidates": 48,
+      "n_candidates": 50,
       "matches": [
+        {
+          "golden": "Backup code validation is case-sensitive due to the use of indexOf(). This causes validation to fail if a user enters uppercase hex characters, as backup codes should be case-insensitive for a better user experience.",
+          "candidate": "Backup code validation is case-sensitive due to indexOf() - users entering uppercase hex characters will fail validation even though backup codes should be case-insensitive",
+          "similarity": 0.7726223776223776,
+          "severity": "Medium"
+        },
+        {
+          "golden": "Error message mentions 'backup code login' but this is a disable endpoint, not login",
+          "candidate": "Error message says 'backup code login' but this endpoint disables 2FA - the message incorrectly describes the action, confusing users about what operation is being performed",
+          "similarity": 0.6414204545454544,
+          "severity": "Low"
+        },
         {
           "golden": "Because backupCodes are decrypted and mutated in memory before being written back, two concurrent login requests using the same backupCode could both pass this check and update, so a single backup code may effectively be accepted more than once if used concurrently, weakening the intended one-time-use semantics.",
           "candidate": "Race condition in backup code validation: backup codes are decrypted and mutated in memory before being written back - two concurrent login requests can both read the same unused code and both succeed, allowing code reuse",
@@ -3978,21 +4131,9 @@
           "severity": "High"
         },
         {
-          "golden": "Backup code validation is case-sensitive due to the use of indexOf(). This causes validation to fail if a user enters uppercase hex characters, as backup codes should be case-insensitive for a better user experience.",
-          "candidate": "No input sanitization or validation pattern for backup code format - accepts any characters instead of expected alphanumeric format",
-          "similarity": 0.34808452950558216,
-          "severity": "Medium"
-        },
-        {
           "golden": "The exported function TwoFactor handles backup codes and is in BackupCode.tsx. Inconsistent naming.",
           "candidate": "All backup codes are deleted regardless of which authentication path was taken, including when backup codes were not used",
           "similarity": 0.2356323529411765,
-          "severity": "Low"
-        },
-        {
-          "golden": "Error message mentions 'backup code login' but this is a disable endpoint, not login",
-          "candidate": "Logic allows backup code authentication even when TOTP code might be required first",
-          "similarity": 0.23174999999999998,
           "severity": "Low"
         }
       ]
