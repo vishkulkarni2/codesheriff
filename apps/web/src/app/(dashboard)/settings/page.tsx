@@ -163,8 +163,8 @@ export default async function SettingsPage() {
         {org?.plan !== 'FREE' && (
           <p className="mt-3 text-xs text-muted-foreground">
             To manage your subscription, contact{' '}
-            <a href="mailto:support@codesheriff.dev" className="underline hover:text-foreground">
-              support@codesheriff.dev
+            <a href="mailto:hello@thecodesheriff.com" className="underline hover:text-foreground">
+              hello@thecodesheriff.com
             </a>
             .
           </p>

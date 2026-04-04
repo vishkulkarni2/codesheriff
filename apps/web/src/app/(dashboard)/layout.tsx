@@ -5,7 +5,7 @@
  */
 
 import { UserButton } from '@clerk/nextjs';
-import { ShieldCheck } from 'lucide-react';
+import { LogoIcon } from '@/components/shared/logo';
 import { SidebarNav } from '@/components/shared/sidebar-nav';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -15,7 +15,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <aside className="flex w-56 flex-col border-r bg-card">
         {/* Logo */}
         <div className="flex h-14 items-center gap-2 border-b px-4 font-semibold">
-          <ShieldCheck className="h-5 w-5 text-primary" />
+          <LogoIcon size={20} className="text-primary" />
           CodeSheriff
         </div>
 

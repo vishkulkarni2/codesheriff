@@ -1,20 +1,20 @@
 {
-  "total_tp": 108,
-  "total_fp": 349,
-  "total_fn": 29,
-  "precision": 0.2363238512035011,
-  "recall": 0.7883211678832117,
-  "f1": 0.36363636363636365,
+  "total_tp": 103,
+  "total_fp": 92,
+  "total_fn": 34,
+  "precision": 0.5282051282051282,
+  "recall": 0.7518248175182481,
+  "f1": 0.6204819277108433,
   "per_repo": {
     "keycloak": {
       "tp": 19,
-      "fp": 25,
+      "fp": 20,
       "fn": 3,
       "total_golden": 22
     },
     "keycloak-greptile": {
       "tp": 2,
-      "fp": 4,
+      "fp": 3,
       "fn": 0,
       "total_golden": 2
     },
@@ -32,20 +32,20 @@
     },
     "grafana": {
       "tp": 16,
-      "fp": 23,
+      "fp": 20,
       "fn": 6,
       "total_golden": 22
     },
     "discourse-graphite": {
-      "tp": 21,
-      "fp": 83,
-      "fn": 7,
+      "tp": 18,
+      "fp": 19,
+      "fn": 10,
       "total_golden": 28
     },
     "cal.com": {
-      "tp": 26,
-      "fp": 209,
-      "fn": 5,
+      "tp": 24,
+      "fp": 25,
+      "fn": 7,
       "total_golden": 31
     }
   },
@@ -240,6 +240,15 @@
       "reasoning": "The comment identifies that a CSS variable value was changed from 70% to 30% lightness, which is an incorrect value that makes text darker than the intended design specification."
     },
     {
+      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
+      "repo": "discourse-graphite",
+      "language": "Ruby",
+      "comment": "Regex pattern @(#{domains}) only matches domain suffixes, not full domains. evil.example.com would match whitelist entry example.com.",
+      "severity": "Medium",
+      "bug_type": "security",
+      "reasoning": "The comment describes a security vulnerability where the regex pattern for domain whitelisting is too permissive, allowing subdomain bypass attacks (e.g., evil.example.com matching example.com). This is a security issue that could allow unauthorized domains to pass validation."
+    },
+    {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/5",
       "repo": "discourse-graphite",
       "language": "Ruby",
@@ -267,6 +276,24 @@
       "reasoning": "SSRF (Server-Side Request Forgery) is a security vulnerability where an attacker can make the server perform requests to unintended locations. Using open(url) without validation allows attackers to access internal resources or make malicious requests."
     },
     {
+      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
+      "repo": "discourse-graphite",
+      "language": "Ruby",
+      "comment": "The current origin validation using indexOf is insufficient and can be bypassed. An attacker could use a malicious domain like evil-discourseUrl.com to pass this check.",
+      "severity": "Medium",
+      "bug_type": "security",
+      "reasoning": "The comment describes a security vulnerability where origin validation using indexOf can be bypassed by attackers using malicious domains that contain the legitimate domain as a substring, allowing unauthorized access."
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
+      "repo": "discourse-graphite",
+      "language": "Ruby",
+      "comment": "The TopicEmbed.import method is susceptible to a NoMethodError if the contents parameter is nil when attempting to append a string, and an XSS vulnerability due to unescaped url interpolation in the generated HTML.",
+      "severity": "Medium",
+      "bug_type": "security",
+      "reasoning": "The comment identifies two issues: a NoMethodError from nil contents (null reference) and an XSS vulnerability from unescaped URL interpolation. Since XSS is explicitly mentioned as a security vulnerability and security issues typically take precedence in classification, this should be categorized as security."
+    },
+    {
       "pr_url": "https://github.com/calcom/cal.com/pull/8330",
       "repo": "cal.com",
       "language": "TypeScript",
@@ -283,6 +310,24 @@
       "severity": "Low",
       "bug_type": "dead_code",
       "reasoning": "The comment explicitly identifies unreachable code branches - the else if and final else conditions can never be executed because authConditions is always truthy, making those code paths dead code."
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
+      "repo": "cal.com",
+      "language": "TypeScript",
+      "comment": "The parseRefreshTokenResponse function incorrectly sets refresh_token to the hardcoded string 'refresh_token' when it's missing from the OAuth refresh token response. This invalidates the token, breaking subsequent token refreshes and causing authentication failures.",
+      "severity": "High",
+      "bug_type": "incorrect_value",
+      "reasoning": "The comment describes a hardcoded string 'refresh_token' being assigned instead of the actual refresh token value from the response. This is an incorrect value assignment that breaks the authentication flow."
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
+      "repo": "cal.com",
+      "language": "TypeScript",
+      "comment": "The exported function TwoFactor handles backup codes and is in BackupCode.tsx. Inconsistent naming.",
+      "severity": "Low",
+      "bug_type": "other",
+      "reasoning": "This is a naming convention/consistency issue where the exported function name (TwoFactor) doesn't match the file name (BackupCode.tsx) or the actual functionality (backup codes). This is a code organization/naming issue, not a functional bug."
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/10967",
@@ -331,7 +376,12 @@
     {
       "pr_url": "https://github.com/keycloak/keycloak/pull/38446",
       "repo": "keycloak",
-      "candidate": "Type confusion vulnerability in getConfigurableAuthenticatorFactory method - unsafe casting of different factory types without proper validation could lead to ClassCastException or bypass of authentication checks"
+      "candidate": "Unsafe cast from AuthenticatorFactory to ConfigurableAuthenticatorFactory without type checking"
+    },
+    {
+      "pr_url": "https://github.com/keycloak/keycloak/pull/38446",
+      "repo": "keycloak",
+      "candidate": "Unsafe cast from FormActionFactory to ConfigurableAuthenticatorFactory without type checking"
     },
     {
       "pr_url": "https://github.com/keycloak/keycloak/pull/38446",
@@ -341,22 +391,12 @@
     {
       "pr_url": "https://github.com/keycloak/keycloak/pull/38446",
       "repo": "keycloak",
-      "candidate": "Unsafe cast from AuthenticatorFactory to ConfigurableAuthenticatorFactory without type checking"
-    },
-    {
-      "pr_url": "https://github.com/keycloak/keycloak/pull/38446",
-      "repo": "keycloak",
-      "candidate": "Unsafe cast from FormActionFactory to ConfigurableAuthenticatorFactory without type checking"
+      "candidate": "Type confusion vulnerability in getConfigurableAuthenticatorFactory method - unsafe casting of different factory types without proper validation could lead to ClassCastException or bypass of authentication checks"
     },
     {
       "pr_url": "https://github.com/keycloak/keycloak/pull/36880",
       "repo": "keycloak",
-      "candidate": "Method appears to call itself recursively instead of delegating to a wrapped or parent object, causing potential infinite recursion and StackOverflowError"
-    },
-    {
-      "pr_url": "https://github.com/keycloak/keycloak/pull/36880",
-      "repo": "keycloak",
-      "candidate": "Variable 'name' is used without initialization when resourceType doesn't match USERS or CLIENTS types"
+      "candidate": "Feature flag inconsistency causes orphaned permissions: AdminPermissions event listener cleans up permissions when feature is disabled, but another code path creates permissions without checking the flag, leaving orphaned permissions"
     },
     {
       "pr_url": "https://github.com/keycloak/keycloak/pull/36880",
@@ -364,9 +404,9 @@
       "candidate": "Race condition in lazy initialization where multiple threads can simultaneously check 'clientPermissions != null' and both create new instances, causing the first instance to be lost"
     },
     {
-      "pr_url": "https://github.com/keycloak/keycloak/pull/36880",
+      "pr_url": "https://github.com/keycloak/keycloak/pull/37038",
       "repo": "keycloak",
-      "candidate": "Feature flag inconsistency causes orphaned permissions: AdminPermissions event listener cleans up permissions when feature is disabled, but another code path creates permissions without checking the flag, leaving orphaned permissions"
+      "candidate": "In getGroupIdsWithViewPermission, hasPermission is called with groupResource.getId() for both resource and scope parameters - scope should differ from resource ID, causing incorrect permission evaluation and potentially granting wrong access"
     },
     {
       "pr_url": "https://github.com/keycloak/keycloak/pull/37038",
@@ -376,32 +416,12 @@
     {
       "pr_url": "https://github.com/keycloak/keycloak/pull/37038",
       "repo": "keycloak",
-      "candidate": "Hardcoded admin password 'password' creates a critical security vulnerability allowing unauthorized access to admin account"
-    },
-    {
-      "pr_url": "https://github.com/keycloak/keycloak/pull/37038",
-      "repo": "keycloak",
-      "candidate": "Hardcoded client secret 'mysecret' exposes authentication credentials in source code"
-    },
-    {
-      "pr_url": "https://github.com/keycloak/keycloak/pull/37038",
-      "repo": "keycloak",
       "candidate": "Incomplete constant name 'VIEW_MEMBE' in the GROUPS ResourceType definition - should be 'VIEW_MEMBERS'"
-    },
-    {
-      "pr_url": "https://github.com/keycloak/keycloak/pull/37038",
-      "repo": "keycloak",
-      "candidate": "Potential StringIndexOutOfBoundsException when Location header path doesn't contain '/' character"
-    },
-    {
-      "pr_url": "https://github.com/keycloak/keycloak/pull/37038",
-      "repo": "keycloak",
-      "candidate": "In getGroupIdsWithViewPermission, hasPermission is called with groupResource.getId() for both resource and scope parameters - scope should differ from resource ID, causing incorrect permission evaluation and potentially granting wrong access"
     },
     {
       "pr_url": "https://github.com/keycloak/keycloak/pull/33832",
       "repo": "keycloak",
-      "candidate": "Method appears to call itself recursively instead of delegating to a wrapped or parent object, which can cause infinite recursion and StackOverflowError"
+      "candidate": "KeyPairGenerator.getInstance(\"EC\").genKeyPair() creates a key pair with default parameters, but ECDSA algorithms require specific curve parameters (P-256, P-384, P-521) that may not match the default curve"
     },
     {
       "pr_url": "https://github.com/keycloak/keycloak/pull/33832",
@@ -411,7 +431,7 @@
     {
       "pr_url": "https://github.com/keycloak/keycloak/pull/33832",
       "repo": "keycloak",
-      "candidate": "KeyPairGenerator.getInstance(\"EC\").genKeyPair() creates a key pair with default parameters, but ECDSA algorithms require specific curve parameters (P-256, P-384, P-521) that may not match the default curve"
+      "candidate": "Method appears to call itself recursively instead of delegating to a wrapped or parent object, which can cause infinite recursion and StackOverflowError"
     },
     {
       "pr_url": "https://github.com/keycloak/keycloak/pull/40940",
@@ -442,11 +462,6 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/keycloak-greptile/pull/1",
       "repo": "keycloak-greptile",
       "candidate": "Boolean.parseBoolean() returns false for null input, but the code should likely treat null as false explicitly or handle it differently since AUTH_NOTE values can be null"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/keycloak-greptile/pull/1",
-      "repo": "keycloak-greptile",
-      "candidate": "Potential null pointer exception when checking user.isEnabled() or other user properties after null check"
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/1",
@@ -536,11 +551,6 @@
     {
       "pr_url": "https://github.com/grafana/grafana/pull/90045",
       "repo": "grafana",
-      "candidate": "Goroutine launched without context or cancellation mechanism, causing potential goroutine leak"
-    },
-    {
-      "pr_url": "https://github.com/grafana/grafana/pull/90045",
-      "repo": "grafana",
       "candidate": "Variable 'l' is declared as nil and never assigned a value, but is used to initialize legacyStoreMock"
     },
     {
@@ -551,17 +561,12 @@
     {
       "pr_url": "https://github.com/grafana/grafana/pull/106778",
       "repo": "grafana",
-      "candidate": "Function calls prometheusRuleType.grafana.rule() but uses result in boolean context without handling potential undefined/null return values"
+      "candidate": "Redundant type check 'rule && rule.type === PromRuleType.Alerting' after prometheusRuleType.grafana.alertingRule(rule) already verified this condition"
     },
     {
       "pr_url": "https://github.com/grafana/grafana/pull/106778",
       "repo": "grafana",
-      "candidate": "Redundant type check 'rule && rule.type === PromRuleType.Alerting' after prometheusRuleType.grafana.alertingRule(rule) already verified this condition"
-    },
-    {
-      "pr_url": "https://github.com/grafana/grafana/pull/107534",
-      "repo": "grafana",
-      "candidate": "Template variables are applied to filtered queries but the original query objects may be mutated, potentially affecting other parts of the application that reference the same query objects"
+      "candidate": "Function calls prometheusRuleType.grafana.rule() but uses result in boolean context without handling potential undefined/null return values"
     },
     {
       "pr_url": "https://github.com/grafana/grafana/pull/107534",
@@ -569,19 +574,9 @@
       "candidate": "Expected expression includes regex pattern '20|10' but mock data returns string values that would be sorted as ['1', '10', '2', '20', '3'], making the first two values '1' and '10' instead of the expected '20' and '10'"
     },
     {
-      "pr_url": "https://github.com/grafana/grafana/pull/79265",
+      "pr_url": "https://github.com/grafana/grafana/pull/107534",
       "repo": "grafana",
-      "candidate": "Anonymous authentication always succeeds and returns a valid identity without proper authorization checks, potentially allowing unauthorized access"
-    },
-    {
-      "pr_url": "https://github.com/grafana/grafana/pull/79265",
-      "repo": "grafana",
-      "candidate": "SQL injection vulnerability in updateDevice function - query string is concatenated with user-controlled parameters and passed to Exec without proper parameter binding"
-    },
-    {
-      "pr_url": "https://github.com/grafana/grafana/pull/79265",
-      "repo": "grafana",
-      "candidate": "Function returns error immediately after logging debug message, preventing any cleanup or additional error handling that might be needed"
+      "candidate": "Template variables are applied to filtered queries but the original query objects may be mutated, potentially affecting other parts of the application that reference the same query objects"
     },
     {
       "pr_url": "https://github.com/grafana/grafana/pull/79265",
@@ -589,9 +584,9 @@
       "candidate": "Error from TagDevice is returned directly when it's ErrDeviceLimitReached, but other errors are only logged as warnings and authentication continues, creating inconsistent error handling where some failures block authentication while others silently proceed"
     },
     {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/9",
-      "repo": "discourse-graphite",
-      "candidate": "Object.send bypasses method visibility (private/protected) and can invoke any method including dangerous ones"
+      "pr_url": "https://github.com/grafana/grafana/pull/79265",
+      "repo": "grafana",
+      "candidate": "SQL injection vulnerability in updateDevice function - query string is concatenated with user-controlled parameters and passed to Exec without proper parameter binding"
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/9",
@@ -601,12 +596,12 @@
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/9",
       "repo": "discourse-graphite",
-      "candidate": "Inconsistent locale loading logic - translate method duplicates the loaded check from ensure_loaded! but doesn't use ensure_loaded! method"
+      "candidate": "Object.send bypasses method visibility (private/protected) and can invoke any method including dangerous ones"
     },
     {
-      "pr_url": "https://github.com/grafana/grafana/pull/76186",
-      "repo": "grafana",
-      "candidate": "Type assertion to *log.ConcreteLogger without checking if the returned logger is nil, which could cause a panic when accessing methods on a nil pointer"
+      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/9",
+      "repo": "discourse-graphite",
+      "candidate": "Inconsistent locale loading logic - translate method duplicates the loaded check from ensure_loaded! but doesn't use ensure_loaded! method"
     },
     {
       "pr_url": "https://github.com/grafana/grafana/pull/76186",
@@ -614,19 +609,14 @@
       "candidate": "FromContext method creates a new TestLogger instance instead of returning the current instance, losing all accumulated test data"
     },
     {
+      "pr_url": "https://github.com/grafana/grafana/pull/76186",
+      "repo": "grafana",
+      "candidate": "Type assertion to *log.ConcreteLogger without checking if the returned logger is nil, which could cause a panic when accessing methods on a nil pointer"
+    },
+    {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/10",
       "repo": "discourse-graphite",
       "candidate": "Potential NoMethodError on nil - value may be nil from hash lookup or safe navigation, calling methods on nil will raise exception"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/10",
-      "repo": "discourse-graphite",
-      "candidate": "Test assumes 'eviltrout.com' is allowed without explicitly creating it - relies on fabricated host which may not match expected domain"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/8",
-      "repo": "discourse-graphite",
-      "candidate": "Potential NoMethodError on nil - value may be nil from hash lookup or safe navigation, and calling methods on nil will raise an exception"
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/8",
@@ -636,32 +626,7 @@
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/8",
       "repo": "discourse-graphite",
-      "candidate": "Hard-coded group ID '1' assumes a specific group exists in the database, which may not be true in all test environments"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
-      "repo": "discourse-graphite",
-      "candidate": "Missing assignment operator (=) for action_type attribute in Fabricator definition"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
-      "repo": "discourse-graphite",
-      "candidate": "String substitution creates invalid regex pattern when setting contains multiple domains separated by delimiters"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
-      "repo": "discourse-graphite",
-      "candidate": "Method doesn't handle nil or empty email values, will cause NoMethodError when calling =~ on nil"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
-      "repo": "discourse-graphite",
-      "candidate": "Unique index on email field prevents blocking the same email for different action types, which may be a valid business requirement"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
-      "repo": "discourse-graphite",
-      "candidate": "match_count defaults to 0 but last_match_at is nullable, creating inconsistent state where count can be > 0 while last_match_at is null"
+      "candidate": "Potential NoMethodError on nil - value may be nil from hash lookup or safe navigation, and calling methods on nil will raise an exception"
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
@@ -671,37 +636,17 @@
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
       "repo": "discourse-graphite",
-      "candidate": "Email validation with 'email: true' only runs when email changes, but presence and uniqueness validations always run, creating inconsistent validation behavior"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
-      "repo": "discourse-graphite",
       "candidate": "Race condition in should_block? method - multiple concurrent requests for the same email could create inconsistent match_count values due to read-modify-write operation without proper locking"
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
       "repo": "discourse-graphite",
-      "candidate": "Method returns true for blocked emails even when save operation fails, potentially allowing blocked emails to pass through while corrupting tracking data"
+      "candidate": "Method doesn't handle nil or empty email values, will cause NoMethodError when calling =~ on nil"
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
       "repo": "discourse-graphite",
-      "candidate": "I18n.t call uses string concatenation with newlines but may not handle pluralization correctly - the translation key 'login.errors' expects an 'errors' parameter but receives a pre-joined string instead of an array"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
-      "repo": "discourse-graphite",
-      "candidate": "Email rejection check occurs after getting the email but before null/empty validation, potentially causing issues if email is null/undefined"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
-      "repo": "discourse-graphite",
-      "candidate": "Property dependency 'rejectedEmails.@each' may not trigger validation updates when array contents change due to Ember's observer timing"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
-      "repo": "discourse-graphite",
-      "candidate": "Missing null check for result.values before accessing result.values.email could cause runtime error"
+      "candidate": "Missing assignment operator (=) for action_type attribute in Fabricator definition"
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/6",
@@ -716,237 +661,12 @@
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
       "repo": "discourse-graphite",
-      "candidate": "Potential NoMethodError on nil - value may be nil from hash lookup or safe navigation, calling methods on nil will raise exception"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Object.send bypasses method visibility and can invoke dangerous methods - should use public_send with method name validation"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
       "candidate": "Race condition in Redis throttling logic - another process can set key between setnx and expire calls, causing expire to be lost and key to persist indefinitely"
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
       "repo": "discourse-graphite",
-      "candidate": "Host comparison is case-sensitive but domain names should be compared case-insensitively according to RFC standards"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Method returns false early but continues executing subsequent operations without checking return value, potentially causing unintended side effects"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "save_reply_relationships is called unconditionally after save, even if save failed due to validation errors or database constraints"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Time.zone.parse() can return nil for invalid date strings but code doesn't handle this case, setting post.created_at to nil unexpectedly"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Route constraint regex /\\d+/ does not anchor the pattern, allowing partial matches that could accept invalid topic_id values like '123abc'"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "String comparison using start_with? with hardcoded expected string may fail due to URL normalization differences or whitespace variations"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Missing let! declaration - the 'post' variable from line 23 may not be accessible in this test due to RSpec scoping"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Variable shadowing - reassigning 'post' variable that was declared in outer scope, potentially causing confusion about which post is being tested"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Test only checks that feed_polling_enabled? is false but doesn't verify other required conditions are met, potentially masking bugs"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Test only checks that feed_polling_url is nil but doesn't verify other required conditions are met, potentially masking bugs"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Test only checks that embed_by_username is nil but doesn't verify other required conditions are met, potentially masking bugs"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "The after block runs for all tests in the context, but assertions should only apply to specific test cases that expect success"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Mock expectation for TopicRetriever.new without verifying constructor arguments, which could hide bugs in parameter passing"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Mock expectation for TopicView.new assumes specific parameter values without verifying where this value comes from"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "SiteSetting.embeddable_host is mocked globally in before block but affects all tests in context, potentially causing test interference"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Test expects perform_retrieve to be called once but also mocks retrieved_recently? - order of expectations may cause test to fail"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Test expects perform_retrieve to never be called but also mocks retrieved_recently? - if implementation doesn't call retrieved_recently? first, test may pass incorrectly"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Attempting to call TopTopic.periods inside a migration before the TopTopic model may exist or be loaded"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Using 'force: true' will drop existing table without warning, potentially causing data loss in production"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Migration lacks proper rollback handling - adding column with NOT NULL constraint and default value can fail on existing records"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Missing foreign key constraint for topic_id - referential integrity not enforced at database level"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Infinite loop: while loop condition checks post_ids.length > 0 but post_ids is never updated within the loop"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Hard-coded LIMIT 500 may cause performance issues and doesn't account for total number of records that need processing"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Regex validation allows malformed URLs that start with http:// or https:// but may have invalid characters or structure"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
       "candidate": "Transaction block does not handle the case where PostCreator.create fails but doesn't raise an exception"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "TopicEmbed.create! can raise an exception outside the transaction scope if post creation succeeds but embed creation fails"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Using open(url) is deprecated and unsafe - it can execute arbitrary code if URL contains pipe characters"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Method find_by_detail uses includes() but then calls .first which executes query immediately, making includes() ineffective for eager loading"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "The cook method returns 'raw' directly without ensuring it's properly sanitized or validated, potentially allowing unsafe HTML content"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "URI parsing of request.referer can raise URI::InvalidURIError but rescue block only catches it at the end, meaning host comparison could still raise exception"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Missing return statement after render 'loading' allows execution to continue to discourse_expires_in, potentially causing double render error"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Using deprecated open method from 'open-uri' which is vulnerable to command injection if URL contains shell metacharacters"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Regular expression pattern has unnecessary escaping of colons and forward slashes"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "Calling .scrub on potentially nil content without nil check - will raise NoMethodError if i.content is nil"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "No error handling around RSS parsing - network failures or malformed feeds will cause job to crash"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "The no_throttle parameter uses user.try(:staff?) which will be nil when user is not found, but parameter likely expects boolean value"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "candidate": "No null check for comments element - will throw error if 'discourse-comments' element doesn't exist"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/1",
-      "repo": "discourse-graphite",
-      "candidate": "Object.send bypasses method visibility (private/protected) and can invoke any method including dangerous ones"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/1",
-      "repo": "discourse-graphite",
-      "candidate": "Duplicate method definition - two methods named 'downsize' with different parameter signatures will cause the second definition to overwrite the first"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/1",
-      "repo": "discourse-graphite",
-      "candidate": "Regular expression match against potentially nil value - if 'from' is nil, the regex match will raise NoMethodError"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/1",
-      "repo": "discourse-graphite",
-      "candidate": "Shell command injection vulnerability - 'instructions' array elements are not sanitized before being joined and executed in shell"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/1",
-      "repo": "discourse-graphite",
-      "candidate": "Missing return value - method returns false on failure but has no explicit return value on success, implying nil return"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/1",
-      "repo": "discourse-graphite",
-      "candidate": "Variable 'content_type' is not initialized when downloading from URL, leading to potential nil value being passed to Upload.create_for"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/1",
-      "repo": "discourse-graphite",
-      "candidate": "Rescue clause returns nil without checking if download succeeded, causing tempfile to be nil and leading to potential nil pointer exceptions in subsequent code"
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/1",
@@ -959,34 +679,9 @@
       "candidate": "tempfile.size is called without checking if tempfile is nil, which will raise NoMethodError if file download failed"
     },
     {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/1",
-      "repo": "discourse-graphite",
-      "candidate": "Inconsistent unit conversion: file size is converted to KB but maxSizeKB is actually in KB (10 * 1024 = 10240 KB = 10MB), creating confusion about actual limit"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/1",
-      "repo": "discourse-graphite",
-      "candidate": "Same inconsistent unit naming: maxSizeKB variable name suggests KB but the value represents MB in KB units"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/1",
-      "repo": "discourse-graphite",
-      "candidate": "Incorrect parameter passed to translation: max_size_kb receives 10240 (KB) but the translation key suggests it expects the size in KB, which may display confusing values to users"
-    },
-    {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/2",
       "repo": "discourse-graphite",
-      "candidate": "Route 't/:topic_id/summary' will never be reached because it's defined after 't/:slug/:topic_id/summary' route, and Rails matches routes in order"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/2",
-      "repo": "discourse-graphite",
-      "candidate": "Method call I18n.t uses undefined variable 'template_args' instead of '@template_args' instance variable"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/2",
-      "repo": "discourse-graphite",
-      "candidate": "Variable assignment bug: user_id is assigned the result of user.is_a?(User) ? user.id : topic but should use topic.id when user is not a User object"
+      "candidate": "Race condition: TopicUser.change is called without checking if the current post number is actually newer than the existing last_emailed_post_number"
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/2",
@@ -996,57 +691,12 @@
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/2",
       "repo": "discourse-graphite",
-      "candidate": "Using Time.now without timezone specification can cause inconsistent behavior across different server timezones"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/2",
-      "repo": "discourse-graphite",
-      "candidate": "Race condition: TopicUser.change is called without checking if the current post number is actually newer than the existing last_emailed_post_number"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/2",
-      "repo": "discourse-graphite",
-      "candidate": "Logic assumes TopicUser record exists but find_by can return nil, leading to NoMethodError on nil object"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/2",
-      "repo": "discourse-graphite",
-      "candidate": "Missing authentication check - unsubscribe action can be called without verifying user is logged in"
+      "candidate": "Route 't/:topic_id/summary' will never be reached because it's defined after 't/:slug/:topic_id/summary' route, and Rails matches routes in order"
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/22532",
       "repo": "cal.com",
-      "candidate": "Tunnel URL extracted from log file and written to environment file without validation, allowing injection of malicious URLs"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/22532",
-      "repo": "cal.com",
-      "candidate": "Variable TMOLE_PID is used in cleanup() but may be undefined when OWNED_PID=false (reusing existing process)"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/22532",
-      "repo": "cal.com",
-      "candidate": "TUNNEL_URL extraction when reusing existing process assumes log file exists and contains valid URL, but log file may not exist or be stale"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/22532",
-      "repo": "cal.com",
-      "candidate": "Loop exits without setting TUNNEL_URL if neither success condition nor rate limit condition is met after 20 iterations"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/22532",
-      "repo": "cal.com",
-      "candidate": "Potential null value in updatedAt field - Prisma's _max.updatedAt can return null when no records exist for a credentialId, but the return type mapping doesn't handle this case"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/22532",
-      "repo": "cal.com",
-      "candidate": "Method deleteManyByCredential is missing required parameter but should accept credentialId(s) based on method name and typical repository patterns"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/22532",
-      "repo": "cal.com",
-      "candidate": "Method getCacheStatusByCredentialIds is missing required credentialIds parameter but should accept credential IDs based on method name"
+      "candidate": "Race condition potential - if cache statuses are updated between the getCacheStatusByCredentialIds call and the map creation, the cacheStatusMap may contain stale data"
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/22532",
@@ -1059,39 +709,14 @@
       "candidate": "deleteCacheMutation is called with credentialId but the mutation expects a different parameter structure based on the trpc endpoint name 'deleteCache'"
     },
     {
-      "pr_url": "https://github.com/calcom/cal.com/pull/22532",
+      "pr_url": "https://github.com/calcom/cal.com/pull/8330",
       "repo": "cal.com",
-      "candidate": "disconnectMutation is called with credentialId but may need additional parameters like integrationType or delegationCredentialId for proper credential deletion"
+      "candidate": "Variable i is initialized to -1 but the code is incomplete - this suggests a loop that may have off-by-one errors when incrementing/accessing array elements"
     },
     {
-      "pr_url": "https://github.com/calcom/cal.com/pull/22532",
+      "pr_url": "https://github.com/calcom/cal.com/pull/8330",
       "repo": "cal.com",
-      "candidate": "Cache deletion functionality is attempted even when cacheUpdatedAt is null, which may indicate no cache exists"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/22532",
-      "repo": "cal.com",
-      "candidate": "Empty object {} passed as update data to updateManyByCredentialId will result in no actual updates being performed, making the operation ineffective"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/22532",
-      "repo": "cal.com",
-      "candidate": "Calendar cache deletion uses credentialId without verifying ownership, allowing potential unauthorized deletion of cache entries belonging to other users"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/22532",
-      "repo": "cal.com",
-      "candidate": "Potential type mismatch when using || null fallback - if cacheStatusMap.get() returns undefined, the || null creates a union type that may not match the expected type of cacheUpdatedAt"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/22532",
-      "repo": "cal.com",
-      "candidate": "Race condition potential - if cache statuses are updated between the getCacheStatusByCredentialIds call and the map creation, the cacheStatusMap may contain stale data"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/22532",
-      "repo": "cal.com",
-      "candidate": "Missing comma after setDestinationCalendarHandler procedure, which will cause a syntax error when the deleteCache procedure is added"
+      "candidate": "Assertion expects results for plus2DateString but the time range query spans from plus1DateString to plus2DateString, potentially missing or incorrectly filtering results"
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/8330",
@@ -1104,36 +729,6 @@
       "candidate": "endTime calculation duplicates the same dayjs computation twice instead of reusing the result, causing unnecessary work and potential inconsistency"
     },
     {
-      "pr_url": "https://github.com/calcom/cal.com/pull/8330",
-      "repo": "cal.com",
-      "candidate": "Variable i is initialized to -1 but the code is incomplete - this suggests a loop that may have off-by-one errors when incrementing/accessing array elements"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/8330",
-      "repo": "cal.com",
-      "candidate": "End time is set to 23:59:59.999 of the same day as start time, but start time is 18:30 of the previous day, creating a time range that spans nearly 30 hours instead of a single day"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/8330",
-      "repo": "cal.com",
-      "candidate": "Expected time slots are in UTC but the test uses timezone +6:00, creating ambiguity about whether the assertion validates local time or UTC time behavior"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/8330",
-      "repo": "cal.com",
-      "candidate": "Assertion expects results for plus2DateString but the time range query spans from plus1DateString to plus2DateString, potentially missing or incorrectly filtering results"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/8330",
-      "repo": "cal.com",
-      "candidate": "UTC offset calculation is inverted - multiplying by -1 when dayjs.tz().utcOffset() already returns the correct offset"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/8330",
-      "repo": "cal.com",
-      "candidate": "Date format 'YYYY MM DD' with spaces will not match properly - should use consistent formatting"
-    },
-    {
       "pr_url": "https://github.com/calcom/cal.com/pull/14943",
       "repo": "cal.com",
       "candidate": "OR condition deletes SMS reminders with retryCount > 1, conflicting with retry logic that increments retryCount on failures"
@@ -1141,17 +736,12 @@
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/14943",
       "repo": "cal.com",
-      "candidate": "Duplicate retry count increment logic - retryCount is incremented both in the 'else' block for failed SMS and in the catch block for exceptions, potentially double-counting failures"
+      "candidate": "Using lte (less than or equal) with current date will delete SMS reminders scheduled for exactly the current time, preventing them from being sent if the handler runs at the exact scheduled moment"
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/14943",
       "repo": "cal.com",
-      "candidate": "Using lte (less than or equal) with current date will delete SMS reminders scheduled for exactly the current time, preventing them from being sent if the handler runs at the exact scheduled moment"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/22345",
-      "repo": "cal.com",
-      "candidate": "Constructor accepts InsightsBookingServicePublicOptions but assigns to InsightsBookingServiceOptions type field, causing type mismatch"
+      "candidate": "Duplicate retry count increment logic - retryCount is incremented both in the 'else' block for failed SMS and in the catch block for exceptions, potentially double-counting failures"
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/22345",
@@ -1161,297 +751,17 @@
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/22345",
       "repo": "cal.com",
+      "candidate": "Constructor accepts InsightsBookingServicePublicOptions but assigns to InsightsBookingServiceOptions type field, causing type mismatch"
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/22345",
+      "repo": "cal.com",
       "candidate": "Missing await for async cleanup operation - test may complete before cleanup finishes, potentially causing interference with subsequent tests"
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/11059",
       "repo": "cal.com",
-      "candidate": "Client credentials exposed in base64 encoding which provides no security - credentials are transmitted in plaintext equivalent"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "No validation of refresh token format or origin before using it in OAuth request"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Missing timeout configuration for OAuth token refresh request could lead to hanging requests"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Hardcoded OAuth endpoint URL without environment-specific configuration"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "OAuth refresh token exposed in request body without proper validation or sanitization"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "No rate limiting or retry controls on OAuth token refresh endpoint calls"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Credential userId passed to refreshOAuthTokens without authorization check to verify user owns the credential"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Missing authentication/authorization check for userId parameter - any user ID can be passed without validation"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "No validation that the requesting user has permission to refresh tokens for the specified userId"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Missing HTTPS enforcement for credential sync endpoint - sensitive tokens could be transmitted over unencrypted connection"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "User ID transmitted as plain text in POST body without encryption"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Generic error message 'Invalid refreshed tokens were returned' does not provide specific validation failure details, potentially masking security-relevant parsing errors"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Unsafe parsing of any type input without proper type validation before schema parsing, allowing potential injection of malicious data structures"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Overly permissive schema with catch-all unknown properties that may accept and process unvalidated token response fields"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Insufficient input validation - only checks if state is a string but doesn't validate the content, length, or format of the state parameter"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Missing CSRF token validation in OAuth state parameter - state parameter should contain unpredictable value to prevent CSRF attacks"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Missing authentication check - function creates app credentials without verifying if the request is authenticated"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Incomplete authorization validation - only checks admin access to team but no validation for user-level credential creation"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "OAuth state decoding without proper validation could lead to state manipulation attacks"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Boolean expression will be truthy for any non-empty string, including '0', 'false', 'disabled', etc - doesn't properly validate that credential sharing should be enabled"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Missing await keyword before handleZoomResponse call - this will cause responseBody to be a Promise object instead of the parsed response"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Missing HTTP method validation - handler accepts all HTTP methods without checking if the request method is appropriate for the operation"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Function declares async but does not return a Promise type annotation, and the request handler pattern suggests it should handle responses but only takes req parameter without res"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
       "candidate": "Incorrect expiry date calculation - adding seconds to milliseconds timestamp"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Global variables client_id and client_secret are declared with 'let' but never initialized with actual values, remaining empty strings throughout execution"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Sensitive credential (client_secret) stored in a global variable creates security risk and potential race conditions in concurrent environments"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Global variable 'client_id' initialized as empty string may cause OAuth flow failures if not properly set before use"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Condition checks for absence of error (!tokenInfo.data.error) but this is fragile - if tokenInfo.data.error is undefined, null, empty string, or 0, the condition will be true even when no valid token was received"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Function lacks proper error handling - if any of the imported utilities throw exceptions or return unexpected values, the handler will crash without proper HTTP error responses"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "axios.getUri() is being called incorrectly - it expects a config object with 'url' and 'params' properties, but 'url' should be the baseURL or passed separately"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Potential null reference error - responseBody is awaited from handleWebexResponse but the function may not return the expected object structure, and there's no validation before accessing its properties"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Missing error handling for refreshOAuthTokens call - if the refresh fails, the function will throw an unhandled exception"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Redundant 'await' usage - the fetch is already awaited within the async function passed to refreshOAuthTokens, creating unnecessary nested awaits"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "HTTP status check uses statusText instead of status code, which can be inconsistent across different HTTP implementations and may not reliably detect 200 responses"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Missing error handling for invalid JSON response - if the response body is not valid JSON, response.json() will throw an unhandled exception"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Global mutable variables in a web API handler will cause race conditions and state pollution between requests"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Global variable consumer_key is initialized as empty string but never assigned a value, likely causing authentication failures"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "The handleErrorsJson function is called on the response but there's no error handling for the case where responseBody is null/undefined or the refresh token request fails"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Variable reassignment has no effect - o365AuthCredentials is a function parameter and reassigning it doesn't update the original object or persist the new token data"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Database update operation is incomplete - the code shows 'where' clause but no 'data' field to specify what should be updated"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "The refreshOAuthTokens function is called but its return value (resp) is then passed to handleLarkError, suggesting the function might not be returning the expected fetch response object"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "The async arrow function passed to refreshOAuthTokens has redundant await - 'await await fetch(...)' pattern due to the outer async and inner await"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "The redirect_uri parameter may not match the original authorization URL, potentially causing token refresh to fail"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Function uses 'this.client_id' and 'this.client_secret' but there's no guarantee these properties are defined or properly initialized"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Variable 'credential' is used but not defined in the function scope - it appears to be accessed from outer scope without proper validation"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Potential null/undefined access on token without proper validation"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Accessing token.access_token without verifying the property exists"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "parseRefreshTokenResponse could fail if googleCredentials is in invalid state after partial token updates"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Storing client_secret in a global variable is a security risk as it may be exposed in logs, error messages, or memory dumps"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Logic condition allows userId=0 to be treated as falsy and take the else branch, but 0 is a valid user ID"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "No error handling for fetch request - network failures or HTTP errors will throw unhandled exceptions"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Raw Response object returned instead of parsed data - inconsistent return type between branches"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Missing refresh_token property validation - the minimumTokenResponseSchema doesn't require refresh_token but the code assumes it exists"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Hardcoded fallback value 'refresh_token' is likely incorrect - should be null, empty string, or a proper token value"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Incomplete function implementation - missing return statement and error handling for invalid state parameter"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Header name fallback could allow bypass if CALCOM_WEBHOOK_HEADER_NAME is empty string"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Webhook secret comparison vulnerable to timing attacks"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "candidate": "Missing validation that req.body exists before parsing with zod"
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/7232",
@@ -1461,342 +771,12 @@
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/7232",
       "repo": "cal.com",
-      "candidate": "deleteScheduledEmailReminder is called with a third parameter 'true' but deleteScheduledSMSReminder is called without it, suggesting inconsistent API usage"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/7232",
-      "repo": "cal.com",
-      "candidate": "Workflow reminders are being deleted for all updated bookings, not just cancelled ones"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/7232",
-      "repo": "cal.com",
-      "candidate": "Promise.all() combines prismaPromises array with apiDeletes array using concat(), but apiDeletes may not be a Promise array, causing type mismatch"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/7232",
-      "repo": "cal.com",
-      "candidate": "Inconsistent parameter count in deleteScheduledEmailReminder calls - one call passes 3 parameters while another passes only 2"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/7232",
-      "repo": "cal.com",
-      "candidate": "Missing third parameter in deleteScheduledEmailReminder call that was present in earlier call"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/7232",
-      "repo": "cal.com",
-      "candidate": "Potential null/undefined access when destructuring attendees array without checking if it exists or has elements"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/7232",
-      "repo": "cal.com",
-      "candidate": "Using mainAttendee.locale without null check after potentially unsafe destructuring"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/7232",
-      "repo": "cal.com",
       "candidate": "Race condition in onChange handler - form.getValues() may not reflect current input value due to asynchronous form updates"
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/7232",
       "repo": "cal.com",
-      "candidate": "Unnecessary array concatenation with empty array - concat([]) creates new array but serves no purpose"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/7232",
-      "repo": "cal.com",
-      "candidate": "Logical error in disabled condition - button should be enabled when number is verified, not disabled"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/7232",
-      "repo": "cal.com",
-      "candidate": "Query condition may include reminders that are already past due instead of just those within the next hour"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/7232",
-      "repo": "cal.com",
-      "candidate": "Incorrect type annotation for workflowRemindersToDelete array - stores Prisma delete promises, not client objects"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/7232",
-      "repo": "cal.com",
-      "candidate": "External API calls are made sequentially without error handling per request, and if any API call fails, corresponding database record won't be deleted"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/7232",
-      "repo": "cal.com",
-      "candidate": "Database deletion occurs even when Twilio cancellation fails, potentially leaving inconsistent state"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/7232",
-      "repo": "cal.com",
-      "candidate": "Generic catch block swallows all errors without proper error handling or re-throwing"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/7232",
-      "repo": "cal.com",
-      "candidate": "Function silently fails without indicating success/failure to caller, making error detection impossible"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/7232",
-      "repo": "cal.com",
       "candidate": "Database delete operation is not awaited but function continues execution, potentially causing race conditions"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/7232",
-      "repo": "cal.com",
-      "candidate": "Error is logged but not re-thrown or handled, causing silent failures where callers think operation succeeded"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
-      "repo": "cal.com",
-      "candidate": "Email addresses in newGuests parameter are not validated before sending emails, potentially allowing email injection or sending to unauthorized recipients"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
-      "repo": "cal.com",
-      "candidate": "Promise.all() used without proper error handling could expose sensitive information in error messages when email sending fails"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
-      "repo": "cal.com",
-      "candidate": "Function parameter 'newGuests' is typed as string[] but should likely be an array of guest objects with email addresses, not raw email strings"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
-      "repo": "cal.com",
-      "candidate": "emailsToSend array is typed as Promise<unknown>[] but sendEmail likely returns a more specific Promise type that should be preserved for proper error handling"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
-      "repo": "cal.com",
-      "candidate": "Type assertion bypasses TypeScript's type checking and may cause runtime errors if the dynamic import doesn't match the expected type structure"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
-      "repo": "cal.com",
-      "candidate": "Direct mutation of props parameter - modifying `value` prop in place instead of using local state"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
-      "repo": "cal.com",
-      "candidate": "Using array index as React key for dynamic list items that can be removed"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
-      "repo": "cal.com",
-      "candidate": "Accessing this.calEvent.attendees[0] without checking if attendees array exists or has elements, which will throw an error if attendees is empty or undefined"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
-      "repo": "cal.com",
-      "candidate": "The replyTo array concatenation could result in duplicate email addresses if organizer email is also in attendees list"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
-      "repo": "cal.com",
-      "candidate": "Import path inconsistency - importing from './OrganizationAdminNoSlots' but the pattern suggests it should be './OrganizationAdminNoSlotsEmail' to match the exported class name"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
-      "repo": "cal.com",
-      "candidate": "Initial state contains an empty string [\"\"] which will fail email validation, causing immediate invalid state"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
-      "repo": "cal.com",
-      "candidate": "Validation passes empty strings to mutation - multiEmailValue could contain empty strings that pass length check but fail email validation"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
-      "repo": "cal.com",
-      "candidate": "State variable name mismatch - setIsOpenLocationDialog should be setIsOpenSetLocationDialog to match the state variable isOpenSetLocationDialog"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
-      "repo": "cal.com",
-      "candidate": "Prop name mismatch - setShowLocationModal expects setIsOpenSetLocationDialog but receives setIsOpenLocationDialog which doesn't exist"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
-      "repo": "cal.com",
-      "candidate": "Email validation allows empty strings and whitespace-only strings, which are invalid email addresses but pass z.string().email() validation"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
-      "repo": "cal.com",
-      "candidate": "Empty guests array is allowed, which may not be valid business logic for adding guests to a booking"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
-      "repo": "cal.com",
-      "candidate": "Comment claims code is 'unreachable' but it is actually reachable if the dynamic import fails or returns undefined"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Test bypasses 2FA validation by only checking UI state without verifying server-side enforcement"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Backup codes are generated and displayed without proper verification of user authentication state"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Backup codes are being used without proper validation or rate limiting, allowing potential brute force attacks"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Missing server-side validation for TOTP code format and potential replay attack protection"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Encryption key check occurs after user lookup, potentially exposing user enumeration"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Two-factor secret is being selected and potentially exposed in user object without proper access control"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Backup codes selection without apparent usage tracking or invalidation mechanism"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "CSRF token appears to be included in form values but no validation logic is visible in the component, potentially allowing CSRF attacks"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Two-factor authentication state is managed client-side only, allowing potential bypass through client-side manipulation"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Error messages are stored in client-side state without apparent server-side validation, potentially exposing authentication flow details"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Sensitive authentication data (password, TOTP code, backup code) transmitted without CSRF protection"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Two-factor authentication code validation appears to be client-side only without server-side verification"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Autocomplete attribute 'one-time-code' may allow browsers to store and auto-fill sensitive 2FA codes"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Input mode 'decimal' allows non-numeric characters which may bypass client-side validation"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Client-side only validation for backup code length - server can receive codes outside the specified length constraints"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "No input sanitization or validation pattern for backup code format - accepts any characters instead of expected alphanumeric format"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Backup code input not configured to prevent autocomplete which could lead to credential exposure in browser storage"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Two-factor authentication secret and backup codes are returned in plain text to the client, exposing sensitive authentication data"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Backup codes generated with only 50 bits of entropy (5 bytes) may be susceptible to brute force attacks"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Two-factor authentication is disabled when generating new secret, creating a window where 2FA protection is temporarily removed"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Backup codes are not properly invalidated after use, allowing replay attacks"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Two-factor authentication is completely disabled including backup codes and TOTP secret when backup codes are used, potentially leaving account vulnerable"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Backup code validation uses simple string replacement and indexOf which may not provide constant-time comparison, potentially allowing timing attacks"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Test uses isChecked() on a custom component with data-state attribute instead of checking the actual state, suggesting a false positive"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Race condition: clicking download button and immediately awaiting the download event without ensuring the UI is ready for interaction"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Race condition: clicking copy button and immediately checking for toast without ensuring the copy operation completed"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Missing null/undefined check for user.backupCodes before accessing its length property"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Logic allows backup code authentication even when TOTP code might be required first"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Boolean coercion with unnecessary fallback - `!!totpEmail || false` is redundant since `!!totpEmail` already returns a boolean"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Potential state inconsistency - clearing backupCode field when toggling twoFactorLostAccess but not clearing totpCode field when toggling twoFactorRequired"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Function requires all three parameters (password, code, backupCode) but for disabling 2FA, typically only one verification method should be required"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "resetState function does not reset all component state variables - backupCodes, backupCodesUrl, dataUri, secret, and isSubmitting are not cleared"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "backupCodes state is initialized as empty array but no type annotation - could lead to type issues when codes are added"
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/10600",
@@ -1806,117 +786,7 @@
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/10600",
       "repo": "cal.com",
-      "candidate": "Potential memory leak: API response is not properly handled if component unmounts during the async operation"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Function parameter mismatch between definition and usage - autoFocus parameter is defined but removed from line 40 context, creating inconsistency"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "autoFocus logic applies only to first input (index === 0) but doesn't handle case where autoFocus is false - all inputs after first will never receive focus"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "useState value is declared but not connected to form inputs - creates disconnected state that won't sync with form validation"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "minLength and maxLength validation logic is inconsistent with the placeholder format and comment - creates ambiguous validation that could accept malformed codes"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "The register method from react-hook-form may not apply the HTML validation attributes correctly since they are spread after the register call, potentially overriding form validation rules"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Button is not accessible to screen readers - missing aria-label or aria-labelledby attribute"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "tabIndex={-1} removes button from tab navigation, making it inaccessible via keyboard"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Backup codes are generated with only 5 random bytes (10 hex characters), which provides insufficient entropy for security-critical backup codes"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Plaintext backup codes are returned in the API response, creating a security vulnerability where sensitive recovery codes are exposed"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Missing validation that process.env.CALENDSO_ENCRYPTION_KEY exists before using it for encryption, which could cause runtime errors"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "candidate": "Backup code is validated but never removed from the stored codes, allowing infinite reuse of the same backup code"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
-      "repo": "cal.com",
-      "candidate": "Organization verification status is hardcoded to false without proper verification flow, potentially allowing unverified organizations to be created"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
-      "repo": "cal.com",
-      "candidate": "Missing authorization check before organization creation - no validation that the user has permission to create organizations"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
-      "repo": "cal.com",
-      "candidate": "Primary calendar determination logic is inconsistent - when mainHostDestinationCalendar is undefined, primary will always be false even for what should be the primary calendar"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
-      "repo": "cal.com",
-      "candidate": "Potential null pointer exception when accessing mainHostDestinationCalendar.integration without checking if mainHostDestinationCalendar exists"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
-      "repo": "cal.com",
-      "candidate": "Array destructuring assumes evt.destinationCalendar has at least one element, but fallback array is empty which makes mainHostDestinationCalendar undefined"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
-      "repo": "cal.com",
-      "candidate": "Variable 'success' is referenced but not declared in the function scope"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
-      "repo": "cal.com",
-      "candidate": "Variable 'calError' is referenced but not declared in the function scope"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
-      "repo": "cal.com",
-      "candidate": "Return object references 'success' variable that may not be properly initialized or updated"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
-      "repo": "cal.com",
-      "candidate": "Using originalBookingDuration when it might be null/undefined if input.originalRescheduledBooking is falsy"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
-      "repo": "cal.com",
-      "candidate": "The loadUsers function is declared as async but may not handle all async operations properly in the error handling context"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
-      "repo": "cal.com",
-      "candidate": "Missing null check for bookingToDelete.references before calling filter method"
+      "candidate": "Race condition: clicking download button and immediately awaiting the download event without ensuring the UI is ready for interaction"
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/10967",
@@ -1929,54 +799,14 @@
       "candidate": "Variable 'calendar' is assigned a string literal 'calendar' when mainHostDestinationCalendar is falsy, but then checked with Array.isArray(), creating a type inconsistency"
     },
     {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
+      "pr_url": "https://github.com/calcom/cal.com/pull/8087",
       "repo": "cal.com",
-      "candidate": "Destructuring assignment extracts only the first element but ignores potential undefined array, which could cause runtime errors when accessing properties"
+      "candidate": "Using async callback in forEach - the async functions will not be awaited and will execute concurrently without proper error handling or completion tracking"
     },
     {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
+      "pr_url": "https://github.com/calcom/cal.com/pull/8087",
       "repo": "cal.com",
-      "candidate": "Destructuring assignment assumes destinationCalendar is an array, but if it's not an array this will throw a TypeError"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
-      "repo": "cal.com",
-      "candidate": "Anti-pattern: using async function inside Promise constructor - this can lead to unhandled promise rejections and makes error handling inconsistent"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
-      "repo": "cal.com",
-      "candidate": "destinationCalendar array wrapping may cause type mismatch - if selectedDestinationCalendar is already an array, this creates a nested array structure"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
-      "repo": "cal.com",
-      "candidate": "Fallback logic may fail if both booking.destinationCalendar and user.destinationCalendar are falsy - could result in undefined being wrapped in array"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
-      "repo": "cal.com",
-      "candidate": "Potential null/undefined access on user.destinationCalendar without checking if user exists"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
-      "repo": "cal.com",
-      "candidate": "parseRecurringEvent may throw or return unexpected values if eventTypeRaw is null/undefined"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
-      "repo": "cal.com",
-      "candidate": "Potential null pointer exception - booking.user could be null but booking.user.destinationCalendar is accessed without proper null checking"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
-      "repo": "cal.com",
-      "candidate": "Potential type mismatch - booking.destinationCalendar is being wrapped in array but user.destinationCalendar might already be an array"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10967",
-      "repo": "cal.com",
-      "candidate": "Nullable field access without proper null checking - booking.eventType?.requiresConfirmation could be undefined, defaulting to false may not be correct business logic"
+      "candidate": "forEach with async callback creates fire-and-forget promises that are not awaited, potentially causing race conditions and unhandled promise rejections"
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/8087",
@@ -1986,77 +816,7 @@
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/8087",
       "repo": "cal.com",
-      "candidate": "firstVideoAdapter could be undefined if getVideoAdapters returns an empty array, but it's used without null checking in subsequent operations"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/8087",
-      "repo": "cal.com",
-      "candidate": "String transformation logic removes underscores but may not handle edge cases like multiple consecutive underscores or trailing underscores correctly"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/8087",
-      "repo": "cal.com",
-      "candidate": "Potential null/undefined calendar objects in results array due to failed getCalendar() calls not being filtered out before processing"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/8087",
-      "repo": "cal.com",
-      "candidate": "Variable 'success' initialized to false but logic may expect it to be true initially for update operations"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/8087",
-      "repo": "cal.com",
-      "candidate": "Missing null check for calendar object before attempting to use it for event creation"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/8087",
-      "repo": "cal.com",
       "candidate": "Template literal displays [object Object] instead of meaningful app identifier when paymentApp is an object"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/8087",
-      "repo": "cal.com",
-      "candidate": "Unsafe type assertion bypasses null/undefined checks - if paymentAppCredentials is null/undefined, accessing .app.dirName will throw runtime error"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/8087",
-      "repo": "cal.com",
-      "candidate": "Template literal shows object reference instead of meaningful identifier - paymentApp is an object, not a string type name"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/8087",
-      "repo": "cal.com",
-      "candidate": "Potential array access bug when splitting on '_other_calendar' - if the string doesn't contain '_other_calendar' or contains multiple instances, split()[0] may not behave as expected"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/8087",
-      "repo": "cal.com",
-      "candidate": "Array access without bounds checking - if calendarType.split('_') returns an empty array, join('') will work but may not represent the intended behavior for edge cases"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/8087",
-      "repo": "cal.com",
-      "candidate": "Missing await keyword before calendar?.deleteEvent() call inside Promise.all context"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/8087",
-      "repo": "cal.com",
-      "candidate": "async function used in forEach callback without proper error handling or awaiting"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/8087",
-      "repo": "cal.com",
-      "candidate": "Using async callback in forEach - the async functions will not be awaited and will execute concurrently without proper error handling or completion tracking"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/8087",
-      "repo": "cal.com",
-      "candidate": "Return statement inside forEach callback has no effect - the returned promise is ignored and doesn't affect the outer function flow"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/8087",
-      "repo": "cal.com",
-      "candidate": "forEach with async callback creates fire-and-forget promises that are not awaited, potentially causing race conditions and unhandled promise rejections"
     }
   ],
   "tp_details": [
@@ -2621,14 +1381,6 @@
       "severity": "Medium"
     },
     {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
-      "repo": "discourse-graphite",
-      "golden": "Regex pattern @(#{domains}) only matches domain suffixes, not full domains. evil.example.com would match whitelist entry example.com.",
-      "candidate": "Regex pattern allows partial domain matches (e.g., 'evil.com' matches whitelist entry 'vil.com')",
-      "similarity": 0.5137006993006993,
-      "severity": "Medium"
-    },
-    {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/6",
       "repo": "discourse-graphite",
       "golden": "The include_website_name method is missing the required ? suffix. Rails serializers expect include_ methods to end with ? for conditional attribute inclusion, a convention followed by other methods in this serializer. Without it, the website_name attribute may not be conditionally included as intended. Additionally, the '.' << website_host string concatenation should be replaced with '.' + website_host or '.#{website_host}' to avoid mutating string literals, which can lead to issues.",
@@ -2658,22 +1410,6 @@
       "golden": "The code sets X-Frame-Options: ALLOWALL which completely disables clickjacking protection. The referer validation can be bypassed (referer headers are easily spoofed), and the fallback to empty string for nil referer masks validation failures.",
       "candidate": "X-Frame-Options set to ALLOWALL completely disables clickjacking protection - referer header validation can be spoofed, leaving the endpoint vulnerable to iframe-based attacks",
       "similarity": 0.4921318373071529,
-      "severity": "Medium"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "golden": "The current origin validation using indexOf is insufficient and can be bypassed. An attacker could use a malicious domain like evil-discourseUrl.com to pass this check.",
-      "candidate": "Security vulnerability: indexOf check for origin validation is insufficient and can be bypassed by malicious domains that contain the discourse URL as a substring",
-      "similarity": 0.45413333333333333,
-      "severity": "Medium"
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
-      "repo": "discourse-graphite",
-      "golden": "The TopicEmbed.import method is susceptible to a NoMethodError if the contents parameter is nil when attempting to append a string, and an XSS vulnerability due to unescaped url interpolation in the generated HTML.",
-      "candidate": "String interpolation in I18n translation creates XSS vulnerability - URL is not escaped before being inserted into HTML",
-      "similarity": 0.2573233082706767,
       "severity": "Medium"
     },
     {
@@ -2712,8 +1448,8 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/2",
       "repo": "discourse-graphite",
       "golden": "logic: Potential nil pointer exception - if no TopicUser record exists, tu will be nil and calling methods on it will crash",
-      "candidate": "Potential null pointer exception when current_user is nil - TopicUser.find_by will return nil but code assumes tu exists",
-      "similarity": 0.4930526315789474,
+      "candidate": "Logic assumes TopicUser record exists but find_by can return nil, leading to NoMethodError on nil object",
+      "similarity": 0.4219545454545455,
       "severity": "High"
     },
     {
@@ -2797,14 +1533,6 @@
       "severity": "High"
     },
     {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "golden": "The parseRefreshTokenResponse function incorrectly sets refresh_token to the hardcoded string 'refresh_token' when it's missing from the OAuth refresh token response. This invalidates the token, breaking subsequent token refreshes and causing authentication failures.",
-      "candidate": "Hardcoded fallback refresh token 'refresh_token' when actual refresh token is missing, potentially allowing unauthorized access with a predictable token",
-      "similarity": 0.33707749712973595,
-      "severity": "High"
-    },
-    {
       "pr_url": "https://github.com/calcom/cal.com/pull/7232",
       "repo": "cal.com",
       "golden": "Asynchronous functions deleteScheduledEmailReminder and deleteScheduledSMSReminder are called without await inside forEach loops. This occurs during booking rescheduling/cancellation, and workflow/workflow step deletion/updates. Consequently, scheduled workflow reminders may not be reliably cancelled, potentially leaving them active.",
@@ -2816,8 +1544,8 @@
       "pr_url": "https://github.com/calcom/cal.com/pull/7232",
       "repo": "cal.com",
       "golden": "When immediateDelete is true, the deleteScheduledEmailReminder function cancels the SendGrid email but fails to delete the corresponding WorkflowReminder record from the database. This creates orphaned database entries and is inconsistent with the immediateDelete: false path, which marks the record as cancelled. The SendGrid DELETE API call is also omitted in this path.",
-      "candidate": "Function returns early without cleaning up database record when immediateDelete is true, leaving orphaned data",
-      "similarity": 0.40103715415019764,
+      "candidate": "deleteScheduledEmailReminder is called with a third parameter 'true' but deleteScheduledSMSReminder is called without it, suggesting inconsistent API usage",
+      "similarity": 0.22597402597402597,
       "severity": "High"
     },
     {
@@ -2885,14 +1613,6 @@
       "severity": "High"
     },
     {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "golden": "The exported function TwoFactor handles backup codes and is in BackupCode.tsx. Inconsistent naming.",
-      "candidate": "All backup codes are deleted regardless of which authentication path was taken, including when backup codes were not used",
-      "similarity": 0.2356323529411765,
-      "severity": "Low"
-    },
-    {
       "pr_url": "https://github.com/calcom/cal.com/pull/10967",
       "repo": "cal.com",
       "golden": "The Calendar interface now requires createEvent(event, credentialId), but some implementations (e.g., Lark/Office365) still declare createEvent(event) only\u2014this breaks the interface contract (also applies to other locations in the PR).",
@@ -2912,8 +1632,8 @@
       "pr_url": "https://github.com/calcom/cal.com/pull/10967",
       "repo": "cal.com",
       "golden": "Potential null reference if mainHostDestinationCalendar is undefined if evt.destinationCalendar is null or an empty array ",
-      "candidate": "Destructuring assignment with empty array fallback could mask undefined/null destinationCalendar - mainHostDestinationCalendar will be undefined if destinationCalendar is null, undefined, or an empty array",
-      "similarity": 0.5685576923076923,
+      "candidate": "Array destructuring assumes evt.destinationCalendar has at least one element, but fallback array is empty which makes mainHostDestinationCalendar undefined",
+      "similarity": 0.49649999999999994,
       "severity": "High"
     },
     {
@@ -2927,19 +1647,19 @@
   ],
   "per_bug_type_fn": {
     "missing_validation": 3,
-    "other": 5,
+    "other": 6,
     "null_reference": 1,
     "race_condition": 1,
     "api_misuse": 4,
-    "incorrect_value": 10,
+    "incorrect_value": 11,
     "logic_error": 2,
-    "security": 1,
+    "security": 4,
     "dead_code": 2
   },
   "per_severity_fn": {
-    "Low": 23,
-    "Medium": 3,
-    "High": 2,
+    "Low": 24,
+    "Medium": 6,
+    "High": 3,
     "Critical": 1
   },
   "all_pr_results": [
@@ -3044,10 +1764,10 @@
       "repo": "keycloak",
       "language": "Java",
       "tp": 3,
-      "fp": 4,
+      "fp": 2,
       "fn": 0,
       "n_golden": 3,
-      "n_candidates": 7,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "In getClientsWithPermission(String scope), iterating resourceStore.findByType(server, AdminPermissionsSchema.CLIENTS_RESOURCE_TYPE) and returning resource.getName() will only ever consider the type-level 'Clients' resource (per-client resources have no type) and return its name, while AvailableRoleMappingResource#getRoleIdsWithPermissions expects actual client IDs to pass to realm.getClientById, which can lead to incorrect behavior or a null client and subsequent failures.",
@@ -3074,10 +1794,10 @@
       "repo": "keycloak",
       "language": "Java",
       "tp": 2,
-      "fp": 6,
+      "fp": 3,
       "fn": 0,
       "n_golden": 2,
-      "n_candidates": 8,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "Incorrect permission check in canManage() method",
@@ -3146,10 +1866,10 @@
       "repo": "keycloak-greptile",
       "language": "Java",
       "tp": 2,
-      "fp": 4,
+      "fp": 3,
       "fn": 0,
       "n_golden": 2,
-      "n_candidates": 6,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "ConditionalPasskeysEnabled() called without UserModel parameter",
@@ -3558,10 +2278,10 @@
       "repo": "grafana",
       "language": "Go",
       "tp": 3,
-      "fp": 3,
+      "fp": 2,
       "fn": 0,
       "n_golden": 3,
-      "n_candidates": 6,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "The context is being created with d.Log instead of the log variable that was initialized with additional context values (name, kind, method). This means those values won't be propagated to the logging context.",
@@ -3623,10 +2343,10 @@
       "repo": "grafana",
       "language": "Go",
       "tp": 3,
-      "fp": 4,
+      "fp": 2,
       "fn": 2,
       "n_golden": 5,
-      "n_candidates": 7,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "Race condition: Multiple concurrent requests could pass the device count check simultaneously and create devices beyond the limit. Consider using a database transaction or lock.",
@@ -3689,10 +2409,10 @@
       "repo": "discourse-graphite",
       "language": "Ruby",
       "tp": 4,
-      "fp": 2,
+      "fp": 1,
       "fn": 0,
       "n_golden": 4,
-      "n_candidates": 6,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "record_for_host compares lower(host) = ? but does not normalize the parameter\u2019s case, so mixed\u2011case referer hosts may fail to match even though comparison intends to be case\u2011insensitive.",
@@ -3736,10 +2456,10 @@
       "repo": "discourse-graphite",
       "language": "Ruby",
       "tp": 3,
-      "fp": 3,
+      "fp": 2,
       "fn": 0,
       "n_golden": 3,
-      "n_candidates": 6,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "HTTP method mismatch in .remove_member - test uses PUT but remove_member action expects DELETE",
@@ -3765,22 +2485,16 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
       "repo": "discourse-graphite",
       "language": "Ruby",
-      "tp": 2,
-      "fp": 13,
-      "fn": 0,
+      "tp": 1,
+      "fp": 4,
+      "fn": 1,
       "n_golden": 2,
-      "n_candidates": 15,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "BlockedEmail.should_block_email? method has side effects during a read operation - it updates statistics even when just checking if an email should be blocked. This could cause race conditions in concurrent environments and makes the method name misleading.",
           "candidate": "BlockedEmail.should_block_email? has side effects during a read operation - it updates statistics even when only checking whether an email should be blocked, causing unexpected DB writes on reads",
           "similarity": 0.6039545454545454,
-          "severity": "Medium"
-        },
-        {
-          "golden": "Regex pattern @(#{domains}) only matches domain suffixes, not full domains. evil.example.com would match whitelist entry example.com.",
-          "candidate": "Regex pattern allows partial domain matches (e.g., 'evil.com' matches whitelist entry 'vil.com')",
-          "similarity": 0.5137006993006993,
           "severity": "Medium"
         }
       ]
@@ -3818,11 +2532,11 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/4",
       "repo": "discourse-graphite",
       "language": "Ruby",
-      "tp": 5,
-      "fp": 40,
-      "fn": 1,
+      "tp": 3,
+      "fp": 2,
+      "fn": 3,
       "n_golden": 6,
-      "n_candidates": 45,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "postMessage targetOrigin should be the origin (scheme+host+port), not the full referrer URL; using the full URL will cause the message to be dropped and prevent resizing.",
@@ -3841,18 +2555,6 @@
           "candidate": "X-Frame-Options set to ALLOWALL completely disables clickjacking protection - referer header validation can be spoofed, leaving the endpoint vulnerable to iframe-based attacks",
           "similarity": 0.4921318373071529,
           "severity": "Medium"
-        },
-        {
-          "golden": "The current origin validation using indexOf is insufficient and can be bypassed. An attacker could use a malicious domain like evil-discourseUrl.com to pass this check.",
-          "candidate": "Security vulnerability: indexOf check for origin validation is insufficient and can be bypassed by malicious domains that contain the discourse URL as a substring",
-          "similarity": 0.45413333333333333,
-          "severity": "Medium"
-        },
-        {
-          "golden": "The TopicEmbed.import method is susceptible to a NoMethodError if the contents parameter is nil when attempting to append a string, and an XSS vulnerability due to unescaped url interpolation in the generated HTML.",
-          "candidate": "String interpolation in I18n translation creates XSS vulnerability - URL is not escaped before being inserted into HTML",
-          "similarity": 0.2573233082706767,
-          "severity": "Medium"
         }
       ]
     },
@@ -3861,10 +2563,10 @@
       "repo": "discourse-graphite",
       "language": "Ruby",
       "tp": 3,
-      "fp": 12,
+      "fp": 2,
       "fn": 0,
       "n_golden": 3,
-      "n_candidates": 15,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "Hardcoding maxSizeKB = 10 * 1024 ignores Discourse.SiteSettings['max_' + type + '_size_kb'], so the client-side limit can diverge from server-side and per-type settings (also applies to the 413 handler below).",
@@ -3891,10 +2593,10 @@
       "repo": "discourse-graphite",
       "language": "Ruby",
       "tp": 2,
-      "fp": 8,
+      "fp": 3,
       "fn": 0,
       "n_golden": 2,
-      "n_candidates": 10,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "Typo in property name: 'stopNotificiationsText' should be 'stopNotificationsText' (missing 'n' in 'Notifications')",
@@ -3904,8 +2606,8 @@
         },
         {
           "golden": "logic: Potential nil pointer exception - if no TopicUser record exists, tu will be nil and calling methods on it will crash",
-          "candidate": "Potential null pointer exception when current_user is nil - TopicUser.find_by will return nil but code assumes tu exists",
-          "similarity": 0.4930526315789474,
+          "candidate": "Logic assumes TopicUser record exists but find_by can return nil, leading to NoMethodError on nil object",
+          "similarity": 0.4219545454545455,
           "severity": "High"
         }
       ]
@@ -3915,10 +2617,10 @@
       "repo": "cal.com",
       "language": "TypeScript",
       "tp": 2,
-      "fp": 16,
+      "fp": 3,
       "fn": 0,
       "n_golden": 2,
-      "n_candidates": 18,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "logic: macOS-specific sed syntax with empty string after -i flag will fail on Linux systems",
@@ -3939,10 +2641,10 @@
       "repo": "cal.com",
       "language": "TypeScript",
       "tp": 1,
-      "fp": 8,
+      "fp": 4,
       "fn": 1,
       "n_golden": 2,
-      "n_candidates": 9,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "Using === for dayjs object comparison will always return false as it compares object references, not values. Use .isSame() method instead: dayjs(date.start).add(utcOffset, 'minutes').isSame(dayjs(date.end).add(utcOffset, minutes))",
@@ -3998,11 +2700,11 @@
       "pr_url": "https://github.com/calcom/cal.com/pull/11059",
       "repo": "cal.com",
       "language": "TypeScript",
-      "tp": 5,
-      "fp": 58,
-      "fn": 0,
+      "tp": 4,
+      "fp": 1,
+      "fn": 1,
       "n_golden": 5,
-      "n_candidates": 63,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "parseRefreshTokenResponse returns a Zod safeParse result ({ success, data, error }), not the credential key object. Persisting that as key stores the wrapper instead of the token payload; we should store the parsed data or use schema parse.",
@@ -4027,12 +2729,6 @@
           "candidate": "Invalid Zod schema syntax - `z.string().toString()` creates a string literal 'string' as a key, not a dynamic string key pattern",
           "similarity": 0.41337551020408164,
           "severity": "High"
-        },
-        {
-          "golden": "The parseRefreshTokenResponse function incorrectly sets refresh_token to the hardcoded string 'refresh_token' when it's missing from the OAuth refresh token response. This invalidates the token, breaking subsequent token refreshes and causing authentication failures.",
-          "candidate": "Hardcoded fallback refresh token 'refresh_token' when actual refresh token is missing, potentially allowing unauthorized access with a predictable token",
-          "similarity": 0.33707749712973595,
-          "severity": "High"
         }
       ]
     },
@@ -4041,10 +2737,10 @@
       "repo": "cal.com",
       "language": "TypeScript",
       "tp": 2,
-      "fp": 19,
+      "fp": 3,
       "fn": 0,
       "n_golden": 2,
-      "n_candidates": 21,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "Asynchronous functions deleteScheduledEmailReminder and deleteScheduledSMSReminder are called without await inside forEach loops. This occurs during booking rescheduling/cancellation, and workflow/workflow step deletion/updates. Consequently, scheduled workflow reminders may not be reliably cancelled, potentially leaving them active.",
@@ -4054,8 +2750,8 @@
         },
         {
           "golden": "When immediateDelete is true, the deleteScheduledEmailReminder function cancels the SendGrid email but fails to delete the corresponding WorkflowReminder record from the database. This creates orphaned database entries and is inconsistent with the immediateDelete: false path, which marks the record as cancelled. The SendGrid DELETE API call is also omitted in this path.",
-          "candidate": "Function returns early without cleaning up database record when immediateDelete is true, leaving orphaned data",
-          "similarity": 0.40103715415019764,
+          "candidate": "deleteScheduledEmailReminder is called with a third parameter 'true' but deleteScheduledSMSReminder is called without it, suggesting inconsistent API usage",
+          "similarity": 0.22597402597402597,
           "severity": "High"
         }
       ]
@@ -4065,10 +2761,10 @@
       "repo": "cal.com",
       "language": "TypeScript",
       "tp": 5,
-      "fp": 17,
+      "fp": 0,
       "fn": 0,
       "n_golden": 5,
-      "n_candidates": 22,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "Case sensitivity bypass in email blacklist",
@@ -4106,11 +2802,11 @@
       "pr_url": "https://github.com/calcom/cal.com/pull/10600",
       "repo": "cal.com",
       "language": "TypeScript",
-      "tp": 4,
-      "fp": 46,
-      "fn": 0,
+      "tp": 3,
+      "fp": 2,
+      "fn": 1,
       "n_golden": 4,
-      "n_candidates": 50,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "Backup code validation is case-sensitive due to the use of indexOf(). This causes validation to fail if a user enters uppercase hex characters, as backup codes should be case-insensitive for a better user experience.",
@@ -4129,12 +2825,6 @@
           "candidate": "Race condition in backup code validation: backup codes are decrypted and mutated in memory before being written back - two concurrent login requests can both read the same unused code and both succeed, allowing code reuse",
           "similarity": 0.6372125435540069,
           "severity": "High"
-        },
-        {
-          "golden": "The exported function TwoFactor handles backup codes and is in BackupCode.tsx. Inconsistent naming.",
-          "candidate": "All backup codes are deleted regardless of which authentication path was taken, including when backup codes were not used",
-          "similarity": 0.2356323529411765,
-          "severity": "Low"
         }
       ]
     },
@@ -4143,10 +2833,10 @@
       "repo": "cal.com",
       "language": "TypeScript",
       "tp": 3,
-      "fp": 23,
+      "fp": 2,
       "fn": 2,
       "n_golden": 5,
-      "n_candidates": 26,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "The Calendar interface now requires createEvent(event, credentialId), but some implementations (e.g., Lark/Office365) still declare createEvent(event) only\u2014this breaks the interface contract (also applies to other locations in the PR).",
@@ -4162,8 +2852,8 @@
         },
         {
           "golden": "Potential null reference if mainHostDestinationCalendar is undefined if evt.destinationCalendar is null or an empty array ",
-          "candidate": "Destructuring assignment with empty array fallback could mask undefined/null destinationCalendar - mainHostDestinationCalendar will be undefined if destinationCalendar is null, undefined, or an empty array",
-          "similarity": 0.5685576923076923,
+          "candidate": "Array destructuring assumes evt.destinationCalendar has at least one element, but fallback array is empty which makes mainHostDestinationCalendar undefined",
+          "similarity": 0.49649999999999994,
           "severity": "High"
         }
       ]
@@ -4173,10 +2863,10 @@
       "repo": "cal.com",
       "language": "TypeScript",
       "tp": 1,
-      "fp": 16,
+      "fp": 4,
       "fn": 1,
       "n_golden": 2,
-      "n_candidates": 17,
+      "n_candidates": 5,
       "matches": [
         {
           "golden": "The code uses forEach with async callbacks, which causes asynchronous operations (e.g., calendar/video event deletions, payment refunds) to run concurrently without being awaited. This 'fire-and-forget' behavior leads to unhandled promise rejections, race conditions, and incomplete cleanup, as surrounding try-catch blocks cannot properly handle errors from these unawaited promises. Replace forEach with for...of loops or Promise.all() with map() to ensure proper sequential execution and error handling.",

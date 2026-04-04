@@ -8,6 +8,11 @@ import { ClerkProvider } from '@clerk/nextjs';
 import './globals.css';
 
 export const metadata: Metadata = {
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+  },
   title: {
     default: 'CodeSheriff',
     template: '%s | CodeSheriff',

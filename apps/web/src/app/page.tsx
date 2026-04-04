@@ -7,6 +7,7 @@ import { SignInButton, SignUpButton } from '@clerk/nextjs';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { ShieldCheck, Zap, GitMerge, LineChart } from 'lucide-react';
+import { LogoIcon } from '@/components/shared/logo';
 
 export default async function LandingPage() {
   const { userId } = await auth();
@@ -18,7 +19,7 @@ export default async function LandingPage() {
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           <div className="flex items-center gap-2 font-semibold text-lg">
-            <ShieldCheck className="h-5 w-5 text-primary" />
+            <LogoIcon size={20} className="text-primary" />
             CodeSheriff
           </div>
           <nav className="flex items-center gap-3">
@@ -98,7 +99,7 @@ const FEATURES = [
     icon: ShieldCheck,
     title: 'Hallucination detection',
     description:
-      'Catches calls to APIs, methods, and libraries that don\'t exist — a common AI mistake.',
+      "Catches calls to APIs, methods, and libraries that don't exist — a common AI mistake.",
   },
   {
     icon: Zap,

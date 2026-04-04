@@ -347,12 +347,46 @@ export class AnalysisPipeline {
       };
       const MAX_FINDINGS_PER_PR = 5;
       const FP_BLOCKLIST = [
+        // Generic advisory patterns — not actionable without full context
         'optional chaining',
         'consider adding error handling',
         'consider adding validation',
-        'authorization check',
         'deprecated RSpec',
         'inconsistent naming',
+        // "Missing X" advisories: speculative, rarely TPs on benchmark
+        'missing timeout',
+        'missing https enforcement',
+        'missing http method validation',
+        'missing rate limit',
+        'missing authentication check',
+        'missing authentication/authorization',
+        'missing server-side validation',
+        'missing csrf token',
+        'no rate limit',
+        'no validation of',
+        'no error handling for',
+        // Security speculation on normal patterns
+        'transmitted as plain text',
+        'without encryption',
+        'without proper validation',
+        'without proper sanitization',
+        'overly permissive schema',
+        'generic error message',
+        // Client-side / test observations (not backend bugs)
+        'client-side only',
+        'test bypasses',
+        'test only checks',
+        'test assumes',
+        'mock expectation',
+        'autocomplete attribute',
+        // Global var / type annotation nits
+        'global mutable variables',
+        'global variable.*initialized as empty',
+        'type assertion bypasses',
+        'does not return a promise type annotation',
+        // Async redundancy nits (not bugs)
+        'redundant await',
+        'redundant .await. usage',
       ];
 
       // Filter blocklist

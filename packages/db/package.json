@@ -22,7 +22,8 @@
     "migrate:reset": "prisma migrate reset",
     "db:push": "prisma db push",
     "studio": "prisma studio",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "postinstall": "prisma generate || true"
   },
   "dependencies": {
     "@prisma/client": "^5.12.0"

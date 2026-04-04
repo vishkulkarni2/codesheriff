@@ -1,0 +1,10 @@
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <!-- 5-point sheriff star -->
+  <path d="M16 2 L19.41 11.31 L29.31 11.67 L21.52 17.79 L24.23 27.33 L16 21.8 L7.77 27.33 L10.48 17.79 L2.69 11.67 L12.59 11.31 Z" fill="#4ade80"/>
+  <!-- < -->
+  <path d="M13 12.5 L11.2 16 L13 19.5" stroke="#052e16" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- / -->
+  <path d="M15.8 19 L17.5 13" stroke="#052e16" stroke-width="1.75" stroke-linecap="round"/>
+  <!-- > -->
+  <path d="M19 12.5 L20.8 16 L19 19.5" stroke="#052e16" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
