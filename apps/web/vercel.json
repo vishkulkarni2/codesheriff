@@ -1,0 +1,7 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "cd ../.. && pnpm --filter @codesheriff/shared build && pnpm --filter @codesheriff/db build && pnpm --filter @codesheriff/db generate && pnpm --filter @codesheriff/web build",
+  "outputDirectory": ".next",
+  "installCommand": "cd ../.. && pnpm install",
+  "regions": ["sfo1"]
+}

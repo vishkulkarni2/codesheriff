@@ -1,0 +1,76 @@
+{
+  "target": "/tmp/codesheriff-dogfood/vulnerable-app-nodejs-express/",
+  "riskScore": 100,
+  "findingsCount": 5,
+  "durationMs": 1784,
+  "findings": [
+    {
+      "ruleId": "ai-sql-template-literal",
+      "title": "Sql Template Literal",
+      "description": "SQL query constructed with string interpolation/concatenation. This is a SQL injection vulnerability -- use parameterized queries: db.query('SELECT ... WHERE id = $1', [id]). Even if the variable looks safe, it may be attacker-controlled.\n",
+      "severity": "CRITICAL",
+      "category": "SECURITY",
+      "file": "index.js",
+      "lineStart": 16,
+      "lineEnd": 26,
+      "codeSnippet": "requires login",
+      "detector": "StaticAnalyzer"
+    },
+    {
+      "ruleId": "ts-optional-chain-missing",
+      "title": "Ts Optional Chain Missing",
+      "description": "Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.query?.name) for safety, especially when dealing with API responses or database results that may have missing fields.\n",
+      "severity": "HIGH",
+      "category": "SECURITY",
+      "file": "index.js",
+      "lineStart": 33,
+      "lineEnd": 33,
+      "codeSnippet": "requires login",
+      "detector": "StaticAnalyzer"
+    },
+    {
+      "ruleId": "ts-optional-chain-missing",
+      "title": "Ts Optional Chain Missing",
+      "description": "Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.query?.name) for safety, especially when dealing with API responses or database results that may have missing fields.\n",
+      "severity": "HIGH",
+      "category": "SECURITY",
+      "file": "index.js",
+      "lineStart": 39,
+      "lineEnd": 39,
+      "codeSnippet": "requires login",
+      "detector": "StaticAnalyzer"
+    },
+    {
+      "ruleId": "ai-sql-template-literal",
+      "title": "Sql Template Literal",
+      "description": "SQL query constructed with string interpolation/concatenation. This is a SQL injection vulnerability -- use parameterized queries: db.query('SELECT ... WHERE id = $1', [id]). Even if the variable looks safe, it may be attacker-controlled.\n",
+      "severity": "CRITICAL",
+      "category": "SECURITY",
+      "file": "index.js",
+      "lineStart": 44,
+      "lineEnd": 46,
+      "codeSnippet": "requires login",
+      "detector": "StaticAnalyzer"
+    },
+    {
+      "ruleId": "ts-optional-chain-missing",
+      "title": "Ts Optional Chain Missing",
+      "description": "Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.params?.id) for safety, especially when dealing with API responses or database results that may have missing fields.\n",
+      "severity": "HIGH",
+      "category": "SECURITY",
+      "file": "index.js",
+      "lineStart": 46,
+      "lineEnd": 46,
+      "codeSnippet": "requires login",
+      "detector": "StaticAnalyzer"
+    }
+  ],
+  "summary": {
+    "critical": 2,
+    "high": 3,
+    "medium": 0,
+    "low": 0,
+    "info": 0
+  },
+  "passed": false
+}

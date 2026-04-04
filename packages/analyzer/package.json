@@ -24,8 +24,7 @@
     "@anthropic-ai/sdk": "^0.24.0",
     "@codesheriff/shared": "workspace:*",
     "ioredis": "^5.3.2",
-    "pino": "^9.2.0",
-    "crypto": "^1.0.1"
+    "pino": "^9.2.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

@@ -1,0 +1,41 @@
+rules:
+  # ---------------------------------------------------------------------------
+  # TypeScript/JavaScript Correctness Rules
+  # Targets: Cal.com (TypeScript scheduling platform)
+  # Based on golden comments: async forEach, unhandled promise rejections,
+  # missing error handling, naming inconsistencies
+  # ---------------------------------------------------------------------------
+
+  - id: ts-async-foreach
+    patterns:
+      - pattern: $ARRAY.forEach(async ($ITEM) => { ... })
+      - pattern: $ARRAY.forEach(async ($ITEM, $IDX) => { ... })
+      - pattern: $ARRAY.forEach(async function($ITEM) { ... })
+    message: >
+      Array.forEach with an async callback does not await the promises, causing
+      fire-and-forget execution. Errors will result in unhandled promise rejections
+      and operations may execute concurrently without coordination. Use a for...of
+      loop with await, or Promise.all(array.map(async ...)) for controlled concurrency.
+    severity: ERROR
+    languages: [typescript, javascript]
+    metadata:
+      category: correctness
+      cwe: CWE-252
+      benchmark-target: cal.com
+
+  # ts-missing-await: DISABLED
+  # The pattern (const $X = $FUNC(); ... $X.then(...)) matches intentional
+  # fire-and-forget patterns and generates enormous noise on cal.com.
+  # LLM detectors (LogicBugDetector) handle async misuse in context.
+  #
+  # - id: ts-missing-await
+
+  # ts-catch-empty: DISABLED
+  # .catch(() => {}) is an extremely common intentional pattern in TypeScript —
+  # used deliberately to suppress unhandled rejection warnings for non-critical
+  # operations (analytics, telemetry, cache warming). This rule was the single
+  # largest source of FPs on cal.com.
+  # LLM detectors can identify genuinely dangerous empty catch blocks in context.
+  #
+  # - id: ts-catch-empty
+

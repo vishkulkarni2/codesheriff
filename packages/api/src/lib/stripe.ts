@@ -20,7 +20,7 @@ export function getStripe(): Stripe {
   }
 
   _stripe = new Stripe(key, {
-    apiVersion: '2024-06-20',
+    apiVersion: '2025-02-24.acacia',
   });
 
   return _stripe;

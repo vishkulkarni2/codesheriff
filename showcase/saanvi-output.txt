@@ -1,0 +1,30 @@
+
+CodeSheriff · AI Code Safety Scanner
+Target: /tmp/codesheriff-dogfood/saanvi/
+
+
+──────────────────────────────────────────
+  🚨 CRITICAL  (1)
+──────────────────────────────────────────
+   CRITICAL  Python Queryset Negative Slice
+       modules/python3/pacman_config.py:284
+       Django QuerySets do not support negative indexing or negative slicing. Using a negative index on a QuerySet raises AssertionError. Convert to a list first or use alternative logic to access elements from the end.
+
+         │ requires login
+
+
+──────────────────────────────────────────
+  ⛔ HIGH  (1)
+──────────────────────────────────────────
+     HIGH    Python None Attribute Access
+       main.py:368
+       Potential None dereference. The value may be None (e.g., from dict.get()) and accessing attributes on None raises AttributeError. Add a None check.
+
+         │ requires login
+
+Summary: 1 critical · 1 high
+
+Risk Score: 42/100  ████████░░░░░░░░░░░░
+
+Scan completed in 1790ms
+

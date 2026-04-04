@@ -1,0 +1,340 @@
+rules:
+  # ---------------------------------------------------------------------------
+  # Benchmark-Targeted Rules
+  # Based on analysis of the top missed patterns in the code-review-benchmark.
+  # Priority focus areas:
+  #   1. incorrect_value — wrong variable/parameter used (24.8% of golden)
+  #   2. null_reference — unchecked null/Optional/dict access (8.0% of golden)
+  #   3. api_misuse — wrong method or overly broad API usage (19.0% of golden)
+  # ---------------------------------------------------------------------------
+
+  # ── INCORRECT_VALUE patterns ────────────────────────────────────────────────
+
+  - id: java-optional-get-without-check
+    pattern: |
+      $OPT.get()
+    pattern-not-inside: |
+      if ($OPT.isPresent()) {
+          ...
+      }
+    pattern-not-inside: |
+      $OPT.ifPresent(...)
+    pattern-not-inside: |
+      $OPT.orElse(...)
+    pattern-not-inside: |
+      $OPT.orElseGet(...)
+    pattern-not-inside: |
+      $OPT.orElseThrow(...)
+    message: >
+      Calling Optional.get() without first checking isPresent() will throw
+      NoSuchElementException if the Optional is empty. Use isPresent(), orElse(),
+      orElseGet(), or orElseThrow() to handle the empty case explicitly.
+    severity: ERROR
+    languages: [java]
+    metadata:
+      category: correctness
+      cwe: CWE-476
+      benchmark-target: keycloak
+      bug-type: null_reference
+      benchmark-pattern: >
+        Golden comment example: "Calling Optional.get() directly on the Optional
+        returned by RecoveryAuthnCodesUtils.getCredential(user) without checking
+        isPresent() can lead to a NoSuchElementException if the Optional is empty."
+
+  - id: java-instanceof-before-cast
+    patterns:
+      - pattern: |
+          ($TYPE) $VAR
+      - pattern: |
+          ($TYPE) $OBJ.$METHOD(...)
+    pattern-not-inside: |
+      if ($VAR instanceof $TYPE) {
+          ...
+      }
+    pattern-not-inside: |
+      if ($OBJ instanceof $TYPE) {
+          ...
+      }
+    message: >
+      Unsafe cast without prior instanceof check. If the object is not of the
+      expected type, this will throw a ClassCastException at runtime. Add an
+      instanceof guard before casting, or use pattern matching (Java 16+):
+      if (obj instanceof TargetType t) { ... }
+    severity: WARNING
+    languages: [java]
+    metadata:
+      category: correctness
+      cwe: CWE-704
+      benchmark-target: keycloak
+      bug-type: incorrect_value
+      benchmark-pattern: >
+        Golden comment example: "Unsafe cast from AuthenticatorFactory to
+        ConfigurableAuthenticatorFactory without type checking."
+
+  # ── NULL_REFERENCE patterns ─────────────────────────────────────────────────
+
+  - id: python-dict-nested-access-no-guard
+    patterns:
+      - pattern: $DICT[$KEY1][$KEY2]
+      - pattern: $DICT[$KEY1][$KEY2][$KEY3]
+    pattern-not-inside: |
+      if $KEY1 in $DICT:
+          ...
+    pattern-not-inside: |
+      $DICT.get($KEY1, ...)
+    message: >
+      Nested dictionary access without existence check can raise KeyError if the
+      outer key is absent. Use dict.get() with a default, the 'in' operator, or
+      dict.setdefault() to safely access nested keys.
+      Prefer: value = dict.get(key1, {}).get(key2)
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: correctness
+      cwe: CWE-476
+      benchmark-target: sentry
+      bug-type: null_reference
+      benchmark-pattern: >
+        Golden comment example: "The code attempts to access
+        integration.metadata[sender][login] without checking for the existence
+        of the sender key. This causes a KeyError for integrations where the
+        sender metadata was not set during creation."
+
+  - id: ruby-hash-nested-access-no-dig
+    patterns:
+      - pattern: $HASH[$KEY1][$KEY2]
+      - pattern: $HASH[$KEY1][$KEY2][$KEY3]
+    pattern-not-inside: |
+      if $HASH[$KEY1]
+          ...
+      end
+    pattern-not-inside: |
+      $HASH.dig(...)
+    message: >
+      Nested hash access without nil check can raise NoMethodError if an
+      intermediate key is nil. Use Hash#dig for safe nested access:
+      hash.dig(:key1, :key2) returns nil instead of raising.
+    severity: WARNING
+    languages: [ruby]
+    metadata:
+      category: correctness
+      cwe: CWE-476
+      benchmark-target: discourse
+      bug-type: null_reference
+      benchmark-pattern: >
+        Discourse golden comments frequently flag missing nil guards on
+        nested hash/object access patterns.
+
+  - id: go-nil-dereference-after-return
+    patterns:
+      - pattern: |
+          $VAL, $ERR := $FUNC(...)
+          $VAL.$FIELD
+      - pattern: |
+          $VAL, $ERR := $FUNC(...)
+          $VAL.$METHOD(...)
+    pattern-not-inside: |
+      $VAL, $ERR := $FUNC(...)
+      if $ERR != nil {
+          ...
+      }
+      ...
+      $VAL.$FIELD
+    message: >
+      Value from a function that returns (T, error) is used without checking
+      the error first. If the function returns an error, the value may be nil,
+      and dereferencing it will panic. Always check err != nil before using the
+      returned value.
+    severity: ERROR
+    languages: [go]
+    metadata:
+      category: correctness
+      cwe: CWE-476
+      benchmark-target: grafana
+      bug-type: null_reference
+
+  # ── API_MISUSE patterns ─────────────────────────────────────────────────────
+
+  - id: python-broad-exception-catch
+    patterns:
+      - pattern: |
+          try:
+              ...
+          except Exception as $E:
+              pass
+      - pattern: |
+          try:
+              ...
+          except Exception as $E:
+              $LOG.warning(...)
+      - pattern: |
+          try:
+              ...
+          except Exception as $E:
+              return None
+    message: >
+      Catching the base Exception class suppresses all exceptions including
+      unexpected ones that may indicate bugs. Catch the specific exception type
+      you expect (e.g., ValueError, KeyError, requests.HTTPError). If you need
+      to catch broad exceptions, re-raise after logging or use a more specific
+      base class.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: correctness
+      cwe: CWE-390
+      benchmark-target: sentry
+      bug-type: api_misuse
+      benchmark-pattern: >
+        Golden comment example: "Catching generic RuntimeException is too broad.
+        The implementation throws IllegalArgumentException specifically — catch
+        that instead for more precise testing."
+
+  - id: java-broad-exception-catch
+    patterns:
+      - pattern: |
+          try {
+              ...
+          } catch (RuntimeException $E) {
+              ...
+          }
+      - pattern: |
+          try {
+              ...
+          } catch (Exception $E) {
+              ...
+          }
+    pattern-not-inside: |
+      try {
+          ...
+      } catch (Exception $E) {
+          throw $E;
+      }
+    message: >
+      Catching RuntimeException or Exception is overly broad and can hide
+      unexpected errors. Catch the specific exception type(s) that can be thrown
+      by the code in the try block. If multiple types are expected, use a
+      multi-catch: catch (TypeA | TypeB e).
+    severity: WARNING
+    languages: [java]
+    metadata:
+      category: correctness
+      cwe: CWE-390
+      benchmark-target: keycloak
+      bug-type: api_misuse
+
+  - id: ruby-broad-rescue
+    pattern: |
+      begin
+          ...
+      rescue => $E
+          ...
+      end
+    message: >
+      Bare rescue (rescue => e) catches StandardError and all subclasses, which
+      is often too broad. Rescue the specific exception class(es) you expect.
+      Catching everything can mask bugs and make debugging harder.
+    severity: WARNING
+    languages: [ruby]
+    metadata:
+      category: correctness
+      cwe: CWE-390
+      benchmark-target: discourse
+      bug-type: api_misuse
+
+  - id: typescript-promise-not-awaited
+    patterns:
+      - pattern: |
+          async function $FN(...) {
+              ...
+              $OBJ.$METHOD(...);
+              ...
+          }
+      - pattern: |
+          async ($PARAMS) => {
+              ...
+              $OBJ.$METHOD(...);
+              ...
+          }
+    pattern-not: |
+      async function $FN(...) {
+          ...
+          await $OBJ.$METHOD(...);
+          ...
+      }
+    message: >
+      An async function call result may not be awaited. If $METHOD returns a
+      Promise, not awaiting it means errors are silently swallowed and the
+      caller continues before the async operation completes. Add 'await' if
+      the result or completion matters. Use void operator intentionally if
+      fire-and-forget is intended.
+    severity: WARNING
+    languages: [typescript]
+    metadata:
+      category: correctness
+      cwe: CWE-362
+      benchmark-target: cal.com
+      bug-type: race_condition
+
+  # ── RACE_CONDITION patterns ──────────────────────────────────────────────────
+
+  - id: go-goroutine-without-sync
+    patterns:
+      - pattern: |
+          go func() {
+              ...
+              $SHARED = ...
+              ...
+          }()
+      - pattern: |
+          go func() {
+              ...
+              $SHARED[$KEY] = ...
+              ...
+          }()
+    message: >
+      A goroutine writes to a shared variable without apparent synchronization.
+      This is a data race. Protect shared state with sync.Mutex, sync.RWMutex,
+      or use channels to communicate results. Use 'go test -race' to detect races.
+    severity: ERROR
+    languages: [go]
+    metadata:
+      category: correctness
+      cwe: CWE-362
+      benchmark-target: grafana
+      bug-type: race_condition
+
+  - id: python-test-time-sleep
+    patterns:
+      - pattern: time.sleep($N)
+      - pattern: import time\n...\ntime.sleep($N)
+    message: >
+      Fixed sleep in tests is flaky — the sleep duration may be too short under
+      load, or too long when the condition resolves quickly. Replace with an
+      explicit wait loop that polls for the expected condition with a timeout,
+      or use threading.Event / asyncio.wait_for with a condition variable.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: correctness
+      cwe: CWE-362
+      benchmark-target: sentry
+      bug-type: race_condition
+      benchmark-pattern: >
+        Golden comment example: "Fixed sleep in tests can be flaky;
+        wait on condition instead."
+
+  - id: ruby-test-time-sleep
+    pattern: sleep($N)
+    message: >
+      Fixed sleep in tests introduces flakiness. Under load, the sleep duration
+      may not be sufficient; normally it wastes time waiting. Use wait_for
+      helpers, polling loops with a timeout, or Capybara's have_* matchers
+      which retry automatically.
+    severity: WARNING
+    languages: [ruby]
+    metadata:
+      category: correctness
+      cwe: CWE-362
+      benchmark-target: discourse
+      bug-type: race_condition

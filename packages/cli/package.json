@@ -1,0 +1,48 @@
+{
+  "name": "codesheriff",
+  "version": "0.1.0",
+  "description": "CodeSheriff CLI — AI code safety scanner for the terminal",
+  "type": "module",
+  "bin": {
+    "codesheriff": "./dist/cli.js"
+  },
+  "main": "./dist/cli.js",
+  "exports": {
+    ".": {
+      "import": "./dist/cli.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "start": "node dist/cli.js"
+  },
+  "dependencies": {
+    "@codesheriff/analyzer": "workspace:*",
+    "@codesheriff/shared": "workspace:*",
+    "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "glob": "^11.0.0",
+    "ora": "^8.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "keywords": [
+    "code-review",
+    "ai-safety",
+    "hallucination-detection",
+    "security",
+    "cli"
+  ],
+  "license": "MIT"
+}

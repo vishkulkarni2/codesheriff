@@ -3,21 +3,19 @@ rules:
   # ai-sql-concatenation
   # Detects SQL queries built with string concatenation or template literals.
   #
-  # AI coding assistants frequently generate SQL with string interpolation —
+  # AI coding assistants frequently generate SQL with string interpolation --
   # even when the variable names sound safe (userId, email, id). This is a
   # SQL injection vulnerability regardless of how the variable is named.
   # ---------------------------------------------------------------------------
 
   - id: ai-sql-template-literal
-    patterns:
-      - pattern: db.query(`... ${$VAR} ...`)
-      - pattern: db.query('...' + $VAR + '...')
-      - pattern: db.execute(`... ${$VAR} ...`)
-      - pattern: pool.query(`... ${$VAR} ...`)
-      - pattern: connection.query(`... ${$VAR} ...`)
+    pattern-either:
+      - pattern: $DB.query(`...`)
+      - pattern: $DB.query('...' + $VAR + '...')
+      - pattern: $DB.execute(`...`)
     message: >
       SQL query constructed with string interpolation/concatenation. This is a SQL injection
-      vulnerability — use parameterized queries: db.query('SELECT ... WHERE id = $1', [id]).
+      vulnerability -- use parameterized queries: db.query('SELECT ... WHERE id = $1', [id]).
       Even if the variable looks safe, it may be attacker-controlled.
     severity: ERROR
     languages: [javascript, typescript]
@@ -28,26 +26,12 @@ rules:
       ai-specific: true
       fix: Use parameterized queries (prepared statements) with placeholder parameters.
 
-  - id: ai-sql-string-format
-    pattern: |
-      $QUERY = `SELECT ... ${$VAR} ...`
-      ...
-      db.$METHOD($QUERY)
-    message: >
-      SQL string assembled with template literal before being passed to database.
-      Any interpolated value is a potential injection point. Use parameterized queries.
-    severity: ERROR
-    languages: [javascript, typescript]
-    metadata:
-      category: security
-      cwe: CWE-89
-      ai-specific: true
-
   - id: ai-sql-concat-python
-    patterns:
-      - pattern: cursor.execute("..." + $VAR + "...")
-      - pattern: cursor.execute(f"... {$VAR} ...")
-      - pattern: cursor.execute("... %s" % $VAR)
+    pattern-either:
+      - pattern: $CURSOR.execute("..." + $VAR + "...")
+      - pattern: $CURSOR.execute(f"...")
+      - pattern: $CURSOR.execute("..." % $VAR)
+      - pattern: $CURSOR.execute("..." % ($VAR,))
     message: >
       SQL query built with string concatenation or f-string in Python.
       Use parameterized queries: cursor.execute('SELECT ... WHERE id = %s', (value,))
@@ -59,11 +43,11 @@ rules:
       ai-specific: true
 
   - id: ai-sql-concat-prisma-raw
-    patterns:
-      - pattern: prisma.$queryRaw(`... ${$VAR} ...`)
-      - pattern: prisma.$executeRaw(`... ${$VAR} ...`)
+    pattern-either:
+      - pattern: prisma.$queryRaw(`...`)
+      - pattern: prisma.$executeRaw(`...`)
     message: >
-      Prisma $queryRaw used with template literal interpolation — this bypasses Prisma's
+      Prisma $queryRaw used with template literal interpolation -- this bypasses Prisma's
       parameterization. Use Prisma.sql tagged template or $queryRaw with separate params array.
     severity: ERROR
     languages: [javascript, typescript]

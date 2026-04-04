@@ -3,16 +3,10 @@ rules:
   # ai-jwt-client-only
   # Detects JWT decode/verify calls in frontend/client-side code without
   # evidence of a corresponding server-side verification.
-  #
-  # AI coding assistants commonly generate client-side JWT decoding to extract
-  # user info (role, id) and then make access control decisions based on the
-  # decoded payload — trusting an unverified token.
   # ---------------------------------------------------------------------------
 
   - id: ai-jwt-client-only-decode
-    patterns:
-      - pattern: jwt.decode($TOKEN)
-      - pattern-not: jwt.verify($TOKEN, ...)
+    pattern: jwt.decode($TOKEN)
     message: >
       JWT token is decoded without cryptographic verification (jwt.decode does NOT verify the
       signature). An attacker can tamper with the payload (e.g., escalate role to 'admin').
@@ -29,14 +23,13 @@ rules:
         - https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html
 
   - id: ai-jwt-decode-role-check
-    patterns:
-      - pattern: |
-          const $PAYLOAD = jwt.decode($TOKEN);
-          ...
-          if ($PAYLOAD.$FIELD === ...) { ... }
+    pattern: |
+      const $PAYLOAD = jwt.decode($TOKEN);
+      ...
+      if ($PAYLOAD.$FIELD === ...) { ... }
     message: >
       Decoded JWT payload used for access control without server-side verification.
-      The payload is only base64-decoded, not verified — any client can forge this.
+      The payload is only base64-decoded, not verified -- any client can forge this.
     severity: ERROR
     languages: [javascript, typescript]
     metadata:

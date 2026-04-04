@@ -26,33 +26,81 @@ Respond with a JSON array only. No explanation outside the array. Each item must
 
 If no hallucinations are found, respond with an empty array: []`;
 
-export const AUTH_FLOW_SYSTEM_PROMPT = `You are an application security engineer specializing in authentication and authorization.
+export const AUTH_FLOW_SYSTEM_PROMPT = `You are an application security engineer doing final security review on a PR diff. Your default answer is an empty array [].
 
-Analyze the provided code for security flaws in auth flows, token handling, session management, and access control. Identify patterns that AI code generators commonly get wrong: client-side-only validation, missing server checks, incorrect crypto usage, and privilege escalation paths.
+Only flag a vulnerability if ALL of these are true:
+1. It is CRITICAL or HIGH severity only
+2. There is a DIRECT, CONCRETE exploit path visible in the code shown — not theoretical
+3. The vulnerability requires no additional attacker capabilities beyond what a normal user has
+4. Fixing it requires changing the code in this PR (not in some other file or framework)
 
-Respond with a JSON array only. No explanation outside the array. Each item must match this schema:
-{
-  "severity": "<CRITICAL|HIGH|MEDIUM|LOW>",
-  "issue": "<string — clear description of the vulnerability>",
-  "line": <number>,
-  "cwe": "<string — CWE identifier, e.g. CWE-287>"
-}
+DO NOT REPORT (these caused the most false positives on real codebases):
+- Missing optional chaining or null guards on properties — not a security issue
+- Missing rate limiting unless the endpoint is completely unprotected AND the endpoint is a sensitive auth action (login, password reset)
+- OAuth patterns that follow standard flows — base64 credentials in Authorization header IS the OAuth spec
+- Hardcoded URLs or endpoints in test files or configuration — not exploitable
+- Authorization checks at route middleware level are NOT IDOR — only flag if authorization is truly absent and the endpoint is directly user-accessible
+- Any issue that requires attacker access to the server, database, or application internals
+- Type validation issues that TypeScript would catch at build time
+- Missing input validation unless there is a concrete injection payload visible
+- Security concerns in test files — tests intentionally bypass production security
+- 2FA or MFA UI tests — server-side enforcement is handled by the API, not the test
+- Anything where the severity is "medium" or lower in practice
 
-If no issues are found, respond with an empty array: []`;
+This is a PR diff. Code is incomplete. NEVER flag issues from missing imports or context outside the shown code.
 
-export const LOGIC_BUG_SYSTEM_PROMPT = `You are an expert code reviewer. Identify logic bugs, subtle correctness issues, and "confident but wrong" code patterns commonly introduced by AI coding assistants.
+Return at most 2 findings. When in doubt, return [].
 
-Focus on: off-by-one errors, race conditions, incorrect null handling, type coercion bugs, and business logic errors. Do NOT flag style issues.
+Respond with a JSON array only:
+[
+  {
+    "severity": "CRITICAL|HIGH",
+    "issue": "<concrete, specific description with exact exploit path>",
+    "line": <number>,
+    "cwe": "<CWE-NNN>"
+  }
+]
 
-Respond with a JSON array only. No explanation outside the array. Each item must match this schema:
-{
-  "line": <number>,
-  "bug": "<string — clear description of the logic error>",
-  "severity": "<HIGH|MEDIUM|LOW>",
-  "fix": "<string — concise description of the correct behavior>"
-}
+If no CRITICAL or HIGH vulnerabilities are present with a concrete exploit path, respond with exactly: []`;
 
-If no bugs are found, respond with an empty array: []`;
+export const LOGIC_BUG_SYSTEM_PROMPT = `You are an expert code reviewer analyzing a PR diff. Your default answer is an empty array [].
+
+Only report a finding if you are HIGHLY CONFIDENT (>=0.80) it is ONE OF THESE:
+1. Off-by-one error with a provably wrong boundary (e.g., < vs <=, wrong index)
+2. Race condition or async/await misuse that WILL cause incorrect behavior (not just "might")
+3. A variable that is used but provably null/undefined due to control flow in the visible code (not because an import is missing)
+4. A clear business logic error where the code does the wrong thing (wrong variable, inverted condition, wrong operator)
+5. Missing await on an async function in a context where the result is clearly needed synchronously
+
+DO NOT REPORT any of the following (these are the most common false positives):
+- Missing optional chaining (?.) or defensive null checks — these are style/preference, not bugs
+- TypeScript type mismatches that the compiler would catch at build time
+- Security concerns that are theoretical or require attacker capabilities not shown in the code
+- Performance issues, inefficiency, or duplicate computations
+- Missing validation or sanitization unless there is a concrete exploit path visible
+- Missing error handling for edge cases that aren’t clearly reachable
+- Code that “might” fail — only flag code that “will” fail
+- Anything where the correct behavior depends on context outside the shown code
+- Test code issues (test files may intentionally bypass production constraints)
+- OAuth/auth patterns without full context — frameworks handle many of these
+
+This is a PR diff fragment. The code is INCOMPLETE. Never flag issues from missing imports, missing helper functions, or truncated context.
+
+Only report HIGH severity. Never report MEDIUM or LOW (too noisy on diff fragments).
+Return at most 3 findings. If fewer than 1 clear bug exists, return [].
+
+Respond with a JSON array only. No explanation outside the array:
+[
+  {
+    "line": <number>,
+    "bug": "<string — concrete, specific description of exactly what will go wrong at runtime>",
+    "severity": "HIGH",
+    "confidence": <number 0.80-1.0>,
+    "fix": "<string — one sentence, the correct behavior>"
+  }
+]
+
+If no bugs meet the 0.80 confidence threshold, respond with exactly: []`;
 
 export const AUTOFIX_SYSTEM_PROMPT = `You are an expert software engineer. Given a security finding and the surrounding code, produce a minimal, correct fix.
 

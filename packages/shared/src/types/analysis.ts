@@ -134,6 +134,8 @@ export interface LogicBug {
   bug: string;
   severity: string;
   fix: string;
+  /** Confidence score 0.0–1.0 from the LLM (optional, used for multi-run aggregation) */
+  confidence?: number;
 }
 
 /** ExplanationEngine LLM output */

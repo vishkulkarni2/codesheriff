@@ -1,0 +1,48 @@
+
+CodeSheriff · AI Code Safety Scanner
+Target: /tmp/codesheriff-dogfood/vulnerable-app-nodejs-express/
+
+
+──────────────────────────────────────────
+  🚨 CRITICAL  (2)
+──────────────────────────────────────────
+   CRITICAL  Sql Template Literal
+       index.js:16
+       SQL query constructed with string interpolation/concatenation. This is a SQL injection vulnerability -- use parameterized queries: db.query('SELECT ... WHERE id = $1', [id]). Even if the variable looks safe, it may be attacker-controlled.
+
+         │ requires login
+
+   CRITICAL  Sql Template Literal
+       index.js:44
+       SQL query constructed with string interpolation/concatenation. This is a SQL injection vulnerability -- use parameterized queries: db.query('SELECT ... WHERE id = $1', [id]). Even if the variable looks safe, it may be attacker-controlled.
+
+         │ requires login
+
+
+──────────────────────────────────────────
+  ⛔ HIGH  (3)
+──────────────────────────────────────────
+     HIGH    Ts Optional Chain Missing
+       index.js:33
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.query?.name) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       index.js:39
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.query?.name) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       index.js:46
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.params?.id) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+Summary: 2 critical · 3 high
+
+Risk Score: 100/100  ████████████████████
+
+Scan completed in 1782ms
+

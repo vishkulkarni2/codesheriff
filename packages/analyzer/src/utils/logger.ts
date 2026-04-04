@@ -2,6 +2,8 @@
  * Structured logger for the analyzer pipeline.
  * Uses pino with request-ID correlation. Intentionally never logs
  * secrets, API keys, or raw code snippets beyond debug level.
+ *
+ * Logs are sent to stderr so they don't pollute stdout JSON output.
  */
 
 import pino from 'pino';
@@ -29,7 +31,7 @@ export const logger = pino({
     code: (v: unknown) =>
       process.env['LOG_LEVEL'] === 'debug' ? v : '[code omitted]',
   },
-});
+}, pino.destination(2));
 
 /**
  * Create a child logger scoped to a specific scan job.

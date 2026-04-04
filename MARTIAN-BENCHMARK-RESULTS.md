@@ -1,76 +1,56 @@
 # Martian Code Review Benchmark -- CodeSheriff Results
 
-**Date:** April 1, 2026
 **Benchmark:** Martian Code Review Bench (Offline) v2026-03
 **Judge Model:** Claude Sonnet 4 (claude-sonnet-4-20250514)
 
 ---
 
-## Summary
+## v2 Results (April 1, 2026) -- Full 48-PR Evaluation
 
-| Metric | Value |
-|--------|-------|
-| **F1 Score** | **8.7%** |
-| Precision | 5.0% |
-| Recall | 35.3% |
-| True Positives | 6 |
-| False Positives | 115 |
-| False Negatives | 11 |
-| PRs Evaluated | 6 / 50 (cal.com only) |
-| Total Candidates | 121 |
+| Metric | v1 (6 PRs) | v2 (48 PRs) | Delta |
+|--------|------------|-------------|-------|
+| **F1 Score** | **8.7%** | **12.2%** | +3.5pp |
+| Precision | 5.0% | 8.2% | +3.2pp |
+| Recall | 35.3% | 23.5% | -11.8pp |
+| True Positives | 6 | 31 | +25 |
+| False Positives | 115 | 347 | +232 |
+| False Negatives | 11 | 101 | +90 |
+| PRs Evaluated | 6 / 50 | 48 / 50 | +42 PRs |
+| Total Candidates | 121 | 378 | +257 |
 
-**Status: NOT READY FOR SUBMISSION**
+**Status: IMPROVED BUT NOT COMPETITIVE**
 
----
-
-## Key Findings
-
-### 1. Coverage Gap
-CodeSheriff only produced reviews for **6 out of 50 benchmark PRs**, all from the cal.com (TypeScript) repository. No reviews were generated for:
-- Sentry (Python)
-- Grafana (Go)
-- Keycloak (Java)
-- Discourse (Ruby)
-
-This means the scan was incomplete. The benchmark requires coverage across all 50 PRs and 5 repositories to be competitive.
-
-### 2. Precision is Critically Low (5.0%)
-Of 121 candidate issues CodeSheriff raised, only 6 matched real golden issues. The dominant failure mode is **generic, repetitive warnings** that do not correspond to actual bugs:
-- "Deep property access without optional chaining" (repeated across many files/PRs)
-- "Missing authorization check" (generic, not specific to the actual code issue)
-- "Organization verification status hardcoded" (not a real bug in context)
-
-For comparison, the top tools achieve 40-60% precision on the same cal.com PRs.
-
-### 3. Recall is Moderate (35.3%)
-When CodeSheriff does find real issues, the recall is reasonable (35.3%), meaning it catches about 1 in 3 actual bugs. However, this is measured on only 6 PRs (17 golden comments) so the sample is too small to be meaningful.
-
-### 4. True Positive Examples (What CodeSheriff Got Right)
-- Detected `===` comparison on dayjs objects always returning false (cal.com #8330)
-- Found async functions not awaiting delete operations (cal.com #7232)
-- Identified backup codes decrypted/mutated in memory issue (cal.com #10600)
-- Caught potential null reference on mainHostDestinationCalendar (cal.com #10967)
-- Found forEach with async callbacks issue (cal.com #8087)
+Key changes from v1 to v2:
+- Coverage expanded from 6 PRs (cal.com only) to 48 PRs across all 5 repos
+- Precision improved from 5.0% to 8.2% (still very low)
+- Recall dropped from 35.3% to 23.5% as harder repos were included
+- F1 improved modestly from 8.7% to 12.2%
 
 ---
 
-## Per-PR Breakdown
+## Per-Repository Breakdown (v2)
 
-| PR | TP | FP | FN | Precision | Recall |
-|----|---:|---:|---:|----------:|-------:|
-| cal.com #8330 | 1 | 8 | 1 | 11.1% | 50.0% |
-| cal.com #22345 | 0 | 4 | 2 | 0.0% | 0.0% |
-| cal.com #7232 | 2 | 19 | 0 | 9.5% | 100.0% |
-| cal.com #10600 | 1 | 48 | 3 | 2.0% | 25.0% |
-| cal.com #10967 | 1 | 22 | 4 | 4.3% | 20.0% |
-| cal.com #8087 | 1 | 14 | 1 | 6.7% | 50.0% |
-| **Total** | **6** | **115** | **11** | **5.0%** | **35.3%** |
+| Repository | PRs | TP | FP | FN | Precision | Recall | F1 |
+|------------|----:|---:|---:|---:|----------:|-------:|---:|
+| sentry-greptile | 4 | 3 | 2 | 10 | 60.0% | 23.1% | 33.3% |
+| grafana | 10 | 4 | 20 | 18 | 16.7% | 18.2% | 17.4% |
+| discourse-graphite | 10 | 7 | 83 | 21 | 7.8% | 25.0% | 11.9% |
+| cal.com | 10 | 15 | 214 | 16 | 6.6% | 48.4% | 11.5% |
+| keycloak | 9 | 2 | 22 | 20 | 8.3% | 9.1% | 8.7% |
+| keycloak-greptile | 1 | 0 | 4 | 2 | 0.0% | 0.0% | 0.0% |
+| sentry | 4 | 0 | 2 | 14 | 0.0% | 0.0% | 0.0% |
+| **Total** | **48** | **31** | **347** | **101** | **8.2%** | **23.5%** | **12.2%** |
+
+### Observations by Repo
+- **sentry-greptile** (F1=33.3%): Best precision (60%) -- few candidates but they were on target
+- **grafana** (F1=17.4%): Decent balance, second-best precision (16.7%)
+- **cal.com** (F1=11.5%): Highest recall (48.4%) but very low precision (6.6%) -- generates too much noise on TypeScript repos
+- **sentry** (F1=0.0%): No true positives found at all on Python code
+- **keycloak** (F1=8.7%): Poor on Java code
 
 ---
 
-## Comparison vs. Top Tools (All 3 Judge Models, Full 50 PRs)
-
-### Full Benchmark (50 PRs)
+## Comparison vs. Top Tools (Full 50 PRs, All Judge Models)
 
 | Rank | Tool | F1 (Opus 4.5) | F1 (Sonnet 4.5) | F1 (GPT-5.2) | Avg F1 |
 |------|------|---------------:|----------------:|--------------:|-------:|
@@ -82,59 +62,58 @@ When CodeSheriff does find real issues, the recall is reasonable (35.3%), meanin
 | ... | ... | ... | ... | ... | ... |
 | 15 | Claude (Sonnet) | 35.3% | 37.8% | 34.6% | 35.9% |
 | 19 | Copilot | 37.0% | 35.5% | 33.6% | 35.4% |
-| -- | **CodeSheriff** | **n/a** | **n/a** | **n/a** | **8.7%*** |
+| -- | **CodeSheriff v2** | **n/a** | **n/a** | **n/a** | **12.2%*** |
+| -- | **CodeSheriff v1** | **n/a** | **n/a** | **n/a** | **8.7%*** |
 
-*CodeSheriff evaluated with claude-sonnet-4-20250514 judge only, on 6/50 PRs.
-
-### Cal.com-Only Comparison (10 PRs, for context)
-
-On the same repository (cal.com), other tools with the Opus 4.5 judge score:
-
-| Tool | F1 (cal.com) |
-|------|-------------:|
-| Sourcery | 61.8% |
-| Qodo Ext Summary | 56.1% |
-| Cubic v2 | 53.5% |
-| Devin | 54.5% |
-| Augment | 51.2% |
-| **CodeSheriff** | **8.7%** |
+*CodeSheriff evaluated with claude-sonnet-4-20250514 judge only, on 48/50 PRs (v2) or 6/50 PRs (v1).
 
 ---
 
 ## Root Cause Analysis
 
-### Why Precision is So Low
-1. **Generic rule-based findings**: CodeSheriff applies static-analysis-style rules (e.g., "optional chaining missing") broadly, generating many warnings that are technically valid but not actual bugs
-2. **No context awareness**: The tool flags patterns without understanding whether they represent real issues in the specific codebase context
-3. **No deduplication of rule types**: The same rule (e.g., Ts Optional Chain Missing) fires dozens of times across a single PR
+### Why Precision Remains Low (8.2%)
+1. **Noise volume**: 378 candidates for 48 PRs = ~8 candidates/PR on average, but only 0.6 true positives/PR
+2. **cal.com dominates noise**: 214 of 347 false positives (62%) come from cal.com TypeScript PRs
+3. **Generic warnings persist**: Optional chaining, authorization checks, and other pattern-matching rules fire too broadly
+4. **No severity filtering**: Low-confidence findings are not suppressed
 
-### Why Coverage is Incomplete
-1. CodeSheriff only reviewed cal.com (TypeScript) PRs -- the other 4 repos use Python, Go, Java, and Ruby
-2. This suggests either language support limitations or incomplete GitHub App installation across benchmark fork repos
+### Why Recall is Moderate (23.5%)
+1. **2 PRs with no reviews at all** (missing from benchmark_data entirely)
+2. **sentry coverage is poor**: 0 TPs across 4 sentry PRs -- Python analysis is weak
+3. **Strongest on cal.com**: 48.4% recall on TypeScript, but tanks on other languages
+
+### Improvement from v1
+1. **Multi-language support works**: Reviews now generated for Java, Go, Ruby, Python repos
+2. **Precision improved 64%**: From 5.0% to 8.2% (still insufficient)
+3. **More true positives**: 31 vs 6, finding real bugs across 5 repos
 
 ---
 
-## Recommendations Before Benchmark Submission
+## Recommendations
 
-1. **DO NOT SUBMIT** these results to Martian. An 8.7% F1 would place CodeSheriff near the bottom of the leaderboard, below even tools that score 0% (which at least don't generate noise).
+1. **DO NOT SUBMIT** these results to Martian. A 12.2% F1 would place CodeSheriff near the bottom of the leaderboard.
 
-2. **Fix multi-language support**: Ensure CodeSheriff can analyze Python, Go, Java, and Ruby PRs to cover all 50 benchmark PRs.
+2. **Priority 1 -- Reduce false positives**:
+   - Add severity threshold: only report High/Critical
+   - Filter generic/repetitive warnings (optional chaining, authorization)
+   - Cap candidates per PR (e.g., top 5 highest confidence only)
+   - Target: 30%+ precision
 
-3. **Dramatically reduce false positives**: The #1 priority is precision. Consider:
-   - Suppressing generic/repetitive warnings (optional chaining, authorization checks)
-   - Adding severity thresholds -- only report High/Critical issues
-   - Using LLM-based filtering to determine if a finding is a real bug vs. a style nit
+3. **Priority 2 -- Improve Python/sentry recall**:
+   - 0% recall on sentry is unacceptable; investigate why no findings match
+   - Check if Python-specific rules are generating relevant candidates
 
-4. **Re-run the benchmark** after fixes, targeting at minimum 30% F1 (which would place CodeSheriff in the middle of the pack).
+4. **Target for competitive submission**: 35%+ F1 (matches Claude/Copilot baseline)
 
-5. **Target for launch**: 40%+ F1 would be competitive (top 15). 50%+ F1 would be noteworthy.
+5. **Target for launch**: 45%+ F1 (top 10 on leaderboard)
 
 ---
 
 ## Pipeline Details
 
-- **Extraction**: Step 2 extracted 121 candidates from 6 CodeSheriff reviews (all cal.com PRs)
-- **Deduplication**: Step 2.5 grouped candidates; 6 dedup groups found
-- **Judging**: Step 3 evaluated all 121 candidates against golden comments using claude-sonnet-4-20250514
+- **Extraction**: Step 2 extracted candidates from 43 codesheriff reviews (some PRs had no review comments)
+- **Deduplication**: Step 2.5 deduplicated 38 reviews
+- **Judging**: Step 3 evaluated 48 reviews using claude-sonnet-4-20250514
 - **Benchmark repo**: `~/.openclaw/workspace/code-review-benchmark/offline/`
 - **Results file**: `results/claude-sonnet-4-20250514/evaluations.json`
+- **No rate limiting issues encountered** (Anthropic API key used directly)

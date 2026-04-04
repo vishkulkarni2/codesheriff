@@ -93,7 +93,7 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
       const existing = await stripe.customers.list({ email: userEmail, limit: 1 });
 
       if (existing.data.length > 0) {
-        customerId = existing.data[0].id;
+        customerId = existing.data[0]!.id;
       } else {
         const customer = await stripe.customers.create({
           email: userEmail,

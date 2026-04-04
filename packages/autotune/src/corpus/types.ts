@@ -5,5 +5,5 @@ export interface CorpusEntry {
   language: string;
   code: string;
   description: string;
-  expectedRuleIds?: string[];
+  expectedRuleIds?: string[] | undefined;
 }

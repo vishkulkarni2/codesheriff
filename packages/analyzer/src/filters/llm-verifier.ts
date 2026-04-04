@@ -19,32 +19,31 @@ import type { RawFinding } from '@codesheriff/shared';
 import type { LlmClient } from '../llm/client.js';
 import { getScanLogger } from '../utils/logger.js';
 
-const SYSTEM_PROMPT = `You are a senior security engineer doing final triage on automated code analysis findings.
+const SYSTEM_PROMPT = `You are a senior security engineer doing final triage on automated code analysis findings. Your default answer is REJECT (FALSE_POSITIVE).
 
-Your task: classify each finding as REAL_BUG or FALSE_POSITIVE, and provide a confidence score.
+Only classify as REAL_BUG if you are CONFIDENT (>=0.75) that this finding represents ONE OF THE FOLLOWING:
+1. A concrete security vulnerability with a direct exploit path visible in the code shown (SQLi, XSS, auth bypass, path traversal, RCE, hardcoded secret)
+2. A crash risk that will definitely occur at runtime: null/undefined dereference on a non-guarded access, array out-of-bounds, unhandled async rejection on a code path that is guaranteed to execute
+3. A provable logic error where the code demonstrably does the WRONG thing: wrong variable used, inverted condition, off-by-one in a critical calculation, data corruption
+4. A race condition or async bug that WILL cause incorrect behavior (not just "might")
 
-REAL_BUG — keep if it is:
-- A functional bug that causes incorrect behavior, wrong output, or data corruption in the code shown
-- A security vulnerability with a concrete exploit path (SQLi, XSS, auth bypass, path traversal, injection)
-- A crash risk: null dereference, unchecked array index, unhandled exception on a hot path
-- A hardcoded secret, credential, or token
-- A logic error where the code provably does the wrong thing (wrong variable, off-by-one, inverted condition)
+Classify as FALSE_POSITIVE (default) if:
+- The finding is theoretical, hypothetical, or requires additional context not shown
+- The code might be correct depending on higher-level framework / middleware context (e.g., auth checks at route level, not query level)
+- It is a best practice violation, code smell, style issue, or refactoring suggestion
+- It flags a pattern that is intentional and common in the repository's framework (e.g., .catch(() => {}) for telemetry suppression, role checks in auth-gated routes)
+- The exploit path requires assumptions not supported by the code shown
+- It is missing error handling for an edge case that is not clearly likely to occur
+- You are uncertain or the evidence is ambiguous — when in doubt, REJECT
 
-FALSE_POSITIVE — drop if it is:
-- A stylistic preference, naming convention, or formatting issue
-- A suggestion to refactor or use a newer API when the existing code works correctly
-- A theoretical risk with no practical exploit path given the context shown
-- A performance optimization or memory efficiency suggestion
-- Missing error handling for edge cases that are not plausible in context
-- A concern about incomplete code fragments (missing imports, partial functions in a diff)
-- A best practice suggestion that doesn't change correctness
+CRITICAL: This is a PR diff — code is incomplete. NEVER flag issues caused by missing imports, helper functions defined elsewhere, or truncated context.
 
-IMPORTANT CONTEXT: You are analyzing code diffs from pull requests — the code may be incomplete. Do not flag issues that arise purely from missing context (e.g., imports not shown, helper functions defined elsewhere).
+Be aggressive about rejecting. A missed finding (false negative) is far less costly than a noisy false positive. Your job is to be a strict final gate.
 
 Output strict JSON only — no markdown, no extra text:
 {"verdict":"REAL_BUG"|"FALSE_POSITIVE","reason":"<one sentence>","confidence":0.0-1.0}
 
-confidence: 1.0 = certain, 0.5 = uncertain, 0.0 = completely guessing`;
+confidence: 1.0 = certain it is a real bug, 0.0 = certain it is a false positive. Only REAL_BUG with confidence >= 0.75 will be kept.`;
 
 export interface VerifyResult {
   finding: RawFinding;
@@ -207,12 +206,10 @@ export class LlmVerifier {
       return { finding, keep: true, bypassed: 'keep' };
     }
 
-    // Bypass rule: SECURITY category with HIGH severity → always keep
-    // (CRITICAL already handled above)
-    if (finding.category === FindingCategory.SECURITY && finding.severity === Severity.HIGH) {
-      log.debug({ ruleId: finding.ruleId, title: finding.title }, 'LlmVerifier bypass: SECURITY HIGH/CRITICAL → KEEP');
-      return { finding, keep: true, bypassed: 'keep' };
-    }
+    // NOTE: SECURITY HIGH bypass was removed. High-severity security findings
+    // (e.g., IDOR pattern rules) were the primary source of FPs on cal.com because
+    // they fire on every Prisma query without understanding middleware-level auth.
+    // All non-CRITICAL, non-SECRET findings now go through LLM verification.
 
     // Bypass rule: QUALITY category with LOW severity → always drop, no LLM call
     if (finding.category === FindingCategory.QUALITY && finding.severity === Severity.LOW) {
@@ -224,14 +221,17 @@ export class LlmVerifier {
     try {
       const result = await verifyFinding(finding, this.llm);
 
-      // Confidence < 0.5 on FALSE_POSITIVE → uncertain, keep it (fail toward keeping)
+      // Confidence gate: REAL_BUG must have confidence >= 0.75 to be kept.
+      // Previously we inverted low-confidence FALSE_POSITIVEs to REAL_BUG (fail-open),
+      // which was actively adding noise. Now: uncertain = drop.
       let verdict = result.verdict;
-      if (verdict === 'FALSE_POSITIVE' && result.confidence !== undefined && result.confidence < 0.5) {
+      const MIN_CONFIDENCE = 0.75;
+      if (verdict === 'REAL_BUG' && result.confidence !== undefined && result.confidence < MIN_CONFIDENCE) {
         log.debug(
           { ruleId: finding.ruleId, confidence: result.confidence },
-          'LlmVerifier: low-confidence FALSE_POSITIVE → treating as REAL_BUG'
+          `LlmVerifier: REAL_BUG confidence ${result.confidence} < ${MIN_CONFIDENCE} threshold → treating as FALSE_POSITIVE`
         );
-        verdict = 'REAL_BUG';
+        verdict = 'FALSE_POSITIVE';
       }
 
       const keep = verdict === 'REAL_BUG';
@@ -254,12 +254,15 @@ export class LlmVerifier {
 
       return { finding: enrichedFinding, keep, bypassed: false };
     } catch (err) {
-      // Fail-open: any error keeps the finding
+      // Fail-CLOSED: LLM errors drop the finding.
+      // Previously fail-open (keep on error) was adding noise whenever the LLM
+      // returned malformed JSON or timed out. A dropped finding (false negative)
+      // is less harmful than a kept false positive at 8% precision.
       log.warn(
         { ruleId: finding.ruleId, title: finding.title, err: String(err) },
-        'LlmVerifier error — fail-open, keeping finding'
+        'LlmVerifier error — fail-closed, dropping finding'
       );
-      return { finding, keep: true, bypassed: false };
+      return { finding, keep: false, bypassed: false };
     }
   }
 }

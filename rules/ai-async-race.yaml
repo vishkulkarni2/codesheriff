@@ -9,7 +9,7 @@ rules:
   # ---------------------------------------------------------------------------
 
   - id: ai-promise-all-shared-write
-    patterns:
+    pattern-either:
       - pattern: |
           await Promise.all([
             ...,
@@ -34,7 +34,7 @@ rules:
       ai-specific: true
 
   - id: ai-promise-all-db-write-without-transaction
-    patterns:
+    pattern-either:
       - pattern: |
           await Promise.all([
             ...,
@@ -62,7 +62,7 @@ rules:
       ai-specific: true
 
   - id: ai-counter-race-no-atomic
-    patterns:
+    pattern-either:
       - pattern: |
           $OBJ.$COUNT = $OBJ.$COUNT + 1;
           await $DB.save($OBJ);

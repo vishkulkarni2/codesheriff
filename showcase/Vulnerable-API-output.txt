@@ -1,0 +1,48 @@
+
+CodeSheriff · AI Code Safety Scanner
+Target: /tmp/codesheriff-dogfood/Vulnerable-API/
+
+
+──────────────────────────────────────────
+  🚨 CRITICAL  (1)
+──────────────────────────────────────────
+   CRITICAL  Sql Concat Python
+       sqli.py:16
+       SQL query built with string concatenation or f-string in Python. Use parameterized queries: cursor.execute('SELECT ... WHERE id = %s', (value,))
+
+         │ requires login
+
+
+──────────────────────────────────────────
+  ⛔ HIGH  (4)
+──────────────────────────────────────────
+     HIGH    Python Except Bare
+       app.py:6
+       Bare except clause catches all exceptions including SystemExit, KeyboardInterrupt, and GeneratorExit. Use except Exception: to catch only standard exceptions, or catch specific exception types.
+
+         │ requires login
+
+     HIGH    Python Except Bare
+       app.py:11
+       Bare except clause catches all exceptions including SystemExit, KeyboardInterrupt, and GeneratorExit. Use except Exception: to catch only standard exceptions, or catch specific exception types.
+
+         │ requires login
+
+     HIGH    Python Except Bare
+       lfi.py:2
+       Bare except clause catches all exceptions including SystemExit, KeyboardInterrupt, and GeneratorExit. Use except Exception: to catch only standard exceptions, or catch specific exception types.
+
+         │ requires login
+
+     HIGH    Python Except Bare
+       rfi.py:4
+       Bare except clause catches all exceptions including SystemExit, KeyboardInterrupt, and GeneratorExit. Use except Exception: to catch only standard exceptions, or catch specific exception types.
+
+         │ requires login
+
+Summary: 1 critical · 4 high
+
+Risk Score: 100/100  ████████████████████
+
+Scan completed in 1795ms
+

@@ -1,0 +1,62 @@
+
+CodeSheriff · AI Code Safety Scanner
+Target: /tmp/codesheriff-dogfood/securityvulnerabilities/
+
+
+──────────────────────────────────────────
+  🚨 CRITICAL  (6)
+──────────────────────────────────────────
+   CRITICAL  Password comparison with == operator
+       16_session_fixation.py:21
+       Non-constant-time password comparison is a critical auth anti-pattern in AI code.
+         │ if password == "secret":
+
+   CRITICAL  Password comparison with == operator
+       16_session_fixation.py:38
+       Non-constant-time password comparison is a critical auth anti-pattern in AI code.
+         │ if password == "secret":
+
+   CRITICAL  Password comparison with == operator
+       03_login.py:19
+       Non-constant-time password comparison is a critical auth anti-pattern in AI code.
+         │ if username != "admin" or password != "secret":
+
+   CRITICAL  Password comparison with == operator
+       03_login.py:31
+       Non-constant-time password comparison is a critical auth anti-pattern in AI code.
+         │ if username != "admin" or password != "secret":
+
+   CRITICAL  Python Unsafe Deserialization
+       00_multi_sec.py:55
+       Unsafe deserialization detected. pickle.loads, yaml.load without SafeLoader, and marshal.loads can execute arbitrary code when processing untrusted data. Use yaml.safe_load() for YAML, or json for serialization where possible.
+
+         │ requires login
+
+   CRITICAL  Python Unsafe Deserialization
+       24_deserialization.py:27
+       Unsafe deserialization detected. pickle.loads, yaml.load without SafeLoader, and marshal.loads can execute arbitrary code when processing untrusted data. Use yaml.safe_load() for YAML, or json for serialization where possible.
+
+         │ requires login
+
+
+──────────────────────────────────────────
+  ⛔ HIGH  (2)
+──────────────────────────────────────────
+     HIGH    Python None Attribute Access
+       22_ssrf_fetch_data.py:23
+       Potential None dereference. The value may be None (e.g., from dict.get()) and accessing attributes on None raises AttributeError. Add a None check.
+
+         │ requires login
+
+     HIGH    Python None Attribute Access
+       22_ssrf_fetch_data.py:34
+       Potential None dereference. The value may be None (e.g., from dict.get()) and accessing attributes on None raises AttributeError. Add a None check.
+
+         │ requires login
+
+Summary: 6 critical · 2 high
+
+Risk Score: 100/100  ████████████████████
+
+Scan completed in 1808ms
+

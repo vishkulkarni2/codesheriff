@@ -23,7 +23,7 @@ import { PIPELINE_DEFAULTS } from '@codesheriff/shared';
 // Path to CodeSheriff's built-in semgrep rules directory (relative to repo root)
 // In production this would be bundled with the package; for now resolve relative
 const BUILTIN_RULES_DIR = resolve(
-  new URL('../../../../../rules', import.meta.url).pathname
+  new URL('../../../../rules', import.meta.url).pathname
 );
 
 const SEVERITY_MAP: Record<string, Severity> = {
@@ -154,11 +154,11 @@ export class StaticAnalyzer {
     const severity =
       SEVERITY_MAP[match.extra.severity.toUpperCase()] ?? Severity.MEDIUM;
 
-    const category = inferCategory(match.checkId, match.extra.message);
+    const category = inferCategory(match.check_id, match.extra.message);
 
     return {
-      ruleId: match.checkId,
-      title: match.checkId
+      ruleId: match.check_id,
+      title: match.check_id
         .replace(/^ai-/, '')
         .replace(/-/g, ' ')
         .replace(/\b\w/g, (c) => c.toUpperCase()),
@@ -171,7 +171,7 @@ export class StaticAnalyzer {
       codeSnippet: match.extra.lines.slice(0, 500),
       isAIPatternSpecific:
         (match.extra.metadata['ai-specific'] as boolean | undefined) === true ||
-        match.checkId.startsWith('ai-'),
+        match.check_id.startsWith('ai-'),
       detector: 'StaticAnalyzer',
       metadata: match.extra.metadata,
     };

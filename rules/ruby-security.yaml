@@ -1,0 +1,79 @@
+rules:
+  # ---------------------------------------------------------------------------
+  # Ruby / Rails Security & Correctness Rules
+  # Targets: Discourse (Rails-based forum platform)
+  # Based on golden comment patterns: nil handling, method overrides, logic bugs
+  # ---------------------------------------------------------------------------
+
+  - id: ruby-unsafe-eval
+    pattern-either:
+      - pattern: eval($INPUT)
+      - pattern: instance_eval($INPUT)
+      - pattern: class_eval($INPUT)
+      - pattern: module_eval($INPUT)
+      - pattern: Kernel.eval($INPUT)
+    message: >
+      Use of eval with dynamic input is dangerous and can lead to arbitrary code
+      execution. If you need dynamic dispatch, use public_send or a whitelist of
+      allowed method names instead.
+    severity: ERROR
+    languages: [ruby]
+    metadata:
+      category: security
+      cwe: CWE-94
+      benchmark-target: discourse
+
+  - id: ruby-unsafe-send
+    pattern-either:
+      - pattern: $OBJ.send($INPUT, ...)
+    message: >
+      Object.send bypasses method visibility (private/protected) and can invoke
+      any method including dangerous ones. Use public_send instead, which respects
+      visibility, and validate the method name against a whitelist of allowed methods.
+    severity: WARNING
+    languages: [ruby]
+    metadata:
+      category: security
+      cwe: CWE-94
+      benchmark-target: discourse
+
+  - id: ruby-sql-injection
+    pattern-either:
+      - pattern: $MODEL.where("...#{$VAR}...")
+      - pattern: $MODEL.where("..." + $VAR + "...")
+      - pattern: $MODEL.order("...#{$VAR}...")
+      - pattern: $MODEL.joins("...#{$VAR}...")
+      - pattern: $MODEL.find_by_sql("...#{$VAR}...")
+      - pattern: $MODEL.select("...#{$VAR}...")
+    message: >
+      SQL injection via string interpolation in ActiveRecord query. Use parameterized
+      queries instead: Model.where("column = ?", value) or Model.where(column: value).
+      String interpolation in SQL bypasses ActiveRecord escaping.
+    severity: ERROR
+    languages: [ruby]
+    metadata:
+      category: security
+      cwe: CWE-89
+      owasp: A03:2021 - Injection
+      benchmark-target: discourse
+
+  - id: ruby-nil-method-call
+    pattern-either:
+      - pattern: |
+          $X = $HASH[$KEY]
+          ...
+          $X.$METHOD(...)
+      - pattern: |
+          $X = $OBJ&.$METHOD1
+          ...
+          $X.$METHOD2(...)
+    message: >
+      Potential NoMethodError on nil. The value may be nil (from hash lookup or
+      safe navigation), and calling methods on nil will raise an exception. Use
+      the safe navigation operator (&.) or add a nil check before method calls.
+    severity: WARNING
+    languages: [ruby]
+    metadata:
+      category: correctness
+      cwe: CWE-476
+      benchmark-target: discourse

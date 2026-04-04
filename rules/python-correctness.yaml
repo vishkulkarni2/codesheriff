@@ -1,0 +1,56 @@
+rules:
+  # ---------------------------------------------------------------------------
+  # Python Correctness Rules
+  # Targets: Sentry (Django-based) - queryset bugs, None handling
+  # Based on golden comment patterns observed in the benchmark
+  # ---------------------------------------------------------------------------
+
+  - id: python-queryset-negative-slice
+    pattern: $QS[$START:$END]
+    metavariable-comparison:
+      metavariable: $START
+      comparison: $START < 0
+    message: >
+      Django QuerySets do not support negative indexing or negative slicing.
+      Using a negative index on a QuerySet raises AssertionError. Convert to a
+      list first or use alternative logic to access elements from the end.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: correctness
+      benchmark-target: sentry
+
+  - id: python-mutable-default-arg
+    pattern-either:
+      - pattern: |
+          def $FUNC(..., $ARG=[], ...):
+              ...
+      - pattern: |
+          def $FUNC(..., $ARG={}, ...):
+              ...
+    message: >
+      Mutable default argument detected. Lists and dicts as default arguments are
+      shared across all calls, leading to subtle bugs where mutations persist between
+      invocations. Use None as default and create the mutable object inside the function.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: correctness
+      cwe: CWE-665
+      benchmark-target: sentry
+
+  - id: python-except-bare
+    pattern: |
+      try:
+          ...
+      except:
+          ...
+    message: >
+      Bare except clause catches all exceptions including SystemExit, KeyboardInterrupt,
+      and GeneratorExit. Use except Exception: to catch only standard exceptions,
+      or catch specific exception types.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: correctness
+      benchmark-target: sentry

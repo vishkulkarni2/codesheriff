@@ -1,0 +1,91 @@
+rules:
+  # ---------------------------------------------------------------------------
+  # Go Security & Correctness Rules
+  # Targets: Grafana (Go-based observability platform)
+  # Based on golden comment patterns: race conditions, nil deref, error handling
+  # ---------------------------------------------------------------------------
+
+  - id: go-error-swallowed
+    patterns:
+      - pattern: |
+          $ERR := $FUNC(...)
+          if $ERR != nil {
+              $LOG(...)
+          }
+      - pattern: |
+          if $ERR := $FUNC(...); $ERR != nil {
+              $LOG(...)
+          }
+    pattern-not: |
+      if $ERR := $FUNC(...); $ERR != nil {
+          ...
+          return ...
+      }
+    message: >
+      Error is logged but not returned or handled. After detecting an error, the
+      function continues execution with potentially invalid state. Either return
+      the error or handle it in a way that prevents subsequent code from running
+      with corrupted state.
+    severity: WARNING
+    languages: [go]
+    metadata:
+      category: correctness
+      cwe: CWE-754
+      benchmark-target: grafana
+
+  - id: go-nil-pointer-deref
+    patterns:
+      - pattern: |
+          $X, $OK := $MAP[$KEY]
+          ...
+          $X.$FIELD
+      - pattern: |
+          $X := $FUNC(...)
+          ...
+          $X.$FIELD
+    message: >
+      Potential nil pointer dereference. The value retrieved from a map lookup or
+      function return may be nil. Check for nil before accessing fields or methods
+      to prevent runtime panics.
+    severity: ERROR
+    languages: [go]
+    metadata:
+      category: correctness
+      cwe: CWE-476
+      benchmark-target: grafana
+
+  - id: go-defer-in-loop
+    pattern: |
+      for ... {
+          ...
+          defer $FUNC(...)
+          ...
+      }
+    message: >
+      defer inside a loop will not execute until the surrounding function returns,
+      not at the end of each loop iteration. This causes resource leaks (file handles,
+      connections, locks) to accumulate. Move the loop body into a separate function
+      or use explicit cleanup at the end of each iteration.
+    severity: ERROR
+    languages: [go]
+    metadata:
+      category: correctness
+      cwe: CWE-404
+      benchmark-target: grafana
+
+  - id: go-goroutine-no-context
+    pattern: |
+      go func() {
+          ...
+      }()
+    message: >
+      Goroutine launched without context or cancellation mechanism. If the parent
+      function returns or an error occurs, this goroutine may leak and run indefinitely.
+      Pass a context.Context and select on ctx.Done() to allow cancellation. Also
+      consider using errgroup or sync.WaitGroup for lifecycle management.
+    severity: WARNING
+    languages: [go]
+    metadata:
+      category: correctness
+      cwe: CWE-404
+      benchmark-target: grafana

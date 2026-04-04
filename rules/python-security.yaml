@@ -1,0 +1,75 @@
+rules:
+  # ---------------------------------------------------------------------------
+  # Python Security Rules
+  # Targets: Sentry (Django-based), general Python code review
+  # ---------------------------------------------------------------------------
+
+  - id: python-sql-injection-fstring
+    pattern-either:
+      - pattern: $CURSOR.execute(f"...")
+      - pattern: $CURSOR.executemany(f"...")
+      - pattern: $DB.execute(f"...")
+    message: >
+      SQL query built using f-string interpolation. This is a SQL injection vulnerability.
+      Use parameterized queries instead: cursor.execute("SELECT ... WHERE id = %s", (value,)).
+      User-controlled input in f-strings bypasses escaping entirely.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: security
+      cwe: CWE-89
+      owasp: A03:2021 - Injection
+      benchmark-target: sentry
+
+  - id: python-unsafe-deserialization
+    pattern-either:
+      - pattern: pickle.loads(...)
+      - pattern: pickle.load(...)
+      - pattern: yaml.load($DATA)
+      - pattern: yaml.load($DATA, Loader=yaml.Loader)
+      - pattern: yaml.load($DATA, Loader=yaml.FullLoader)
+      - pattern: marshal.loads(...)
+      - pattern: shelve.open(...)
+    message: >
+      Unsafe deserialization detected. pickle.loads, yaml.load without SafeLoader,
+      and marshal.loads can execute arbitrary code when processing untrusted data.
+      Use yaml.safe_load() for YAML, or json for serialization where possible.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: security
+      cwe: CWE-502
+      benchmark-target: sentry
+
+  - id: python-none-attribute-access
+    pattern: |
+      $X = $DICT.get(...)
+      ...
+      $X.$ATTR
+    message: >
+      Potential None dereference. The value may be None (e.g., from dict.get())
+      and accessing attributes on None raises AttributeError. Add a None check.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: correctness
+      cwe: CWE-476
+      benchmark-target: sentry
+
+  - id: python-django-raw-sql
+    pattern-either:
+      - pattern: RawSQL(...)
+      - pattern: $MODEL.objects.raw(f"...")
+      - pattern: $MODEL.objects.raw("..." + $VAR + "...")
+      - pattern: $MODEL.objects.raw("..." % $VAR)
+      - pattern: connection.cursor().execute(f"...")
+    message: >
+      Raw SQL query in Django detected. This bypasses Django ORM protections and may
+      introduce SQL injection. Use Django ORM querysets or parameterized raw queries:
+      Model.objects.raw("SELECT ... WHERE id = %s", [value]).
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: security
+      cwe: CWE-89
+      benchmark-target: sentry

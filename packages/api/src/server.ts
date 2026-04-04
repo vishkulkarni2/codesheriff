@@ -42,7 +42,7 @@ export interface ServerOptions {
 export async function buildServer(opts: ServerOptions) {
   const app = Fastify({
     // Pass the pre-configured pino instance directly
-    loggerInstance: logger,
+    logger: logger,
     trustProxy: true, // Required when behind Render/Railway/Vercel proxy
     requestIdHeader: 'x-request-id',
   });
@@ -114,7 +114,7 @@ export async function buildServer(opts: ServerOptions) {
     'application/json',
     { parseAs: 'buffer' },
     (req, body, done) => {
-      (req as unknown as { rawBody: Buffer }).rawBody = body;
+      (req as unknown as { rawBody: Buffer }).rawBody = body as Buffer;
       try {
         done(null, JSON.parse(body.toString('utf8')));
       } catch (err) {

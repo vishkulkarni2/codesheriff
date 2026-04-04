@@ -35,6 +35,10 @@
     },
     "db:seed": {
       "cache": false
+    },
+    "autotune": {
+      "cache": false,
+      "persistent": false
     }
   }
 }

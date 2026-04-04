@@ -1,0 +1,40 @@
+{
+  "target": "/tmp/codesheriff-dogfood/saanvi/",
+  "riskScore": 42,
+  "findingsCount": 2,
+  "durationMs": 1800,
+  "findings": [
+    {
+      "ruleId": "python-none-attribute-access",
+      "title": "Python None Attribute Access",
+      "description": "Potential None dereference. The value may be None (e.g., from dict.get()) and accessing attributes on None raises AttributeError. Add a None check.\n",
+      "severity": "HIGH",
+      "category": "SECURITY",
+      "file": "main.py",
+      "lineStart": 368,
+      "lineEnd": 372,
+      "codeSnippet": "requires login",
+      "detector": "StaticAnalyzer"
+    },
+    {
+      "ruleId": "python-queryset-negative-slice",
+      "title": "Python Queryset Negative Slice",
+      "description": "Django QuerySets do not support negative indexing or negative slicing. Using a negative index on a QuerySet raises AssertionError. Convert to a list first or use alternative logic to access elements from the end.\n",
+      "severity": "CRITICAL",
+      "category": "SECURITY",
+      "file": "modules/python3/pacman_config.py",
+      "lineStart": 284,
+      "lineEnd": 284,
+      "codeSnippet": "requires login",
+      "detector": "StaticAnalyzer"
+    }
+  ],
+  "summary": {
+    "critical": 1,
+    "high": 1,
+    "medium": 0,
+    "low": 0,
+    "info": 0
+  },
+  "passed": false
+}

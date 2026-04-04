@@ -1,0 +1,130 @@
+################################################################################
+# render.yaml — CodeSheriff Production Services
+# Docs: https://render.com/docs/infrastructure-as-code
+#
+# Services:
+#   codesheriff-api    — Fastify API server  (web service, always-on)
+#   codesheriff-worker — BullMQ scan worker  (background worker)
+#
+# The Next.js web app is deployed to Vercel (see apps/web).
+# Postgres → Neon free tier (external)
+# Redis    → Upstash free tier (external)
+#
+# Set the following env vars in the Render dashboard (secret, not committed):
+#   DATABASE_URL, REDIS_URL, ANTHROPIC_API_KEY, CLERK_SECRET_KEY,
+#   CLERK_WEBHOOK_SECRET, NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+#   GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, GITHUB_WEBHOOK_SECRET,
+#   NEXT_PUBLIC_GITHUB_APP_SLUG, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
+#   STRIPE_TEAM_PRICE_ID, TOKEN_ENCRYPTION_KEY, RESEND_API_KEY
+################################################################################
+
+services:
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # API — Fastify (port 4000)
+  # ─────────────────────────────────────────────────────────────────────────
+  - type: web
+    name: codesheriff-api
+    runtime: docker
+    repo: https://github.com/vishkulkarni2/codesheriff
+    branch: main
+    dockerfilePath: docker/Dockerfile.api
+    dockerContext: .
+    plan: starter          # $7/mo — always-on, no cold starts
+    region: oregon
+    healthCheckPath: /health
+    autoDeploy: true
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+      - key: LOG_LEVEL
+        value: info
+      - key: CORS_ORIGINS
+        value: "https://app.codesheriff.dev,https://codesheriff-marketing.vercel.app"
+      # Secrets — set in Render dashboard
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: CLERK_WEBHOOK_SECRET
+        sync: false
+      - key: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: GITHUB_APP_ID
+        sync: false
+      - key: GITHUB_APP_PRIVATE_KEY
+        sync: false
+      - key: GITHUB_WEBHOOK_SECRET
+        sync: false
+      - key: NEXT_PUBLIC_GITHUB_APP_SLUG
+        value: codesheriff
+      - key: GITLAB_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_TEAM_PRICE_ID
+        sync: false
+      - key: TOKEN_ENCRYPTION_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: SLACK_WEBHOOK_URL
+        sync: false
+      - key: APP_URL
+        value: https://app.codesheriff.dev
+      - key: API_URL
+        value: https://api.codesheriff.dev
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Worker — BullMQ (background, no HTTP port)
+  # ─────────────────────────────────────────────────────────────────────────
+  - type: worker
+    name: codesheriff-worker
+    runtime: docker
+    repo: https://github.com/vishkulkarni2/codesheriff
+    branch: main
+    dockerfilePath: docker/Dockerfile.worker
+    dockerContext: .
+    plan: starter          # $7/mo — always-on, required for BullMQ
+    region: oregon
+    autoDeploy: true
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      - key: WORKER_CONCURRENCY
+        value: "3"
+      # Secrets — set in Render dashboard (mirror of API)
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GITHUB_APP_ID
+        sync: false
+      - key: GITHUB_APP_PRIVATE_KEY
+        sync: false
+      - key: GITLAB_WEBHOOK_SECRET
+        sync: false
+      - key: TOKEN_ENCRYPTION_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: SLACK_WEBHOOK_URL
+        sync: false
+      - key: APP_URL
+        value: https://app.codesheriff.dev
+      - key: API_URL
+        value: https://api.codesheriff.dev

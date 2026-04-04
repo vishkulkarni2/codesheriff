@@ -9,7 +9,7 @@ rules:
   # ---------------------------------------------------------------------------
 
   - id: ai-cors-wildcard-origin-object
-    patterns:
+    pattern-either:
       - pattern: |
           cors({ ..., origin: '*', ... })
       - pattern: |
@@ -27,7 +27,7 @@ rules:
       ai-specific: true
 
   - id: ai-cors-header-wildcard
-    patterns:
+    pattern-either:
       - pattern: res.setHeader('Access-Control-Allow-Origin', '*')
       - pattern: res.header('Access-Control-Allow-Origin', '*')
       - pattern: response.headers['Access-Control-Allow-Origin'] = '*'
@@ -54,8 +54,9 @@ rules:
       ai-specific: true
 
   - id: ai-cors-python-wildcard
-    patterns:
-      - pattern: CORS($APP, resources={r"/*": {"origins": "*"}})
+    pattern-either:
+      - pattern: |
+          CORS($APP, resources={...})
       - pattern: response.headers.add('Access-Control-Allow-Origin', '*')
     message: >
       Wildcard CORS origin detected in Python. Use a specific origin allowlist.

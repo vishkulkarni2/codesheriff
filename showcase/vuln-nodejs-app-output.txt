@@ -1,0 +1,867 @@
+
+CodeSheriff · AI Code Safety Scanner
+Target: /tmp/codesheriff-dogfood/vuln-nodejs-app/
+
+
+──────────────────────────────────────────
+  🚨 CRITICAL  (3)
+──────────────────────────────────────────
+   CRITICAL  API key in source code
+       models/db.js:77
+       Hardcoded credential detected — must be moved to environment variables.
+         │ apiToken:"YouHaveCompletedTheExcercise",
+
+   CRITICAL  Password comparison with == operator
+       controllers/vuln_controller.js:353
+       Non-constant-time password comparison is a critical auth anti-pattern in AI code.
+         │ if (req.body.password == '' || req.body.password == undefined || req.body.password == null) return res.sendStatus('400');
+
+   CRITICAL  Password comparison with == operator
+       controllers/vuln_controller.js:486
+       Non-constant-time password comparison is a critical auth anti-pattern in AI code.
+         │ if (process.env.MONGODB_ADMINUSERNAME != '' && process.env.MONGODB_ADMINPASSWORD != '') {
+
+
+──────────────────────────────────────────
+  ⛔ HIGH  (139)
+──────────────────────────────────────────
+     HIGH    Ts Optional Chain Missing
+       assets/js/run_prettify.js:32
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (O?.src?.match) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       assets/js/run_prettify.js:33
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (g?.parentNode?.removeChild) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       assets/js/run_prettify.js:37
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (e?.source?.match) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       assets/js/run_prettify.js:39
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (t?.source?.replace) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       assets/js/run_prettify.js:40
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (a?.nodeName?.toLowerCase) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       assets/js/run_prettify.js:41
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (a?.a?.match) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       assets/js/run_prettify.js:47
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (a?.nodeName?.toLowerCase) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       assets/js/run_prettify.js:50
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (h?.style?.display) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       assets/js/run_prettify.js:51
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (h?.style?.display) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       assets/js/run_prettify.js:62
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (A?.className?.match) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/auth_controller.js:9
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (process?.env?.JWT_SECRET) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/auth_controller.js:13
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.cookies?.authToken) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/auth_controller.js:18
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (process?.env?.JWT_SECRET) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/auth_controller.js:20
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Users?.Users?.findOne) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/auth_controller.js:42
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.body?.username) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/auth_controller.js:43
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.body?.email) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/auth_controller.js:44
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.body?.password) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/auth_controller.js:48
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Users?.Users?.findAll) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/auth_controller.js:55
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Users?.Users?.create) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/auth_controller.js:56
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Org?.Org?.create) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/auth_controller.js:57
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Wallet?.Wallet?.create) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/auth_controller.js:78
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.body?.username) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/auth_controller.js:79
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.body?.password) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/auth_controller.js:81
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Users?.Users?.findOne) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:18
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (process?.env?.DB_NAME) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:19
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (process?.env?.DB_USER) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:20
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (process?.env?.DB_PASS) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:21
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (process?.env?.DB_HOST) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:22
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (process?.env?.DB_PORT) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:32
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.query?.xss1) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:33
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.query?.xss2) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:34
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.query?.xss3) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:50
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.body?.ping) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:51
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.body?.ping1) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:53
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.body?.ping) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:77
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.params?.from) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:78
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.params?.to) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:97
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.params?.from) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:98
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.params?.to) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:99
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Train?.Train?.findAll) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:110
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.body?.comment) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:144
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.cookies?.preference) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:153
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.apiToken) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:166
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.query?.path) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:173
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.id) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:178
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.body?.noteTitle) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:179
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.body?.noteBody) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:180
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.username) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:181
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.id) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:182
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Notes?.Notes?.create) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:189
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.params?.userid) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:190
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Notes?.Notes?.findAll) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:203
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.query?.passenger_name) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:204
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.query?.from_stnt) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:205
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.query?.to_stnt) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:206
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.query?.date) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:212
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (process?.env?.HOST_PORT) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:221
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Users?.Users?.findOne) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:231
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Users?.Users?.update) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:245
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.cookies?.authToken) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:252
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Org?.Org?.update) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:254
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Users?.Users?.update) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:255
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.body?.orgname) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:261
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Org?.Org?.findOne) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:264
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Users?.Users?.findAll) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:278
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Org?.Org?.findOne) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:280
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Users?.Users?.update) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:289
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Org?.Org?.findOne) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:304
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Org?.Org?.findOne) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:307
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Users?.Users?.findAll) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:330
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.apiToken) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:335
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.apiToken) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:353
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.body?.password) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:354
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Users?.Users?.update) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:377
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.totpSecret) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:378
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.email) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:379
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.username) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:392
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.username) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:397
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.body?.totp_verify) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:400
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Users?.Users?.update) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:418
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.totpSecret) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:418
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.body?.totp_code) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:419
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.totpSecret) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:419
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.body?.totp_code) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:431
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.body?.totp_disable) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:432
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.totpSecret) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:433
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.totpSecret) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:436
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Users?.Users?.update) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:450
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Wallet?.Wallet?.findOne) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:461
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.username) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:472
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.body?.name) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:486
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (process?.env?.MONGODB_ADMINUSERNAME) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:487
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (process?.env?.MONGODB_ADMINUSERNAME) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:513
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.username) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:518
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.username) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:536
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.body?.username) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:569
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.username) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:586
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.username) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:595
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.username) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:601
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.id) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:606
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.profilePic) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:608
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.username) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:635
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.files?.profilePic) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:643
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.username) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:652
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Users?.Users?.update) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:663
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Wallet?.Wallet?.findOne) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:673
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Wallet?.Wallet?.findOne) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:682
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (body?.bitcoin?.usd) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:683
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (body?.ethereum?.usd) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:685
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.user?.username) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       controllers/vuln_controller.js:699
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (req?.body?.password) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       models/db.js:7
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (process?.env?.DB_NAME) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       models/db.js:8
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (process?.env?.DB_USER) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       models/db.js:9
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (process?.env?.DB_PASS) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       models/db.js:12
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (process?.env?.DB_HOST) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       server.js:31
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (process?.env?.HOST_PORT) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       server.js:32
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (process?.env?.HOST_PORT) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       server.js:37
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (socket?.request?.headers) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       server.js:40
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (process?.env?.JWT_SECRET) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       server.js:42
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Users?.Users?.findOne) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       server.js:57
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (Wallet?.Wallet?.findOne) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       server.js:65
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (body?.bitcoin?.usd) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       server.js:66
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (body?.ethereum?.usd) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       server.js:68
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (socket?.user?.username) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       server.js:74
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (io?.sockets?.emit) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       vuln_react_app/src/App.test.js:6
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (screen?.screen?.getByText) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       vuln_react_app/src/MyComponents/React_href_xss.js:13
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (this?.saveData?.bind) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       vuln_react_app/src/MyComponents/React_href_xss.js:14
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (this?.updateForm?.bind) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       vuln_react_app/src/MyComponents/React_href_xss.js:26
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (window?.location?.origin) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       vuln_react_app/src/MyComponents/React_href_xss.js:66
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (this?.state?.name) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       vuln_react_app/src/MyComponents/React_href_xss.js:67
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (this?.state?.email) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       vuln_react_app/src/MyComponents/React_href_xss.js:68
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (this?.state?.website) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       vuln_react_app/src/MyComponents/React_ref_innerHTML_xss.js:12
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (this?.saveData?.bind) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       vuln_react_app/src/MyComponents/React_ref_innerHTML_xss.js:13
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (this?.updateForm?.bind) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       vuln_react_app/src/MyComponents/React_ref_innerHTML_xss.js:25
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (window?.location?.origin) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       vuln_react_app/src/MyComponents/React_ref_innerHTML_xss.js:34
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (this?.nameRef?.current) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       vuln_react_app/src/MyComponents/React_ref_innerHTML_xss.js:35
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (this?.emailRef?.current) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       vuln_react_app/src/MyComponents/React_ref_innerHTML_xss.js:36
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (this?.websiteRef?.current) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+     HIGH    Ts Optional Chain Missing
+       vuln_react_app/src/MyComponents/React_ref_innerHTML_xss.js:37
+       Deep property access without optional chaining. If any intermediate property is null or undefined, this will throw a TypeError. Use optional chaining (this?.websiteRef?.current) for safety, especially when dealing with API responses or database results that may have missing fields.
+
+         │ requires login
+
+Summary: 3 critical · 139 high
+
+Risk Score: 100/100  ████████████████████
+
+Scan completed in 2162ms
+

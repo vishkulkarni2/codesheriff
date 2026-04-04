@@ -1,0 +1,76 @@
+{
+  "target": "/tmp/codesheriff-dogfood/Vulnerable-API/",
+  "riskScore": 100,
+  "findingsCount": 5,
+  "durationMs": 1787,
+  "findings": [
+    {
+      "ruleId": "python-except-bare",
+      "title": "Python Except Bare",
+      "description": "Bare except clause catches all exceptions including SystemExit, KeyboardInterrupt, and GeneratorExit. Use except Exception: to catch only standard exceptions, or catch specific exception types.\n",
+      "severity": "HIGH",
+      "category": "SECURITY",
+      "file": "app.py",
+      "lineStart": 6,
+      "lineEnd": 9,
+      "codeSnippet": "requires login",
+      "detector": "StaticAnalyzer"
+    },
+    {
+      "ruleId": "python-except-bare",
+      "title": "Python Except Bare",
+      "description": "Bare except clause catches all exceptions including SystemExit, KeyboardInterrupt, and GeneratorExit. Use except Exception: to catch only standard exceptions, or catch specific exception types.\n",
+      "severity": "HIGH",
+      "category": "SECURITY",
+      "file": "app.py",
+      "lineStart": 11,
+      "lineEnd": 14,
+      "codeSnippet": "requires login",
+      "detector": "StaticAnalyzer"
+    },
+    {
+      "ruleId": "python-except-bare",
+      "title": "Python Except Bare",
+      "description": "Bare except clause catches all exceptions including SystemExit, KeyboardInterrupt, and GeneratorExit. Use except Exception: to catch only standard exceptions, or catch specific exception types.\n",
+      "severity": "HIGH",
+      "category": "SECURITY",
+      "file": "lfi.py",
+      "lineStart": 2,
+      "lineEnd": 5,
+      "codeSnippet": "requires login",
+      "detector": "StaticAnalyzer"
+    },
+    {
+      "ruleId": "python-except-bare",
+      "title": "Python Except Bare",
+      "description": "Bare except clause catches all exceptions including SystemExit, KeyboardInterrupt, and GeneratorExit. Use except Exception: to catch only standard exceptions, or catch specific exception types.\n",
+      "severity": "HIGH",
+      "category": "SECURITY",
+      "file": "rfi.py",
+      "lineStart": 4,
+      "lineEnd": 7,
+      "codeSnippet": "requires login",
+      "detector": "StaticAnalyzer"
+    },
+    {
+      "ruleId": "ai-sql-concat-python",
+      "title": "Sql Concat Python",
+      "description": "SQL query built with string concatenation or f-string in Python. Use parameterized queries: cursor.execute('SELECT ... WHERE id = %s', (value,))\n",
+      "severity": "CRITICAL",
+      "category": "SECURITY",
+      "file": "sqli.py",
+      "lineStart": 16,
+      "lineEnd": 16,
+      "codeSnippet": "requires login",
+      "detector": "StaticAnalyzer"
+    }
+  ],
+  "summary": {
+    "critical": 1,
+    "high": 4,
+    "medium": 0,
+    "low": 0,
+    "info": 0
+  },
+  "passed": false
+}

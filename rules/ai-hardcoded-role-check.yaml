@@ -11,15 +11,19 @@ rules:
   # ---------------------------------------------------------------------------
 
   - id: ai-hardcoded-role-string-admin
-    patterns:
+    # Narrowed: only flag when the result directly gates a privileged action
+    # (e.g., inside an if-block that calls admin-tier operations).
+    # Downgraded from ERROR→WARNING so LLM verifier can evaluate context.
+    # Cal.com uses role checks like this legitimately in TRPC procedures that
+    # are already auth-protected; the raw pattern was causing massive FP noise.
+    pattern-either:
       - pattern: $X.role === 'admin'
-      - pattern: $X.role == 'admin'
       - pattern: $X['role'] === 'admin'
     message: >
       Hardcoded role string comparison detected. Use a typed Role enum and server-side
       RBAC middleware instead of comparing string literals. This pattern is commonly
       introduced by AI assistants and can lead to privilege escalation if roles change.
-    severity: ERROR
+    severity: WARNING
     languages: [javascript, typescript]
     metadata:
       category: auth
@@ -27,15 +31,15 @@ rules:
       ai-specific: true
 
   - id: ai-hardcoded-username-admin
-    patterns:
+    # Narrowed: $X === 'admin' was matching ANY string comparison with 'admin',
+    # including config values, labels, display strings. Removed that over-broad pattern.
+    pattern-either:
       - pattern: $X.username === 'admin'
-      - pattern: $X.username == 'admin'
-      - pattern: $X === 'admin'
       - pattern: username === 'admin'
     message: >
       Hardcoded admin username check detected. This is a common AI code pattern that
       creates a backdoor-like vulnerability. Implement proper RBAC instead.
-    severity: ERROR
+    severity: WARNING
     languages: [javascript, typescript]
     metadata:
       category: auth
@@ -43,7 +47,7 @@ rules:
       ai-specific: true
 
   - id: ai-hardcoded-role-superuser
-    patterns:
+    pattern-either:
       - pattern: $X.role === 'superuser'
       - pattern: $X.role === 'super_admin'
       - pattern: $X.role === 'root'
@@ -59,13 +63,13 @@ rules:
       ai-specific: true
 
   - id: ai-hardcoded-role-python
-    patterns:
+    pattern-either:
       - pattern: $X.role == "admin"
       - pattern: $X['role'] == "admin"
       - pattern: username == "admin"
     message: >
       Hardcoded role string comparison detected in Python. Use a proper RBAC system.
-    severity: ERROR
+    severity: WARNING
     languages: [python]
     metadata:
       category: auth

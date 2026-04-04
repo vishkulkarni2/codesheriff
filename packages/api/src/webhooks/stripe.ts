@@ -37,20 +37,12 @@ export async function stripeWebhookRoutes(app: FastifyInstance): Promise<void> {
     return;
   }
 
-  // Override the JSON content type parser within this plugin scope so that
-  // req.body is a raw Buffer — required for Stripe signature verification.
-  // This only affects routes registered in this plugin (i.e., POST /stripe).
-  app.addContentTypeParser(
-    'application/json',
-    { parseAs: 'buffer' },
-    (_req: FastifyRequest, body: Buffer, done: (err: Error | null, body?: Buffer) => void) => {
-      done(null, body);
-    }
-  );
+  // Raw body is available via req.rawBody — set by the global content type parser in server.ts.
+  // Required for Stripe signature verification.
 
   app.post(
     '/stripe',
-    { schema: { hide: true } },
+    {},
     async (req: FastifyRequest, reply: FastifyReply) => {
       const sig = req.headers['stripe-signature'];
 
@@ -63,7 +55,12 @@ export async function stripeWebhookRoutes(app: FastifyInstance): Promise<void> {
       let event: Stripe.Event;
 
       try {
-        event = stripe.webhooks.constructEvent(req.body as Buffer, sig, webhookSecret);
+        const rawBody = (req as unknown as { rawBody?: Buffer }).rawBody;
+        if (!rawBody) {
+          req.log.error('rawBody not available for Stripe signature verification');
+          return reply.status(500).send({ error: 'Server configuration error' });
+        }
+        event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
       } catch (err) {
         req.log.warn({ err }, 'Stripe webhook signature verification failed');
         return reply.status(401).send({ error: 'Invalid signature' });
@@ -123,7 +120,7 @@ async function handleCheckoutCompleted(
     where: { id: organizationId },
     data: {
       plan: Plan.TEAM,
-      stripeCustomerId: customerId ?? undefined,
+      stripeCustomerId: customerId ?? null,
       stripeSubscriptionId: subscriptionId,
       stripeSubscriptionStatus: 'active',
       planUpdatedAt: new Date(),

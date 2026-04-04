@@ -60,7 +60,7 @@ export async function clerkWebhookRoutes(app: FastifyInstance): Promise<void> {
     {
       config: { rawBody: true },
       // Tighter rate limit — Clerk sends at most a few events per second
-      schema: { hide: true },
+      
     },
     async (req: FastifyRequest, reply: FastifyReply) => {
       // ---- Signature verification ----
@@ -140,7 +140,7 @@ async function handleUserCreated(
     return;
   }
 
-  const name = [data.first_name, data.last_name].filter(Boolean).join(' ') || data.username || primaryEmail.split('@')[0];
+  const name = [data.first_name, data.last_name].filter(Boolean).join(' ') || data.username || primaryEmail.split('@')[0] || 'Unknown';
 
   // Check if user already exists (idempotent — Clerk may retry)
   const existing = await prisma.user.findUnique({ where: { clerkId: data.id } });
@@ -193,7 +193,7 @@ async function handleUserUpdated(
 
   if (!primaryEmail) return;
 
-  const name = [data.first_name, data.last_name].filter(Boolean).join(' ') || data.username || primaryEmail.split('@')[0];
+  const name = [data.first_name, data.last_name].filter(Boolean).join(' ') || data.username || primaryEmail.split('@')[0] || 'Unknown';
 
   const updated = await prisma.user.updateMany({
     where: { clerkId: data.id },

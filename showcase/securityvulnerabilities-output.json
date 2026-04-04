@@ -1,0 +1,112 @@
+{
+  "target": "/tmp/codesheriff-dogfood/securityvulnerabilities/",
+  "riskScore": 100,
+  "findingsCount": 8,
+  "durationMs": 1818,
+  "findings": [
+    {
+      "ruleId": "ai-pattern:password-comparison-with-==-operator",
+      "title": "Password comparison with == operator",
+      "description": "Non-constant-time password comparison is a critical auth anti-pattern in AI code.",
+      "severity": "CRITICAL",
+      "category": "QUALITY",
+      "file": "16_session_fixation.py",
+      "lineStart": 21,
+      "lineEnd": 21,
+      "codeSnippet": "if password == \"secret\":",
+      "detector": "AIPatternDetector"
+    },
+    {
+      "ruleId": "ai-pattern:password-comparison-with-==-operator",
+      "title": "Password comparison with == operator",
+      "description": "Non-constant-time password comparison is a critical auth anti-pattern in AI code.",
+      "severity": "CRITICAL",
+      "category": "QUALITY",
+      "file": "16_session_fixation.py",
+      "lineStart": 38,
+      "lineEnd": 38,
+      "codeSnippet": "if password == \"secret\":",
+      "detector": "AIPatternDetector"
+    },
+    {
+      "ruleId": "ai-pattern:password-comparison-with-==-operator",
+      "title": "Password comparison with == operator",
+      "description": "Non-constant-time password comparison is a critical auth anti-pattern in AI code.",
+      "severity": "CRITICAL",
+      "category": "QUALITY",
+      "file": "03_login.py",
+      "lineStart": 19,
+      "lineEnd": 19,
+      "codeSnippet": "if username != \"admin\" or password != \"secret\":",
+      "detector": "AIPatternDetector"
+    },
+    {
+      "ruleId": "ai-pattern:password-comparison-with-==-operator",
+      "title": "Password comparison with == operator",
+      "description": "Non-constant-time password comparison is a critical auth anti-pattern in AI code.",
+      "severity": "CRITICAL",
+      "category": "QUALITY",
+      "file": "03_login.py",
+      "lineStart": 31,
+      "lineEnd": 31,
+      "codeSnippet": "if username != \"admin\" or password != \"secret\":",
+      "detector": "AIPatternDetector"
+    },
+    {
+      "ruleId": "python-unsafe-deserialization",
+      "title": "Python Unsafe Deserialization",
+      "description": "Unsafe deserialization detected. pickle.loads, yaml.load without SafeLoader, and marshal.loads can execute arbitrary code when processing untrusted data. Use yaml.safe_load() for YAML, or json for serialization where possible.\n",
+      "severity": "CRITICAL",
+      "category": "SECURITY",
+      "file": "00_multi_sec.py",
+      "lineStart": 55,
+      "lineEnd": 55,
+      "codeSnippet": "requires login",
+      "detector": "StaticAnalyzer"
+    },
+    {
+      "ruleId": "python-none-attribute-access",
+      "title": "Python None Attribute Access",
+      "description": "Potential None dereference. The value may be None (e.g., from dict.get()) and accessing attributes on None raises AttributeError. Add a None check.\n",
+      "severity": "HIGH",
+      "category": "SECURITY",
+      "file": "22_ssrf_fetch_data.py",
+      "lineStart": 23,
+      "lineEnd": 24,
+      "codeSnippet": "requires login",
+      "detector": "StaticAnalyzer"
+    },
+    {
+      "ruleId": "python-none-attribute-access",
+      "title": "Python None Attribute Access",
+      "description": "Potential None dereference. The value may be None (e.g., from dict.get()) and accessing attributes on None raises AttributeError. Add a None check.\n",
+      "severity": "HIGH",
+      "category": "SECURITY",
+      "file": "22_ssrf_fetch_data.py",
+      "lineStart": 34,
+      "lineEnd": 35,
+      "codeSnippet": "requires login",
+      "detector": "StaticAnalyzer"
+    },
+    {
+      "ruleId": "python-unsafe-deserialization",
+      "title": "Python Unsafe Deserialization",
+      "description": "Unsafe deserialization detected. pickle.loads, yaml.load without SafeLoader, and marshal.loads can execute arbitrary code when processing untrusted data. Use yaml.safe_load() for YAML, or json for serialization where possible.\n",
+      "severity": "CRITICAL",
+      "category": "SECURITY",
+      "file": "24_deserialization.py",
+      "lineStart": 27,
+      "lineEnd": 27,
+      "codeSnippet": "requires login",
+      "detector": "StaticAnalyzer"
+    }
+  ],
+  "summary": {
+    "critical": 6,
+    "high": 2,
+    "medium": 0,
+    "low": 0,
+    "info": 0
+  },
+  "passed": false
+}

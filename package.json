@@ -18,7 +18,8 @@
     "db:migrate": "pnpm --filter @codesheriff/db migrate:dev",
     "db:push": "pnpm --filter @codesheriff/db db:push",
     "db:seed": "pnpm --filter @codesheriff/db seed",
-    "db:studio": "pnpm --filter @codesheriff/db studio"
+    "db:studio": "pnpm --filter @codesheriff/db studio",
+    "autotune": "pnpm --filter @codesheriff/autotune run autotune"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
@@ -26,5 +27,6 @@
     "typescript": "^5.4.0",
     "prettier": "^3.2.0",
     "eslint": "^8.57.0"
-  }
+  },
+  "packageManager": "pnpm@8.15.9"
 }

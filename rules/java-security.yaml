@@ -1,0 +1,101 @@
+rules:
+  # ---------------------------------------------------------------------------
+  # Java Security & Correctness Rules
+  # Targets: Keycloak (Java-based authentication platform)
+  # Based on golden comment patterns: recursive caching, incorrect references,
+  # method parameter mismatches, Spring Security misconfig
+  # ---------------------------------------------------------------------------
+
+  - id: java-sql-injection-string-concat
+    patterns:
+      - pattern: |
+          String $QUERY = "..." + $VAR + "...";
+          ...
+          $STMT.executeQuery($QUERY);
+      - pattern: |
+          String $QUERY = "..." + $VAR + "...";
+          ...
+          $STMT.execute($QUERY);
+      - pattern: $STMT.executeQuery("..." + $VAR + "...")
+      - pattern: $EM.createQuery("..." + $VAR + "...")
+      - pattern: $EM.createNativeQuery("..." + $VAR + "...")
+    message: >
+      SQL injection via string concatenation. Use PreparedStatement with parameter
+      placeholders instead of concatenating user input into queries. For JPA, use
+      named parameters: em.createQuery("SELECT e FROM Entity e WHERE e.id = :id").
+    severity: ERROR
+    languages: [java]
+    metadata:
+      category: security
+      cwe: CWE-89
+      owasp: A03:2021 - Injection
+      benchmark-target: keycloak
+
+  - id: java-resource-leak
+    patterns:
+      - pattern: |
+          $STREAM = new $TYPE(...);
+          ...
+          $STREAM.$METHOD(...);
+      - pattern: |
+          $CONN = $DS.getConnection();
+          ...
+          $CONN.$METHOD(...);
+    pattern-not: |
+      try ($TYPE $STREAM = ...) {
+          ...
+      }
+    message: >
+      Potential resource leak. Streams, connections, and other closeable resources
+      should be managed with try-with-resources to ensure they are closed even if
+      an exception occurs. Without proper cleanup, the application can exhaust
+      file handles or database connections.
+    severity: WARNING
+    languages: [java]
+    metadata:
+      category: correctness
+      cwe: CWE-404
+      benchmark-target: keycloak
+
+  - id: java-spring-csrf-disabled
+    patterns:
+      - pattern: $HTTP.csrf().disable()
+      - pattern: $HTTP.csrf($CUSTOMIZER -> $CUSTOMIZER.disable())
+      - pattern: |
+          @Bean
+          public SecurityFilterChain $METHOD(...) {
+              ...
+              $HTTP.csrf().disable();
+              ...
+          }
+    message: >
+      CSRF protection is disabled in Spring Security configuration. This allows
+      cross-site request forgery attacks against state-changing endpoints. Only
+      disable CSRF for stateless APIs that use token-based authentication (Bearer
+      tokens), not for session-based web applications.
+    severity: ERROR
+    languages: [java]
+    metadata:
+      category: security
+      cwe: CWE-352
+      benchmark-target: keycloak
+
+  - id: java-recursive-delegation-bug
+    pattern: |
+      public $RET $METHOD(...) {
+          ...
+          $THIS.$METHOD(...);
+          ...
+      }
+    message: >
+      Method appears to call itself recursively instead of delegating to a wrapped
+      or parent object. This can cause infinite recursion and StackOverflowError.
+      Verify that the recursive call is intentional and has a proper base case, or
+      change to delegate to the correct target (e.g., delegate.method() instead of
+      this.method()).
+    severity: ERROR
+    languages: [java]
+    metadata:
+      category: correctness
+      cwe: CWE-674
+      benchmark-target: keycloak

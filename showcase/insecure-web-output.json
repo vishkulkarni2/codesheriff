@@ -1,0 +1,15 @@
+{
+  "target": "/tmp/codesheriff-dogfood/insecure-web/",
+  "riskScore": 0,
+  "findingsCount": 0,
+  "durationMs": 1684,
+  "findings": [],
+  "summary": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "info": 0
+  },
+  "passed": true
+}
