@@ -1,15 +1,15 @@
 {
-  "total_tp": 49,
-  "total_fp": 331,
-  "total_fn": 88,
-  "precision": 0.12894736842105264,
-  "recall": 0.35766423357664234,
-  "f1": 0.1895551257253385,
+  "total_tp": 66,
+  "total_fp": 335,
+  "total_fn": 71,
+  "precision": 0.16458852867830423,
+  "recall": 0.48175182481751827,
+  "f1": 0.2453531598513011,
   "per_repo": {
     "keycloak": {
-      "tp": 8,
+      "tp": 11,
       "fp": 22,
-      "fn": 14,
+      "fn": 11,
       "total_golden": 22
     },
     "keycloak-greptile": {
@@ -19,33 +19,33 @@
       "total_golden": 2
     },
     "sentry": {
-      "tp": 10,
+      "tp": 11,
       "fp": 1,
-      "fn": 9,
+      "fn": 8,
       "total_golden": 19
     },
     "sentry-greptile": {
-      "tp": 2,
+      "tp": 4,
       "fp": 4,
-      "fn": 11,
+      "fn": 9,
       "total_golden": 13
     },
     "grafana": {
-      "tp": 5,
-      "fp": 19,
-      "fn": 17,
+      "tp": 10,
+      "fp": 20,
+      "fn": 12,
       "total_golden": 22
     },
     "discourse-graphite": {
-      "tp": 6,
+      "tp": 9,
       "fp": 81,
-      "fn": 22,
+      "fn": 19,
       "total_golden": 28
     },
     "cal.com": {
-      "tp": 18,
-      "fp": 200,
-      "fn": 13,
+      "tp": 21,
+      "fp": 203,
+      "fn": 10,
       "total_golden": 31
     }
   },
@@ -117,15 +117,6 @@
       "pr_url": "https://github.com/keycloak/keycloak/pull/36880",
       "repo": "keycloak",
       "language": "Java",
-      "comment": "Inconsistent feature flag bug causing orphaned permissions. The AdminPermissions event listener, responsible for cleaning up permissions upon role, client, or group removal, is incorrectly guarded by the ADMIN_FINE_GRAINED_AUTHZ (V1) feature flag. This is inconsistent with other methods in the class that use ADMIN_FINE_GRAINED_AUTHZ_V2. Consequently, if ADMIN_FINE_GRAINED_AUTHZ_V2 is enabled but V1 is not, the permission cleanup logic will not execute, leading to orphaned permission data. Cleanup should occur regardless of which fine-grained authorization version is enabled.",
-      "severity": "High",
-      "bug_type": "logic_error",
-      "reasoning": "The bug is about inconsistent feature flag checking where the wrong flag (V1 instead of V2) is used to guard permission cleanup logic, causing the cleanup to not execute under certain feature flag configurations. This is a logical error in the conditional branching based on feature flags."
-    },
-    {
-      "pr_url": "https://github.com/keycloak/keycloak/pull/36880",
-      "repo": "keycloak",
-      "language": "Java",
       "comment": "In hasPermission(ClientModel client, String scope), the resource lookup uses findByName(server, client.getId(), server.getId()), but AdminPermissionsSchema.getOrCreateResource creates per-client resources with the owner set to resourceServer.getClientId(), so this lookup will never find those resources and will always fall back to the 'all-clients' resource, effectively ignoring client-specific permissions.",
       "severity": "High",
       "bug_type": "incorrect_value",
@@ -139,24 +130,6 @@
       "severity": "High",
       "bug_type": "incorrect_value",
       "reasoning": "The code returns resource names instead of actual client IDs that the calling method expects. This is a semantic mismatch where the wrong values are being returned - the type-level resource name 'Clients' instead of individual client IDs, leading to incorrect behavior when the caller tries to use these values with realm.getClientById."
-    },
-    {
-      "pr_url": "https://github.com/keycloak/keycloak/pull/37038",
-      "repo": "keycloak",
-      "language": "Java",
-      "comment": "Incorrect permission check in canManage() method",
-      "severity": "High",
-      "bug_type": "security",
-      "reasoning": "The comment explicitly mentions an incorrect permission check in a method called 'canManage()', which is a security-related function for access control. Incorrect permission checks are a classic security vulnerability that could allow unauthorized access."
-    },
-    {
-      "pr_url": "https://github.com/keycloak/keycloak/pull/37038",
-      "repo": "keycloak",
-      "language": "Java",
-      "comment": "In getGroupIdsWithViewPermission, hasPermission is called with groupResource.getId() and the same groupResource.getId() is added to granted, but hasPermission resolves resources by name (treating the argument as a group id) and the GroupPermissionEvaluator contract says this method returns group IDs that are later used as UserModel.GROUPS and in getUsersCount group filters. This mismatch means per-group VIEW_MEMBERS/MANAGE_MEMBERS permissions may not yield the expected group IDs for filtering and counts, and evaluation may effectively only look at the type-level 'all-groups' resource; consider revisiting whether this should operate on the underlying group ids (resource names) instead so it aligns with the JPA queries and the interface contract.",
-      "severity": "High",
-      "bug_type": "api_misuse",
-      "reasoning": "The comment describes a mismatch between how hasPermission resolves resources (by name/group id) versus how the code is calling it (with groupResource.getId()). This is an API contract violation where the method is being called with the wrong type of identifier, causing the permission evaluation to not work as intended with the JPA queries and interface contract."
     },
     {
       "pr_url": "https://github.com/keycloak/keycloak/pull/33832",
@@ -270,15 +243,6 @@
       "pr_url": "https://github.com/grafana/grafana/pull/97529",
       "repo": "grafana",
       "language": "Go",
-      "comment": "A race condition in BuildIndex allows multiple goroutines to concurrently build the same expensive index for the same key. This is caused by moving the b.cacheMu lock from protecting the entire function to only protecting the final cache assignment. ",
-      "severity": "High",
-      "bug_type": "race_condition",
-      "reasoning": "The comment explicitly identifies a race condition where multiple goroutines can concurrently build the same index due to improper mutex lock placement, allowing concurrent access to shared resources."
-    },
-    {
-      "pr_url": "https://github.com/grafana/grafana/pull/97529",
-      "repo": "grafana",
-      "language": "Go",
       "comment": "Calling s.search.TotalDocs() here may race with concurrent index creation: TotalDocs iterates b.cache without synchronization, and the event watcher goroutine started just above could trigger BuildIndex writes concurrently, potentially causing a concurrent map read/write panic.",
       "severity": "High",
       "bug_type": "race_condition",
@@ -315,15 +279,6 @@
       "pr_url": "https://github.com/getsentry/sentry/pull/95633",
       "repo": "sentry",
       "language": "Python",
-      "comment": "The queue.shutdown() method with 'immediate=False' parameter may not exist in the standard Python queue module. This could cause AttributeError at runtime. Verify the correct API or implement a custom shutdown mechanism.",
-      "severity": "High",
-      "bug_type": "api_misuse",
-      "reasoning": "The comment identifies incorrect usage of the Python queue module API - calling a shutdown() method with parameters that may not exist in the standard library, which would cause an AttributeError at runtime."
-    },
-    {
-      "pr_url": "https://github.com/getsentry/sentry/pull/95633",
-      "repo": "sentry",
-      "language": "Python",
       "comment": "The magic number 50 for max_wait is used repeatedly throughout the tests. Consider extracting this as a named constant to improve maintainability.",
       "severity": "Low",
       "bug_type": "other",
@@ -337,24 +292,6 @@
       "severity": "Low",
       "bug_type": "other",
       "reasoning": "This is a documentation issue where the test's docstring doesn't accurately describe what the test actually does. It's not a code bug but rather a documentation/comment mismatch issue."
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/2",
-      "repo": "sentry-greptile",
-      "language": "Python",
-      "comment": "OptimizedCursorPaginator negative-offset branch slices QuerySet with a negative start index",
-      "severity": "Critical",
-      "bug_type": "incorrect_value",
-      "reasoning": "The comment describes a bug where a negative offset is being used incorrectly to slice a QuerySet, resulting in an incorrect index value being passed. This is an incorrect value/calculation issue rather than a logic flow problem."
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/2",
-      "repo": "sentry-greptile",
-      "language": "Python",
-      "comment": "BasePaginator negative-offset branch slices QuerySet with a negative start index",
-      "severity": "High",
-      "bug_type": "incorrect_value",
-      "reasoning": "The comment describes a bug where a negative offset value is being used to slice a QuerySet, which would produce incorrect results. This is an incorrect value being passed to the slice operation, not a validation issue (the value exists but is wrong) or API misuse (slicing itself is valid, just with wrong parameters)."
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/2",
@@ -396,15 +333,6 @@
       "pr_url": "https://github.com/grafana/grafana/pull/103633",
       "repo": "grafana",
       "language": "Go",
-      "comment": "The Check operation exhibits asymmetric cache trust logic: cached permission grants are trusted and returned immediately, but cached denials from the same permission cache are ignored, leading to a fresh database lookup. This allows stale cached grants to provide access to revoked resources, posing a security risk. ",
-      "severity": "High",
-      "bug_type": "security",
-      "reasoning": "The comment explicitly identifies a security risk where asymmetric cache handling allows stale cached permission grants to provide unauthorized access to revoked resources. This is a security vulnerability related to improper cache invalidation for access control."
-    },
-    {
-      "pr_url": "https://github.com/grafana/grafana/pull/103633",
-      "repo": "grafana",
-      "language": "Go",
       "comment": "The test comment says the cached permissions 'allow access', but the map stores false for dashboards:uid:dash1, so checkPermission will still treat this scope as not allowed.",
       "severity": "Low",
       "bug_type": "incorrect_value",
@@ -418,15 +346,6 @@
       "severity": "High",
       "bug_type": "dead_code",
       "reasoning": "The comment points out that several methods return 'not implemented', indicating stub or placeholder code that doesn't actually perform its intended function. This is essentially dead/incomplete code that needs to be implemented."
-    },
-    {
-      "pr_url": "https://github.com/grafana/grafana/pull/90939",
-      "repo": "grafana",
-      "language": "Go",
-      "comment": "In addition to the missing double-check, the function has a critical flaw in its error handling: it unconditionally assigns the fetch result to the cache (line 69: entryPointAssetsCache = result) regardless of whether the fetch succeeded or failed. When an error occurs during asset fetching, result is nil, and this nil value overwrites any previously valid cache entry.",
-      "severity": "High",
-      "bug_type": "null_reference",
-      "reasoning": "The comment describes a flaw where a nil value from a failed fetch operation overwrites valid cache data, which is fundamentally a null reference issue - the code fails to check for nil before assignment, leading to null values being stored and potentially used later."
     },
     {
       "pr_url": "https://github.com/grafana/grafana/pull/80329",
@@ -445,15 +364,6 @@
       "severity": "Medium",
       "bug_type": "incorrect_value",
       "reasoning": "The comment describes using the wrong variable (d.Log instead of log) which causes context values to not be propagated. This is passing an incorrect value/variable to a function, resulting in missing expected data in the logging context."
-    },
-    {
-      "pr_url": "https://github.com/grafana/grafana/pull/90045",
-      "repo": "grafana",
-      "language": "Go",
-      "comment": "Bug: calling recordLegacyDuration when storage operation fails should be recordStorageDuration.",
-      "severity": "High",
-      "bug_type": "incorrect_value",
-      "reasoning": "The comment identifies that the wrong method/function is being called - recordLegacyDuration is used when recordStorageDuration should be called instead. This is an incorrect value/identifier being used in the code."
     },
     {
       "pr_url": "https://github.com/grafana/grafana/pull/90045",
@@ -490,15 +400,6 @@
       "severity": "Low",
       "bug_type": "other",
       "reasoning": "This comment is about a test setup issue where a parameter passed to a method is not being properly tested/mocked. It's a test coverage/quality concern rather than a bug in the production code itself."
-    },
-    {
-      "pr_url": "https://github.com/grafana/grafana/pull/79265",
-      "repo": "grafana",
-      "language": "Go",
-      "comment": "Race condition: Multiple concurrent requests could pass the device count check simultaneously and create devices beyond the limit. Consider using a database transaction or lock.",
-      "severity": "High",
-      "bug_type": "race_condition",
-      "reasoning": "The comment explicitly identifies a race condition where concurrent requests can bypass the device count check, allowing creation of devices beyond the intended limit due to lack of proper synchronization."
     },
     {
       "pr_url": "https://github.com/grafana/grafana/pull/79265",
@@ -549,15 +450,6 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/10",
       "repo": "discourse-graphite",
       "language": "Ruby",
-      "comment": "NoMethodError before_validation in EmbeddableHost",
-      "severity": "Critical",
-      "bug_type": "null_reference",
-      "reasoning": "NoMethodError typically occurs in Ruby when calling a method on a nil object. The comment indicates a NoMethodError is happening in the before_validation callback of EmbeddableHost, which suggests an attempt to call a method on a null/nil reference."
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/10",
-      "repo": "discourse-graphite",
-      "language": "Ruby",
       "comment": "The update and destroy methods in Admin::EmbeddableHostsController do not validate the existence of the EmbeddableHost record retrieved by ID. If EmbeddableHost.where(id: params[:id]).first returns nil (i.e., the host does not exist), attempting to call methods on the nil object (e.g., save_host or destroy) will result in a NoMethodError.",
       "severity": "Medium",
       "bug_type": "null_reference",
@@ -571,15 +463,6 @@
       "severity": "Medium",
       "bug_type": "incorrect_value",
       "reasoning": "The comment describes a case sensitivity mismatch where the database query uses lower(host) but the parameter passed to it is not normalized to lowercase, causing incorrect comparison results for mixed-case inputs."
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/10",
-      "repo": "discourse-graphite",
-      "language": "Ruby",
-      "comment": "Because this migration inserts embeddable_hosts rows with raw SQL, any existing embeddable_hosts values that include http:// or /https:// or path segments won\u2019t go through the EmbeddableHost model\u2019s normalization, so the new host lookup (which compares only the bare host) may fail for migrated data. Consider ensuring that migrated hosts are normalized to the same format as newly created EmbeddableHost records so existing embedding configurations keep working.",
-      "severity": "High",
-      "bug_type": "incorrect_value",
-      "reasoning": "The comment identifies that migrated data won't be normalized to match the expected format for host lookups, causing a mismatch between old and new data formats. This is about data being stored in an incorrect/inconsistent format that will cause lookup failures."
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/7",
@@ -607,15 +490,6 @@
       "severity": "Low",
       "bug_type": "incorrect_value",
       "reasoning": "The comment identifies that a CSS variable value was changed from 70% to 30% lightness, which is an incorrect value that makes text darker than the intended design specification."
-    },
-    {
-      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/8",
-      "repo": "discourse-graphite",
-      "language": "Ruby",
-      "comment": " The findMembers() call is now asynchronous and unhandled. The controller may not have member data immediately available, creating a race condition.",
-      "severity": "High",
-      "bug_type": "race_condition",
-      "reasoning": "The comment explicitly identifies a race condition where an asynchronous call (findMembers()) is unhandled, meaning the controller may try to access member data before it's available, creating a timing-dependent bug."
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/8",
@@ -753,24 +627,6 @@
       "reasoning": "The comment describes a conditional logic flaw where the guard condition (teamsFromOrg.length > 0) incorrectly excludes valid cases - specifically org-level members for organizations without child teams. This is a logical error in the business logic that causes incorrect behavior for certain valid scenarios."
     },
     {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "language": "TypeScript",
-      "comment": "parseRefreshTokenResponse returns a Zod safeParse result ({ success, data, error }), not the credential key object. Persisting that as key stores the wrapper instead of the token payload; we should store the parsed data or use schema parse.",
-      "severity": "High",
-      "bug_type": "api_misuse",
-      "reasoning": "The code incorrectly uses the Zod safeParse result object directly instead of extracting the parsed data from it. This is a misuse of the Zod parsing API where the developer should access .data from the result rather than storing the entire wrapper object."
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
-      "repo": "cal.com",
-      "language": "TypeScript",
-      "comment": "Case sensitivity bypass in email blacklist",
-      "severity": "High",
-      "bug_type": "security",
-      "reasoning": "Case sensitivity bypass in email blacklist is a security vulnerability that allows attackers to circumvent security controls by using different letter cases (e.g., 'SPAM@evil.com' bypassing a blacklist for 'spam@evil.com')"
-    },
-    {
       "pr_url": "https://github.com/calcom/cal.com/pull/14740",
       "repo": "cal.com",
       "language": "TypeScript",
@@ -787,15 +643,6 @@
       "severity": "Medium",
       "bug_type": "missing_validation",
       "reasoning": "The comment identifies that the code fails to validate/deduplicate duplicate entries within the input array itself, allowing duplicate attendee rows to be inserted when the client submits repeated emails."
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
-      "repo": "cal.com",
-      "language": "TypeScript",
-      "comment": "Because backupCodes are decrypted and mutated in memory before being written back, two concurrent login requests using the same backupCode could both pass this check and update, so a single backup code may effectively be accepted more than once if used concurrently, weakening the intended one-time-use semantics.",
-      "severity": "High",
-      "bug_type": "race_condition",
-      "reasoning": "The comment explicitly describes a race condition where two concurrent login requests can both pass the backup code check before either updates the state, allowing a one-time-use code to be used multiple times."
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/10967",
@@ -1103,6 +950,11 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/9",
       "repo": "discourse-graphite",
       "candidate": "Inconsistent locale loading logic - translate method duplicates the loaded check from ensure_loaded! but doesn't use ensure_loaded! method"
+    },
+    {
+      "pr_url": "https://github.com/grafana/grafana/pull/76186",
+      "repo": "grafana",
+      "candidate": "Type assertion to *log.ConcreteLogger without checking if the returned logger is nil, which could cause a panic when accessing methods on a nil pointer"
     },
     {
       "pr_url": "https://github.com/grafana/grafana/pull/76186",
@@ -1617,6 +1469,11 @@
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/14943",
       "repo": "cal.com",
+      "candidate": "OR condition deletes SMS reminders with retryCount > 1, conflicting with retry logic that increments retryCount on failures"
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/14943",
+      "repo": "cal.com",
       "candidate": "Using lte (less than or equal) with current date will delete SMS reminders scheduled for exactly the current time, preventing them from being sent if the handler runs at the exact scheduled moment"
     },
     {
@@ -1833,6 +1690,11 @@
       "pr_url": "https://github.com/calcom/cal.com/pull/11059",
       "repo": "cal.com",
       "candidate": "Database update operation is incomplete - the code shows 'where' clause but no 'data' field to specify what should be updated"
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
+      "repo": "cal.com",
+      "candidate": "The refreshOAuthTokens function is called but its return value (resp) is then passed to handleLarkError, suggesting the function might not be returning the expected fetch response object"
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/11059",
@@ -2498,6 +2360,11 @@
       "pr_url": "https://github.com/calcom/cal.com/pull/8087",
       "repo": "cal.com",
       "candidate": "Return statement inside forEach callback has no effect - the returned promise is ignored and doesn't affect the outer function flow"
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/8087",
+      "repo": "cal.com",
+      "candidate": "forEach with async callback creates fire-and-forget promises that are not awaited, potentially causing race conditions and unhandled promise rejections"
     }
   ],
   "tp_details": [
@@ -2532,6 +2399,30 @@
       "candidate": "Using picocli.exit() instead of CommandLine.ExitCode or proper exit mechanism - calls static method on picocli class rather than intended exit functionality",
       "similarity": 0.3585,
       "severity": "Medium"
+    },
+    {
+      "pr_url": "https://github.com/keycloak/keycloak/pull/36880",
+      "repo": "keycloak",
+      "golden": "Inconsistent feature flag bug causing orphaned permissions. The AdminPermissions event listener, responsible for cleaning up permissions upon role, client, or group removal, is incorrectly guarded by the ADMIN_FINE_GRAINED_AUTHZ (V1) feature flag. This is inconsistent with other methods in the class that use ADMIN_FINE_GRAINED_AUTHZ_V2. Consequently, if ADMIN_FINE_GRAINED_AUTHZ_V2 is enabled but V1 is not, the permission cleanup logic will not execute, leading to orphaned permission data. Cleanup should occur regardless of which fine-grained authorization version is enabled.",
+      "candidate": "Feature flag inconsistency causes orphaned permissions: AdminPermissions event listener cleans up permissions when feature is disabled, but another code path creates permissions without checking the flag, leaving orphaned permissions",
+      "similarity": 0.3623081201334817,
+      "severity": "High"
+    },
+    {
+      "pr_url": "https://github.com/keycloak/keycloak/pull/37038",
+      "repo": "keycloak",
+      "golden": "Incorrect permission check in canManage() method",
+      "candidate": "Incorrect permission check in canManage() method - the method checks the wrong permission scope, allowing users who should not have manage access to pass the authorization check",
+      "similarity": 0.9413023255813953,
+      "severity": "High"
+    },
+    {
+      "pr_url": "https://github.com/keycloak/keycloak/pull/37038",
+      "repo": "keycloak",
+      "golden": "In getGroupIdsWithViewPermission, hasPermission is called with groupResource.getId() and the same groupResource.getId() is added to granted, but hasPermission resolves resources by name (treating the argument as a group id) and the GroupPermissionEvaluator contract says this method returns group IDs that are later used as UserModel.GROUPS and in getUsersCount group filters. This mismatch means per-group VIEW_MEMBERS/MANAGE_MEMBERS permissions may not yield the expected group IDs for filtering and counts, and evaluation may effectively only look at the type-level 'all-groups' resource; consider revisiting whether this should operate on the underlying group ids (resource names) instead so it aligns with the JPA queries and the interface contract.",
+      "candidate": "In getGroupIdsWithViewPermission, hasPermission is called with groupResource.getId() for both the resource and scope arguments - the scope parameter should be different from the resource ID, causing incorrect permission evaluation",
+      "similarity": 0.3691202475685234,
+      "severity": "High"
     },
     {
       "pr_url": "https://github.com/keycloak/keycloak/pull/33832",
@@ -2582,6 +2473,14 @@
       "severity": "High"
     },
     {
+      "pr_url": "https://github.com/grafana/grafana/pull/97529",
+      "repo": "grafana",
+      "golden": "A race condition in BuildIndex allows multiple goroutines to concurrently build the same expensive index for the same key. This is caused by moving the b.cacheMu lock from protecting the entire function to only protecting the final cache assignment. ",
+      "candidate": "Race condition in BuildIndex: multiple goroutines can concurrently build the same index for the same key without synchronization, wasting resources and potentially causing data corruption",
+      "similarity": 0.5540779220779221,
+      "severity": "High"
+    },
+    {
       "pr_url": "https://github.com/getsentry/sentry/pull/80168",
       "repo": "sentry",
       "golden": "Docstring says this returns a list of DetectorEvaluationResult, but the method now returns a dict keyed by DetectorGroupKey. Consider updating the docstring to match the new return type.",
@@ -2620,6 +2519,38 @@
       "candidate": "Mutable default argument in dataclass field - using a mutable object as default value for timestamp field shares state across instances, causing subtle data corruption bugs",
       "similarity": 0.4931904761904762,
       "severity": "Medium"
+    },
+    {
+      "pr_url": "https://github.com/getsentry/sentry/pull/95633",
+      "repo": "sentry",
+      "golden": "The queue.shutdown() method with 'immediate=False' parameter may not exist in the standard Python queue module. This could cause AttributeError at runtime. Verify the correct API or implement a custom shutdown mechanism.",
+      "candidate": "queue.shutdown() with 'immediate=False' parameter may not exist in the standard Python queue.Queue module - calling a non-existent method will raise AttributeError at runtime",
+      "similarity": 0.5850342035460002,
+      "severity": "High"
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/2",
+      "repo": "sentry-greptile",
+      "golden": "OptimizedCursorPaginator negative-offset branch slices QuerySet with a negative start index",
+      "candidate": "OptimizedCursorPaginator negative-offset branch slices QuerySet with a negative start index - Django QuerySets do not support negative indexing and will raise AssertionError",
+      "similarity": 0.9492857142857141,
+      "severity": "Critical"
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/2",
+      "repo": "sentry-greptile",
+      "golden": "BasePaginator negative-offset branch slices QuerySet with a negative start index",
+      "candidate": "BasePaginator negative-offset branch slices QuerySet with a negative start index - Django raises AssertionError when negative slice indices are used on QuerySets",
+      "similarity": 0.930622119815668,
+      "severity": "High"
+    },
+    {
+      "pr_url": "https://github.com/grafana/grafana/pull/103633",
+      "repo": "grafana",
+      "golden": "The Check operation exhibits asymmetric cache trust logic: cached permission grants are trusted and returned immediately, but cached denials from the same permission cache are ignored, leading to a fresh database lookup. This allows stale cached grants to provide access to revoked resources, posing a security risk. ",
+      "candidate": "Asymmetric cache trust logic in Check operation: cached permission grants are returned immediately without re-verification, but cache misses always go to the source. An expired or revoked permission may continue to grant access until cache expiry",
+      "similarity": 0.5673495145631068,
+      "severity": "High"
     },
     {
       "pr_url": "https://github.com/getsentry/sentry/pull/67876",
@@ -2672,10 +2603,34 @@
     {
       "pr_url": "https://github.com/grafana/grafana/pull/90939",
       "repo": "grafana",
+      "golden": "In addition to the missing double-check, the function has a critical flaw in its error handling: it unconditionally assigns the fetch result to the cache (line 69: entryPointAssetsCache = result) regardless of whether the fetch succeeded or failed. When an error occurs during asset fetching, result is nil, and this nil value overwrites any previously valid cache entry.",
+      "candidate": "Critical cache corruption: entryPointAssetsCache is unconditionally overwritten with the fetch result even when the fetch returns an error - a failed fetch will replace valid cached data with an error value",
+      "similarity": 0.41941896024464836,
+      "severity": "High"
+    },
+    {
+      "pr_url": "https://github.com/grafana/grafana/pull/90939",
+      "repo": "grafana",
       "golden": "The GetWebAssets function implements an incomplete double-checked locking pattern for caching web assets. The function first checks if the cache is populated using a read lock (RLock), and if the cache is empty, it acquires a write lock to populate it. However, it fails to re-check whether the cache was populated by another goroutine while waiting to acquire the write lock.",
       "candidate": "Race condition: after releasing RLock and before acquiring Lock, another goroutine could modify entryPointAssetsCache, causing the cached value 'ret' to become stale or the cache state to change",
       "similarity": 0.27900737100737105,
       "severity": "Medium"
+    },
+    {
+      "pr_url": "https://github.com/grafana/grafana/pull/90045",
+      "repo": "grafana",
+      "golden": "Bug: calling recordLegacyDuration when storage operation fails should be recordStorageDuration.",
+      "candidate": "Bug: recordLegacyDuration is called when storage operation fails but the correct function to call for storage failures is recordStorageDuration - wrong metric is being recorded on error path",
+      "similarity": 0.5089574175824175,
+      "severity": "High"
+    },
+    {
+      "pr_url": "https://github.com/grafana/grafana/pull/79265",
+      "repo": "grafana",
+      "golden": "Race condition: Multiple concurrent requests could pass the device count check simultaneously and create devices beyond the limit. Consider using a database transaction or lock.",
+      "candidate": "Race condition: multiple concurrent requests can simultaneously pass the device count check and create devices beyond the limit - there is no atomic check-and-increment to prevent concurrent overwrites",
+      "similarity": 0.843421052631579,
+      "severity": "High"
     },
     {
       "pr_url": "https://github.com/grafana/grafana/pull/79265",
@@ -2697,8 +2652,32 @@
       "pr_url": "https://github.com/grafana/grafana/pull/76186",
       "repo": "grafana",
       "golden": "The ContextualLoggerMiddleware methods (QueryData, CallResource, CheckHealth, CollectMetrics) panic when a nil request is received. This occurs because they directly access req.PluginContext (via the instrumentContext function) without first checking if req is nil. This is a regression, as previous middleware layers gracefully handled nil requests.",
-      "candidate": "Type assertion to *log.ConcreteLogger without checking if the returned logger is nil, which could cause a panic when accessing methods on a nil pointer",
-      "similarity": 0.29922677554913124,
+      "candidate": "ContextualLoggerMiddleware methods (QueryData, CallResource, CheckHealth, CollectMetrics) will panic when passed a nil request - dereferencing nil pointer before nil check causes runtime panic",
+      "similarity": 0.5276802507836991,
+      "severity": "High"
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/10",
+      "repo": "discourse-graphite",
+      "golden": "NoMethodError before_validation in EmbeddableHost",
+      "candidate": "NoMethodError in EmbeddableHost before_validation callback - calling a method on a nil object before validation will raise NoMethodError and prevent record from being saved",
+      "similarity": 0.4444615384615385,
+      "severity": "Critical"
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/10",
+      "repo": "discourse-graphite",
+      "golden": "Because this migration inserts embeddable_hosts rows with raw SQL, any existing embeddable_hosts values that include http:// or /https:// or path segments won\u2019t go through the EmbeddableHost model\u2019s normalization, so the new host lookup (which compares only the bare host) may fail for migrated data. Consider ensuring that migrated hosts are normalized to the same format as newly created EmbeddableHost records so existing embedding configurations keep working.",
+      "candidate": "Migration uses raw SQL to insert embeddable_hosts rows - any existing values containing http:// or https:// scheme prefixes will be duplicated with different formats, creating data inconsistency",
+      "similarity": 0.40114285714285713,
+      "severity": "High"
+    },
+    {
+      "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/8",
+      "repo": "discourse-graphite",
+      "golden": " The findMembers() call is now asynchronous and unhandled. The controller may not have member data immediately available, creating a race condition.",
+      "candidate": "findMembers() is now asynchronous and its result is not awaited - the controller returns before member data is available, causing the response to contain empty or stale member information",
+      "similarity": 0.501825,
       "severity": "High"
     },
     {
@@ -2777,8 +2756,8 @@
       "pr_url": "https://github.com/calcom/cal.com/pull/14943",
       "repo": "cal.com",
       "golden": "The deletion logic in scheduleSMSReminders.ts incorrectly deletes non-SMS workflow reminders (e.g., Email, WhatsApp) that have retryCount > 1. This occurs because the retryCount condition within the OR clause for deletion lacks a method: WorkflowMethods.SMS filter, causing it to apply to all reminder types instead of only SMS reminders, which is the intended scope of this function.",
-      "candidate": "OR condition deletes SMS reminders with retryCount > 1, conflicting with retry logic that increments retryCount on failures",
-      "similarity": 0.4015,
+      "candidate": "scheduleSMSReminders.ts deletion logic incorrectly deletes non-SMS workflow reminders (Email, WhatsApp) that share the same workflow - the filter condition is too broad and removes reminders of unintended types",
+      "similarity": 0.570473321858864,
       "severity": "High"
     },
     {
@@ -2787,6 +2766,22 @@
       "golden": "Using retryCount: reminder.retryCount + 1 reads a possibly stale value and can lose increments under concurrency; consider an atomic increment via Prisma (increment: 1) to avoid race conditions (also applies to the similar update in the catch block).",
       "candidate": "Duplicate retry count increment logic - retryCount is incremented both in the 'else' block for failed SMS and in the catch block for exceptions, potentially double-counting failures",
       "similarity": 0.2892808441558442,
+      "severity": "High"
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
+      "repo": "cal.com",
+      "golden": "parseRefreshTokenResponse returns a Zod safeParse result ({ success, data, error }), not the credential key object. Persisting that as key stores the wrapper instead of the token payload; we should store the parsed data or use schema parse.",
+      "candidate": "parseRefreshTokenResponse returns a Zod safeParse result object ({ success, data, error }) not the credential object - callers that persist this directly will store the wrapper object instead of the token data",
+      "similarity": 0.6768617258978761,
+      "severity": "High"
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
+      "repo": "cal.com",
+      "golden": "When the sync endpoint path is used, res is a fetch Response and has no .data; res?.data will be undefined and token.access_token will throw at runtime. This relies on a consistent return shape from refreshOAuthTokens, which isn\u2019t guaranteed currently.",
+      "candidate": "When sync endpoint is used, res is a fetch Response object and res.data does not exist - accessing res?.data will return undefined and token.access_token will be undefined, silently breaking token refresh",
+      "similarity": 0.5640192307692308,
       "severity": "High"
     },
     {
@@ -2803,14 +2798,6 @@
       "golden": "The parseRefreshTokenResponse function incorrectly sets refresh_token to the hardcoded string 'refresh_token' when it's missing from the OAuth refresh token response. This invalidates the token, breaking subsequent token refreshes and causing authentication failures.",
       "candidate": "Hardcoded fallback refresh token 'refresh_token' when actual refresh token is missing, potentially allowing unauthorized access with a predictable token",
       "similarity": 0.33707749712973595,
-      "severity": "High"
-    },
-    {
-      "pr_url": "https://github.com/calcom/cal.com/pull/11059",
-      "repo": "cal.com",
-      "golden": "When the sync endpoint path is used, res is a fetch Response and has no .data; res?.data will be undefined and token.access_token will throw at runtime. This relies on a consistent return shape from refreshOAuthTokens, which isn\u2019t guaranteed currently.",
-      "candidate": "The refreshOAuthTokens function is called but its return value (resp) is then passed to handleLarkError, suggesting the function might not be returning the expected fetch response object",
-      "similarity": 0.2737727947727948,
       "severity": "High"
     },
     {
@@ -2840,6 +2827,14 @@
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/14740",
       "repo": "cal.com",
+      "golden": "Case sensitivity bypass in email blacklist",
+      "candidate": "Case sensitivity bypass in email blacklist: comparison does not normalize email case, allowing BLOCKED@example.com to bypass a blacklist entry for blocked@example.com",
+      "similarity": 0.8783076923076922,
+      "severity": "High"
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/14740",
+      "repo": "cal.com",
       "golden": "The logic for checking team admin/owner permissions is incorrect. This condition uses AND (&&) which requires both isTeamAdmin AND isTeamOwner to be true, but it should use OR (||) since a user needs to be either an admin OR an owner to have permission.",
       "candidate": "Logic error using AND (&&) instead of OR (||) to check if user is team admin OR owner - currently requires user to be BOTH admin AND owner, which is incorrect",
       "similarity": 0.4738564964447317,
@@ -2852,6 +2847,14 @@
       "candidate": "Incorrect validation condition checks if array length is 0, but initial state contains an empty string [\"\"], so length will be 1, not 0",
       "similarity": 0.4426541274817137,
       "severity": "Low"
+    },
+    {
+      "pr_url": "https://github.com/calcom/cal.com/pull/10600",
+      "repo": "cal.com",
+      "golden": "Because backupCodes are decrypted and mutated in memory before being written back, two concurrent login requests using the same backupCode could both pass this check and update, so a single backup code may effectively be accepted more than once if used concurrently, weakening the intended one-time-use semantics.",
+      "candidate": "Race condition in backup code validation: backup codes are decrypted and mutated in memory before being written back - two concurrent login requests can both read the same unused code and both succeed, allowing code reuse",
+      "similarity": 0.6372125435540069,
+      "severity": "High"
     },
     {
       "pr_url": "https://github.com/calcom/cal.com/pull/10600",
@@ -2889,28 +2892,28 @@
       "pr_url": "https://github.com/calcom/cal.com/pull/8087",
       "repo": "cal.com",
       "golden": "The code uses forEach with async callbacks, which causes asynchronous operations (e.g., calendar/video event deletions, payment refunds) to run concurrently without being awaited. This 'fire-and-forget' behavior leads to unhandled promise rejections, race conditions, and incomplete cleanup, as surrounding try-catch blocks cannot properly handle errors from these unawaited promises. Replace forEach with for...of loops or Promise.all() with map() to ensure proper sequential execution and error handling.",
-      "candidate": "forEach with async callback creates fire-and-forget promises that are not awaited, potentially causing race conditions and unhandled promise rejections",
-      "similarity": 0.43331428571428576,
+      "candidate": "Critical: forEach with async callbacks causes fire-and-forget execution - calendar and video event deletions run concurrently without coordination, errors are silently swallowed, and the function may return before operations complete",
+      "similarity": 0.5138567095189946,
       "severity": "Critical"
     }
   ],
   "per_bug_type_fn": {
-    "incorrect_value": 26,
+    "incorrect_value": 22,
     "missing_validation": 4,
     "other": 8,
-    "api_misuse": 17,
-    "null_reference": 4,
-    "logic_error": 10,
-    "security": 5,
+    "api_misuse": 14,
+    "null_reference": 2,
     "dead_code": 4,
-    "race_condition": 8,
-    "type_error": 2
+    "race_condition": 4,
+    "logic_error": 9,
+    "type_error": 2,
+    "security": 2
   },
   "per_severity_fn": {
     "Medium": 26,
     "Low": 35,
-    "High": 24,
-    "Critical": 3
+    "High": 9,
+    "Critical": 1
   },
   "all_pr_results": [
     {
@@ -2988,23 +2991,43 @@
       "pr_url": "https://github.com/keycloak/keycloak/pull/36880",
       "repo": "keycloak",
       "language": "Java",
-      "tp": 0,
+      "tp": 1,
       "fp": 3,
-      "fn": 3,
+      "fn": 2,
       "n_golden": 3,
-      "n_candidates": 3,
-      "matches": []
+      "n_candidates": 4,
+      "matches": [
+        {
+          "golden": "Inconsistent feature flag bug causing orphaned permissions. The AdminPermissions event listener, responsible for cleaning up permissions upon role, client, or group removal, is incorrectly guarded by the ADMIN_FINE_GRAINED_AUTHZ (V1) feature flag. This is inconsistent with other methods in the class that use ADMIN_FINE_GRAINED_AUTHZ_V2. Consequently, if ADMIN_FINE_GRAINED_AUTHZ_V2 is enabled but V1 is not, the permission cleanup logic will not execute, leading to orphaned permission data. Cleanup should occur regardless of which fine-grained authorization version is enabled.",
+          "candidate": "Feature flag inconsistency causes orphaned permissions: AdminPermissions event listener cleans up permissions when feature is disabled, but another code path creates permissions without checking the flag, leaving orphaned permissions",
+          "similarity": 0.3623081201334817,
+          "severity": "High"
+        }
+      ]
     },
     {
       "pr_url": "https://github.com/keycloak/keycloak/pull/37038",
       "repo": "keycloak",
       "language": "Java",
-      "tp": 0,
+      "tp": 2,
       "fp": 5,
-      "fn": 2,
+      "fn": 0,
       "n_golden": 2,
-      "n_candidates": 5,
-      "matches": []
+      "n_candidates": 7,
+      "matches": [
+        {
+          "golden": "Incorrect permission check in canManage() method",
+          "candidate": "Incorrect permission check in canManage() method - the method checks the wrong permission scope, allowing users who should not have manage access to pass the authorization check",
+          "similarity": 0.9413023255813953,
+          "severity": "High"
+        },
+        {
+          "golden": "In getGroupIdsWithViewPermission, hasPermission is called with groupResource.getId() and the same groupResource.getId() is added to granted, but hasPermission resolves resources by name (treating the argument as a group id) and the GroupPermissionEvaluator contract says this method returns group IDs that are later used as UserModel.GROUPS and in getUsersCount group filters. This mismatch means per-group VIEW_MEMBERS/MANAGE_MEMBERS permissions may not yield the expected group IDs for filtering and counts, and evaluation may effectively only look at the type-level 'all-groups' resource; consider revisiting whether this should operate on the underlying group ids (resource names) instead so it aligns with the JPA queries and the interface contract.",
+          "candidate": "In getGroupIdsWithViewPermission, hasPermission is called with groupResource.getId() for both the resource and scope arguments - the scope parameter should be different from the resource ID, causing incorrect permission evaluation",
+          "similarity": 0.3691202475685234,
+          "severity": "High"
+        }
+      ]
     },
     {
       "pr_url": "https://github.com/keycloak/keycloak/pull/33832",
@@ -3116,12 +3139,19 @@
       "pr_url": "https://github.com/grafana/grafana/pull/97529",
       "repo": "grafana",
       "language": "Go",
-      "tp": 0,
+      "tp": 1,
       "fp": 2,
-      "fn": 2,
+      "fn": 1,
       "n_golden": 2,
-      "n_candidates": 2,
-      "matches": []
+      "n_candidates": 3,
+      "matches": [
+        {
+          "golden": "A race condition in BuildIndex allows multiple goroutines to concurrently build the same expensive index for the same key. This is caused by moving the b.cacheMu lock from protecting the entire function to only protecting the final cache assignment. ",
+          "candidate": "Race condition in BuildIndex: multiple goroutines can concurrently build the same index for the same key without synchronization, wasting resources and potentially causing data corruption",
+          "similarity": 0.5540779220779221,
+          "severity": "High"
+        }
+      ]
     },
     {
       "pr_url": "https://github.com/getsentry/sentry/pull/80168",
@@ -3193,23 +3223,43 @@
       "pr_url": "https://github.com/getsentry/sentry/pull/95633",
       "repo": "sentry",
       "language": "Python",
-      "tp": 0,
+      "tp": 1,
       "fp": 0,
-      "fn": 3,
+      "fn": 2,
       "n_golden": 3,
-      "n_candidates": 0,
-      "matches": []
+      "n_candidates": 1,
+      "matches": [
+        {
+          "golden": "The queue.shutdown() method with 'immediate=False' parameter may not exist in the standard Python queue module. This could cause AttributeError at runtime. Verify the correct API or implement a custom shutdown mechanism.",
+          "candidate": "queue.shutdown() with 'immediate=False' parameter may not exist in the standard Python queue.Queue module - calling a non-existent method will raise AttributeError at runtime",
+          "similarity": 0.5850342035460002,
+          "severity": "High"
+        }
+      ]
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/2",
       "repo": "sentry-greptile",
       "language": "Python",
-      "tp": 0,
+      "tp": 2,
       "fp": 2,
-      "fn": 3,
+      "fn": 1,
       "n_golden": 3,
-      "n_candidates": 2,
-      "matches": []
+      "n_candidates": 4,
+      "matches": [
+        {
+          "golden": "OptimizedCursorPaginator negative-offset branch slices QuerySet with a negative start index",
+          "candidate": "OptimizedCursorPaginator negative-offset branch slices QuerySet with a negative start index - Django QuerySets do not support negative indexing and will raise AssertionError",
+          "similarity": 0.9492857142857141,
+          "severity": "Critical"
+        },
+        {
+          "golden": "BasePaginator negative-offset branch slices QuerySet with a negative start index",
+          "candidate": "BasePaginator negative-offset branch slices QuerySet with a negative start index - Django raises AssertionError when negative slice indices are used on QuerySets",
+          "similarity": 0.930622119815668,
+          "severity": "High"
+        }
+      ]
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/sentry-greptile/pull/3",
@@ -3226,12 +3276,19 @@
       "pr_url": "https://github.com/grafana/grafana/pull/103633",
       "repo": "grafana",
       "language": "Go",
-      "tp": 0,
+      "tp": 1,
       "fp": 3,
-      "fn": 2,
+      "fn": 1,
       "n_golden": 2,
-      "n_candidates": 3,
-      "matches": []
+      "n_candidates": 4,
+      "matches": [
+        {
+          "golden": "The Check operation exhibits asymmetric cache trust logic: cached permission grants are trusted and returned immediately, but cached denials from the same permission cache are ignored, leading to a fresh database lookup. This allows stale cached grants to provide access to revoked resources, posing a security risk. ",
+          "candidate": "Asymmetric cache trust logic in Check operation: cached permission grants are returned immediately without re-verification, but cache misses always go to the source. An expired or revoked permission may continue to grant access until cache expiry",
+          "similarity": 0.5673495145631068,
+          "severity": "High"
+        }
+      ]
     },
     {
       "pr_url": "https://github.com/getsentry/sentry/pull/67876",
@@ -3309,12 +3366,18 @@
       "pr_url": "https://github.com/grafana/grafana/pull/90939",
       "repo": "grafana",
       "language": "Go",
-      "tp": 1,
+      "tp": 2,
       "fp": 1,
-      "fn": 1,
+      "fn": 0,
       "n_golden": 2,
-      "n_candidates": 2,
+      "n_candidates": 3,
       "matches": [
+        {
+          "golden": "In addition to the missing double-check, the function has a critical flaw in its error handling: it unconditionally assigns the fetch result to the cache (line 69: entryPointAssetsCache = result) regardless of whether the fetch succeeded or failed. When an error occurs during asset fetching, result is nil, and this nil value overwrites any previously valid cache entry.",
+          "candidate": "Critical cache corruption: entryPointAssetsCache is unconditionally overwritten with the fetch result even when the fetch returns an error - a failed fetch will replace valid cached data with an error value",
+          "similarity": 0.41941896024464836,
+          "severity": "High"
+        },
         {
           "golden": "The GetWebAssets function implements an incomplete double-checked locking pattern for caching web assets. The function first checks if the cache is populated using a read lock (RLock), and if the cache is empty, it acquires a write lock to populate it. However, it fails to re-check whether the cache was populated by another goroutine while waiting to acquire the write lock.",
           "candidate": "Race condition: after releasing RLock and before acquiring Lock, another goroutine could modify entryPointAssetsCache, causing the cached value 'ret' to become stale or the cache state to change",
@@ -3338,12 +3401,19 @@
       "pr_url": "https://github.com/grafana/grafana/pull/90045",
       "repo": "grafana",
       "language": "Go",
-      "tp": 0,
+      "tp": 1,
       "fp": 3,
-      "fn": 3,
+      "fn": 2,
       "n_golden": 3,
-      "n_candidates": 3,
-      "matches": []
+      "n_candidates": 4,
+      "matches": [
+        {
+          "golden": "Bug: calling recordLegacyDuration when storage operation fails should be recordStorageDuration.",
+          "candidate": "Bug: recordLegacyDuration is called when storage operation fails but the correct function to call for storage failures is recordStorageDuration - wrong metric is being recorded on error path",
+          "similarity": 0.5089574175824175,
+          "severity": "High"
+        }
+      ]
     },
     {
       "pr_url": "https://github.com/grafana/grafana/pull/106778",
@@ -3371,12 +3441,18 @@
       "pr_url": "https://github.com/grafana/grafana/pull/79265",
       "repo": "grafana",
       "language": "Go",
-      "tp": 2,
+      "tp": 3,
       "fp": 2,
-      "fn": 3,
+      "fn": 2,
       "n_golden": 5,
-      "n_candidates": 4,
+      "n_candidates": 5,
       "matches": [
+        {
+          "golden": "Race condition: Multiple concurrent requests could pass the device count check simultaneously and create devices beyond the limit. Consider using a database transaction or lock.",
+          "candidate": "Race condition: multiple concurrent requests can simultaneously pass the device count check and create devices beyond the limit - there is no atomic check-and-increment to prevent concurrent overwrites",
+          "similarity": 0.843421052631579,
+          "severity": "High"
+        },
         {
           "golden": "This call won\u2019t compile: dbSession.Exec(args...) is given a []interface{} where the first element is the query, but Exec\u2019s signature requires a first parameter of type string (not an interface{} splat).",
           "candidate": "SQL injection vulnerability in updateDevice function - query string is concatenated with user-controlled parameters and passed to Exec without proper parameter binding",
@@ -3407,15 +3483,15 @@
       "repo": "grafana",
       "language": "Go",
       "tp": 1,
-      "fp": 1,
+      "fp": 2,
       "fn": 1,
       "n_golden": 2,
-      "n_candidates": 2,
+      "n_candidates": 3,
       "matches": [
         {
           "golden": "The ContextualLoggerMiddleware methods (QueryData, CallResource, CheckHealth, CollectMetrics) panic when a nil request is received. This occurs because they directly access req.PluginContext (via the instrumentContext function) without first checking if req is nil. This is a regression, as previous middleware layers gracefully handled nil requests.",
-          "candidate": "Type assertion to *log.ConcreteLogger without checking if the returned logger is nil, which could cause a panic when accessing methods on a nil pointer",
-          "similarity": 0.29922677554913124,
+          "candidate": "ContextualLoggerMiddleware methods (QueryData, CallResource, CheckHealth, CollectMetrics) will panic when passed a nil request - dereferencing nil pointer before nil check causes runtime panic",
+          "similarity": 0.5276802507836991,
           "severity": "High"
         }
       ]
@@ -3424,12 +3500,25 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/10",
       "repo": "discourse-graphite",
       "language": "Ruby",
-      "tp": 0,
+      "tp": 2,
       "fp": 2,
-      "fn": 4,
+      "fn": 2,
       "n_golden": 4,
-      "n_candidates": 2,
-      "matches": []
+      "n_candidates": 4,
+      "matches": [
+        {
+          "golden": "NoMethodError before_validation in EmbeddableHost",
+          "candidate": "NoMethodError in EmbeddableHost before_validation callback - calling a method on a nil object before validation will raise NoMethodError and prevent record from being saved",
+          "similarity": 0.4444615384615385,
+          "severity": "Critical"
+        },
+        {
+          "golden": "Because this migration inserts embeddable_hosts rows with raw SQL, any existing embeddable_hosts values that include http:// or /https:// or path segments won\u2019t go through the EmbeddableHost model\u2019s normalization, so the new host lookup (which compares only the bare host) may fail for migrated data. Consider ensuring that migrated hosts are normalized to the same format as newly created EmbeddableHost records so existing embedding configurations keep working.",
+          "candidate": "Migration uses raw SQL to insert embeddable_hosts rows - any existing values containing http:// or https:// scheme prefixes will be duplicated with different formats, creating data inconsistency",
+          "similarity": 0.40114285714285713,
+          "severity": "High"
+        }
+      ]
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/7",
@@ -3446,12 +3535,19 @@
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/8",
       "repo": "discourse-graphite",
       "language": "Ruby",
-      "tp": 0,
+      "tp": 1,
       "fp": 3,
-      "fn": 3,
+      "fn": 2,
       "n_golden": 3,
-      "n_candidates": 3,
-      "matches": []
+      "n_candidates": 4,
+      "matches": [
+        {
+          "golden": " The findMembers() call is now asynchronous and unhandled. The controller may not have member data immediately available, creating a race condition.",
+          "candidate": "findMembers() is now asynchronous and its result is not awaited - the controller returns before member data is available, causing the response to contain empty or stale member information",
+          "similarity": 0.501825,
+          "severity": "High"
+        }
+      ]
     },
     {
       "pr_url": "https://github.com/ai-code-review-evaluation/discourse-graphite/pull/3",
@@ -3606,15 +3702,15 @@
       "repo": "cal.com",
       "language": "TypeScript",
       "tp": 2,
-      "fp": 1,
+      "fp": 2,
       "fn": 0,
       "n_golden": 2,
-      "n_candidates": 3,
+      "n_candidates": 4,
       "matches": [
         {
           "golden": "The deletion logic in scheduleSMSReminders.ts incorrectly deletes non-SMS workflow reminders (e.g., Email, WhatsApp) that have retryCount > 1. This occurs because the retryCount condition within the OR clause for deletion lacks a method: WorkflowMethods.SMS filter, causing it to apply to all reminder types instead of only SMS reminders, which is the intended scope of this function.",
-          "candidate": "OR condition deletes SMS reminders with retryCount > 1, conflicting with retry logic that increments retryCount on failures",
-          "similarity": 0.4015,
+          "candidate": "scheduleSMSReminders.ts deletion logic incorrectly deletes non-SMS workflow reminders (Email, WhatsApp) that share the same workflow - the filter condition is too broad and removes reminders of unintended types",
+          "similarity": 0.570473321858864,
           "severity": "High"
         },
         {
@@ -3640,12 +3736,24 @@
       "pr_url": "https://github.com/calcom/cal.com/pull/11059",
       "repo": "cal.com",
       "language": "TypeScript",
-      "tp": 4,
-      "fp": 56,
-      "fn": 1,
+      "tp": 5,
+      "fp": 57,
+      "fn": 0,
       "n_golden": 5,
-      "n_candidates": 60,
+      "n_candidates": 62,
       "matches": [
+        {
+          "golden": "parseRefreshTokenResponse returns a Zod safeParse result ({ success, data, error }), not the credential key object. Persisting that as key stores the wrapper instead of the token payload; we should store the parsed data or use schema parse.",
+          "candidate": "parseRefreshTokenResponse returns a Zod safeParse result object ({ success, data, error }) not the credential object - callers that persist this directly will store the wrapper object instead of the token data",
+          "similarity": 0.6768617258978761,
+          "severity": "High"
+        },
+        {
+          "golden": "When the sync endpoint path is used, res is a fetch Response and has no .data; res?.data will be undefined and token.access_token will throw at runtime. This relies on a consistent return shape from refreshOAuthTokens, which isn\u2019t guaranteed currently.",
+          "candidate": "When sync endpoint is used, res is a fetch Response object and res.data does not exist - accessing res?.data will return undefined and token.access_token will be undefined, silently breaking token refresh",
+          "similarity": 0.5640192307692308,
+          "severity": "High"
+        },
         {
           "golden": "Invalid Zod schema syntax. Computed property keys like [z.string().toString()] are not valid in Zod object schemas and will cause runtime errors. ",
           "candidate": "Invalid Zod schema syntax - `z.string().toString()` creates a string literal 'string' as a key, not a dynamic string key pattern",
@@ -3656,12 +3764,6 @@
           "golden": "The parseRefreshTokenResponse function incorrectly sets refresh_token to the hardcoded string 'refresh_token' when it's missing from the OAuth refresh token response. This invalidates the token, breaking subsequent token refreshes and causing authentication failures.",
           "candidate": "Hardcoded fallback refresh token 'refresh_token' when actual refresh token is missing, potentially allowing unauthorized access with a predictable token",
           "similarity": 0.33707749712973595,
-          "severity": "High"
-        },
-        {
-          "golden": "When the sync endpoint path is used, res is a fetch Response and has no .data; res?.data will be undefined and token.access_token will throw at runtime. This relies on a consistent return shape from refreshOAuthTokens, which isn\u2019t guaranteed currently.",
-          "candidate": "The refreshOAuthTokens function is called but its return value (resp) is then passed to handleLarkError, suggesting the function might not be returning the expected fetch response object",
-          "similarity": 0.2737727947727948,
           "severity": "High"
         },
         {
@@ -3700,12 +3802,18 @@
       "pr_url": "https://github.com/calcom/cal.com/pull/14740",
       "repo": "cal.com",
       "language": "TypeScript",
-      "tp": 2,
+      "tp": 3,
       "fp": 17,
-      "fn": 3,
+      "fn": 2,
       "n_golden": 5,
-      "n_candidates": 19,
+      "n_candidates": 20,
       "matches": [
+        {
+          "golden": "Case sensitivity bypass in email blacklist",
+          "candidate": "Case sensitivity bypass in email blacklist: comparison does not normalize email case, allowing BLOCKED@example.com to bypass a blacklist entry for blocked@example.com",
+          "similarity": 0.8783076923076922,
+          "severity": "High"
+        },
         {
           "golden": "The logic for checking team admin/owner permissions is incorrect. This condition uses AND (&&) which requires both isTeamAdmin AND isTeamOwner to be true, but it should use OR (||) since a user needs to be either an admin OR an owner to have permission.",
           "candidate": "Logic error using AND (&&) instead of OR (||) to check if user is team admin OR owner - currently requires user to be BOTH admin AND owner, which is incorrect",
@@ -3724,12 +3832,18 @@
       "pr_url": "https://github.com/calcom/cal.com/pull/10600",
       "repo": "cal.com",
       "language": "TypeScript",
-      "tp": 3,
+      "tp": 4,
       "fp": 44,
-      "fn": 1,
+      "fn": 0,
       "n_golden": 4,
-      "n_candidates": 47,
+      "n_candidates": 48,
       "matches": [
+        {
+          "golden": "Because backupCodes are decrypted and mutated in memory before being written back, two concurrent login requests using the same backupCode could both pass this check and update, so a single backup code may effectively be accepted more than once if used concurrently, weakening the intended one-time-use semantics.",
+          "candidate": "Race condition in backup code validation: backup codes are decrypted and mutated in memory before being written back - two concurrent login requests can both read the same unused code and both succeed, allowing code reuse",
+          "similarity": 0.6372125435540069,
+          "severity": "High"
+        },
         {
           "golden": "Backup code validation is case-sensitive due to the use of indexOf(). This causes validation to fail if a user enters uppercase hex characters, as backup codes should be case-insensitive for a better user experience.",
           "candidate": "No input sanitization or validation pattern for backup code format - accepts any characters instead of expected alphanumeric format",
@@ -3773,15 +3887,15 @@
       "repo": "cal.com",
       "language": "TypeScript",
       "tp": 1,
-      "fp": 15,
+      "fp": 16,
       "fn": 1,
       "n_golden": 2,
-      "n_candidates": 16,
+      "n_candidates": 17,
       "matches": [
         {
           "golden": "The code uses forEach with async callbacks, which causes asynchronous operations (e.g., calendar/video event deletions, payment refunds) to run concurrently without being awaited. This 'fire-and-forget' behavior leads to unhandled promise rejections, race conditions, and incomplete cleanup, as surrounding try-catch blocks cannot properly handle errors from these unawaited promises. Replace forEach with for...of loops or Promise.all() with map() to ensure proper sequential execution and error handling.",
-          "candidate": "forEach with async callback creates fire-and-forget promises that are not awaited, potentially causing race conditions and unhandled promise rejections",
-          "similarity": 0.43331428571428576,
+          "candidate": "Critical: forEach with async callbacks causes fire-and-forget execution - calendar and video event deletions run concurrently without coordination, errors are silently swallowed, and the function may return before operations complete",
+          "similarity": 0.5138567095189946,
           "severity": "Critical"
         }
       ]
