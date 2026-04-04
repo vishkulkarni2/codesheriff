@@ -20,6 +20,7 @@
  */
 
 import type { AnalysisContext, PipelineResult, RawFinding, DetectorName } from '@codesheriff/shared';
+import { Severity } from '@codesheriff/shared';
 import type { Redis } from 'ioredis';
 import { LlmClient } from './llm/client.js';
 import { AIPatternDetector } from './detectors/ai-pattern.js';
@@ -31,6 +32,7 @@ import { LogicBugDetector } from './detectors/logic-bug.js';
 import { ExplanationEngine } from './detectors/explanation.js';
 import { SeverityScorer } from './scorer.js';
 import { AutoFixGenerator } from './autofix/generator.js';
+import { BugFocusFilter } from './filters/bug-focus.js';
 import { getScanLogger } from './utils/logger.js';
 
 export interface PipelineConfig {
@@ -269,6 +271,53 @@ export class AnalysisPipeline {
       const existingLogicTiming = timings['LogicBugDetector'] ?? 0;
       timings['LogicBugDetector'] = existingLogicTiming; // preserve logic detector time
       void (Date.now() - t); // explanation timing logged but not stored (no dedicated key in type)
+    }
+
+    // -------------------------------------------------------------------------
+    // Post-processing: severity filter + per-ruleId dedup cap
+    // Keeps only HIGH/CRITICAL from noisy static/pattern detectors.
+    // -------------------------------------------------------------------------
+    {
+      const NOISY_DETECTORS = new Set(['StaticAnalyzer', 'AIPatternDetector']);
+      const filtered = findings.filter((f) => {
+        if (NOISY_DETECTORS.has(f.detector)) {
+          return f.severity === Severity.CRITICAL || f.severity === Severity.HIGH;
+        }
+        return true;
+      });
+
+      // Per-ruleId cap: max 2 findings per ruleId to prevent same rule firing 48x
+      const ruleIdCounts = new Map<string, number>();
+      const deduped = filtered.filter((f) => {
+        const ruleId = f.ruleId ?? '';
+        const count = (ruleIdCounts.get(ruleId) ?? 0) + 1;
+        ruleIdCounts.set(ruleId, count);
+        return count <= 2;
+      });
+
+      const beforeCount = findings.length;
+      findings.length = 0;
+      findings.push(...deduped);
+
+      log.info(
+        { before: beforeCount, after: deduped.length },
+        'post-processing filter applied'
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Bug focus filter — drop STYLE findings, keep only real bugs
+    // -------------------------------------------------------------------------
+    {
+      const bugFocusFilter = new BugFocusFilter();
+      const beforeBugFilter = findings.length;
+      const bugFiltered = bugFocusFilter.filter(findings);
+      findings.length = 0;
+      findings.push(...bugFiltered);
+      log.info(
+        { before: beforeBugFilter, after: bugFiltered.length, dropped: beforeBugFilter - bugFiltered.length },
+        "bug focus filter applied"
+      );
     }
 
     // -------------------------------------------------------------------------
