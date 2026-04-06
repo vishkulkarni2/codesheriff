@@ -1,133 +1,46 @@
 # syntax=docker/dockerfile:1.7
-# =============================================================================
 # Dockerfile.worker — CodeSheriff Scan Worker (BullMQ)
-#
-# Stages:
-#   base       — Node 20 slim + pnpm
-#   tools      — install semgrep + trufflehog into /usr/local/bin
-#   deps       — install ALL workspace deps (with BuildKit cache)
-#   builder    — tsc compile all packages the worker depends on
-#   runner     — production image, pruned deps + scan tools
-# =============================================================================
-
 ARG NODE_VERSION=20
 ARG PNPM_VERSION=9
-
-# Pinned tool versions — bump here to upgrade across all builds
 ARG SEMGREP_VERSION=1.72.0
 ARG TRUFFLEHOG_VERSION=3.78.0
 
-# -----------------------------------------------------------------------------
-# base — shared Node + pnpm foundation
-# -----------------------------------------------------------------------------
+# --- base ---
 FROM node:${NODE_VERSION}-slim AS base
-
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/* && \
     npm install -g pnpm@${PNPM_VERSION}
-
 WORKDIR /repo
 
-# -----------------------------------------------------------------------------
-# tools — fetch + verify semgrep and trufflehog binaries
-#
-# semgrep  : installed via pip (official distribution method)
-# trufflehog: pre-built Linux amd64 binary from GitHub releases
-# -----------------------------------------------------------------------------
+# --- tools ---
 FROM python:3.12-slim AS tools
-
 ARG SEMGREP_VERSION
 ARG TRUFFLEHOG_VERSION
-
-# semgrep
 RUN pip install --no-cache-dir semgrep==${SEMGREP_VERSION}
-
-# trufflehog — download, verify checksum, install
-RUN apt-get update -qq && apt-get install -y --no-install-recommends curl && \
-    rm -rf /var/lib/apt/lists/*
+RUN apt-get update -qq && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 RUN ARCH=$(dpkg --print-architecture) && \
-    case "$ARCH" in \
-      amd64) TH_ARCH="amd64" ;; \
-      arm64) TH_ARCH="arm64" ;; \
-      *) echo "Unsupported arch: $ARCH" && exit 1 ;; \
-    esac && \
-    curl -sSfL \
-      "https://github.com/trufflesecurity/trufflehog/releases/download/v${TRUFFLEHOG_VERSION}/trufflehog_${TRUFFLEHOG_VERSION}_linux_${TH_ARCH}.tar.gz" \
-      -o /tmp/trufflehog.tar.gz && \
-    tar -xzf /tmp/trufflehog.tar.gz -C /usr/local/bin trufflehog && \
-    chmod +x /usr/local/bin/trufflehog && \
-    rm /tmp/trufflehog.tar.gz
+    case "$ARCH" in amd64) TH_ARCH="amd64" ;; arm64) TH_ARCH="arm64" ;; *) exit 1 ;; esac && \
+    curl -sSfL "https://github.com/trufflesecurity/trufflehog/releases/download/v${TRUFFLEHOG_VERSION}/trufflehog_${TRUFFLEHOG_VERSION}_linux_${TH_ARCH}.tar.gz" -o /tmp/trufflehog.tar.gz && \
+    tar -xzf /tmp/trufflehog.tar.gz -C /usr/local/bin trufflehog && chmod +x /usr/local/bin/trufflehog && rm /tmp/trufflehog.tar.gz
 
-# -----------------------------------------------------------------------------
-# deps — install full workspace
-# -----------------------------------------------------------------------------
+# --- deps ---
 FROM base AS deps
-
 COPY .npmrc pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY packages/shared/package.json    packages/shared/
 COPY packages/db/package.json        packages/db/
 COPY packages/analyzer/package.json  packages/analyzer/
 COPY packages/worker/package.json    packages/worker/
-
-RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile
-
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile
 COPY packages/ packages/
 COPY turbo.json tsconfig.base.json ./
 
-# -----------------------------------------------------------------------------
-# builder — compile TypeScript for all worker dependencies
-# -----------------------------------------------------------------------------
+# --- builder ---
 FROM deps AS builder
-
 RUN pnpm --filter @codesheriff/db exec prisma generate --schema=prisma/schema.prisma && \
-    pnpm --filter @codesheriff/shared    build && \
-    pnpm --filter @codesheriff/db        build && \
-    pnpm --filter @codesheriff/analyzer  build && \
-    pnpm --filter @codesheriff/worker    build
+    pnpm --filter @codesheriff/shared build && \
+    pnpm --filter @codesheriff/db build && \
+    pnpm --filter @codesheriff/analyzer build && \
+    pnpm --filter @codesheriff/worker build
 
-RUN pnpm --filter @codesheriff/db generate
-
-RUN pnpm deploy --filter @codesheriff/worker --prod /deploy/worker
-
-RUN cp -r packages/worker/dist             /deploy/worker/dist && \
-    cp -r packages/db/dist                 /deploy/worker/node_modules/@codesheriff/db/dist && \
-    cp -r packages/shared/dist             /deploy/worker/node_modules/@codesheriff/shared/dist && \
-    cp -r packages/analyzer/dist           /deploy/worker/node_modules/@codesheriff/analyzer/dist && \
-    cp -r packages/db/prisma               /deploy/worker/prisma
-
-# Generate Prisma client in the production directory
-RUN cd /deploy/worker && npx prisma@5.22.0 generate --schema=prisma/schema.prisma
-
-# -----------------------------------------------------------------------------
-# runner — production image with Node + Python (for semgrep) + trufflehog
-# -----------------------------------------------------------------------------
-FROM node:${NODE_VERSION}-slim AS runner
-
-# Install Python (for semgrep) + system deps
-RUN apt-get update -qq && \
-    apt-get install -y --no-install-recommends \
-      python3 python3-pip python3-venv \
-      openssl ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
-
-# Copy semgrep from tools stage (includes the full python site-packages)
-COPY --from=tools /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=tools /usr/local/bin/semgrep    /usr/local/bin/semgrep
-COPY --from=tools /usr/local/bin/trufflehog /usr/local/bin/trufflehog
-
-WORKDIR /app
-
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser  --system --uid 1001 --ingroup nodejs sheriffworker
-
-COPY --from=builder --chown=sheriffworker:nodejs /deploy/worker ./
-
-USER sheriffworker
-
-ENV NODE_ENV=production
-
-CMD ["node", "dist/index.js"]
-# Prepare production files
 RUN mkdir -p /deploy/worker && \
     cp -r packages/worker/dist /deploy/worker/dist && \
     cp -r packages/worker/package.json /deploy/worker/package.json && \
@@ -143,30 +56,17 @@ RUN mkdir -p /deploy/worker && \
     cp -r packages/analyzer/dist /deploy/worker/node_modules/@codesheriff/analyzer/dist && \
     cp packages/analyzer/package.json /deploy/worker/node_modules/@codesheriff/analyzer/package.json
 
-# -----------------------------------------------------------------------------
-# runner — production image with semgrep + trufflehog
-# -----------------------------------------------------------------------------
+# --- runner ---
 FROM node:${NODE_VERSION}-slim AS runner
-
-ARG SEMGREP_VERSION=1.72.0
-ARG TRUFFLEHOG_VERSION=3.78.0
-
 RUN apt-get update -qq && \
-    apt-get install -y --no-install-recommends \
-      openssl ca-certificates python3 python3-pip curl && \
-    pip3 install --break-system-packages semgrep==${SEMGREP_VERSION} && \
-    curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin v${TRUFFLEHOG_VERSION} && \
+    apt-get install -y --no-install-recommends python3 python3-pip python3-venv openssl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
-
+COPY --from=tools /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=tools /usr/local/bin/semgrep /usr/local/bin/semgrep
+COPY --from=tools /usr/local/bin/trufflehog /usr/local/bin/trufflehog
 WORKDIR /app
-
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 --ingroup nodejs sheriffworker
-
+RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 --ingroup nodejs sheriffworker
 COPY --from=builder --chown=sheriffworker:nodejs /deploy/worker ./
-
 USER sheriffworker
-
 ENV NODE_ENV=production
-
 CMD ["node", "dist/index.js"]
