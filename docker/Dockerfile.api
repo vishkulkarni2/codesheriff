@@ -57,33 +57,26 @@ RUN pnpm --filter @codesheriff/db exec prisma generate --schema=prisma/schema.pr
 # Prisma: generate client for the current platform
 RUN pnpm --filter @codesheriff/db generate
 
-# Prune to production-only deps for the API package
-RUN pnpm deploy --filter @codesheriff/api --prod /deploy/api
-
-# Copy compiled output into the pruned deploy directory
-RUN cp -r packages/api/dist             /deploy/api/dist && \
-    cp -r packages/db/dist              /deploy/api/node_modules/@codesheriff/db/dist && \
-    cp -r packages/shared/dist          /deploy/api/node_modules/@codesheriff/shared/dist && \
-    cp -r packages/db/prisma            /deploy/api/prisma
-
-# Generate Prisma client in the production directory
-RUN cd /deploy/api && npx prisma@5.22.0 generate --schema=prisma/schema.prisma
+# Prepare production files
+RUN mkdir -p /deploy/api && \
+    cp -r packages/api/dist /deploy/api/dist && \
+    cp -r packages/db/prisma /deploy/api/prisma && \
+    cp package.json /deploy/api/package.json && \
+    cp -r node_modules /deploy/api/node_modules
 
 # -----------------------------------------------------------------------------
 # runner — minimal production image
 # -----------------------------------------------------------------------------
 FROM node:${NODE_VERSION}-slim AS runner
 
-# Install OpenSSL (required by Prisma query engine binary)
 RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends openssl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Non-root user for security
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser  --system --uid 1001 --ingroup nodejs sheriffapi
+    adduser --system --uid 1001 --ingroup nodejs sheriffapi
 
 COPY --from=builder --chown=sheriffapi:nodejs /deploy/api ./
 
@@ -94,5 +87,4 @@ EXPOSE 4000
 ENV NODE_ENV=production \
     PORT=4000
 
-# Run Prisma migrations then start the server
 CMD ["node", "dist/index.js"]

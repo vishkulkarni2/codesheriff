@@ -127,3 +127,37 @@ USER sheriffworker
 ENV NODE_ENV=production
 
 CMD ["node", "dist/index.js"]
+# Prepare production files
+RUN mkdir -p /deploy/worker && \
+    cp -r packages/worker/dist /deploy/worker/dist && \
+    cp -r packages/db/prisma /deploy/worker/prisma && \
+    cp package.json /deploy/worker/package.json && \
+    cp -r node_modules /deploy/worker/node_modules
+
+# -----------------------------------------------------------------------------
+# runner — production image with semgrep + trufflehog
+# -----------------------------------------------------------------------------
+FROM node:${NODE_VERSION}-slim AS runner
+
+ARG SEMGREP_VERSION=1.72.0
+ARG TRUFFLEHOG_VERSION=3.78.0
+
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+      openssl ca-certificates python3 python3-pip curl && \
+    pip3 install --break-system-packages semgrep==${SEMGREP_VERSION} && \
+    curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin v${TRUFFLEHOG_VERSION} && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 --ingroup nodejs sheriffworker
+
+COPY --from=builder --chown=sheriffworker:nodejs /deploy/worker ./
+
+USER sheriffworker
+
+ENV NODE_ENV=production
+
+CMD ["node", "dist/index.js"]
