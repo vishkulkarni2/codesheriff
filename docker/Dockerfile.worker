@@ -95,6 +95,9 @@ RUN cp -r packages/worker/dist             /deploy/worker/dist && \
     cp -r packages/analyzer/dist           /deploy/worker/node_modules/@codesheriff/analyzer/dist && \
     cp -r packages/db/prisma               /deploy/worker/prisma
 
+# Generate Prisma client in the production directory
+RUN cd /deploy/worker && npx prisma@5.22.0 generate --schema=prisma/schema.prisma
+
 # -----------------------------------------------------------------------------
 # runner — production image with Node + Python (for semgrep) + trufflehog
 # -----------------------------------------------------------------------------
