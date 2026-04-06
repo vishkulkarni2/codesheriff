@@ -64,7 +64,9 @@ RUN pnpm deploy --filter @codesheriff/api --prod /deploy/api
 RUN cp -r packages/api/dist             /deploy/api/dist && \
     cp -r packages/db/dist              /deploy/api/node_modules/@codesheriff/db/dist && \
     cp -r packages/shared/dist          /deploy/api/node_modules/@codesheriff/shared/dist && \
-    cp -r packages/db/prisma            /deploy/api/prisma
+    cp -r packages/db/prisma            /deploy/api/prisma && \
+    cp -r node_modules/.prisma          /deploy/api/node_modules/.prisma && \
+    cp -r node_modules/@prisma           /deploy/api/node_modules/@prisma
 
 # -----------------------------------------------------------------------------
 # runner — minimal production image
