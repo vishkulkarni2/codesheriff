@@ -60,9 +60,18 @@ RUN pnpm --filter @codesheriff/db generate
 # Prepare production files
 RUN mkdir -p /deploy/api && \
     cp -r packages/api/dist /deploy/api/dist && \
+    cp -r packages/api/package.json /deploy/api/package.json && \
     cp -r packages/db/prisma /deploy/api/prisma && \
-    cp package.json /deploy/api/package.json && \
-    cp -r node_modules /deploy/api/node_modules
+    cp -r node_modules /deploy/api/node_modules && \
+    mkdir -p /deploy/api/node_modules/@codesheriff/db && \
+    cp -r packages/db/dist /deploy/api/node_modules/@codesheriff/db/dist && \
+    cp packages/db/package.json /deploy/api/node_modules/@codesheriff/db/package.json && \
+    mkdir -p /deploy/api/node_modules/@codesheriff/shared && \
+    cp -r packages/shared/dist /deploy/api/node_modules/@codesheriff/shared/dist && \
+    cp packages/shared/package.json /deploy/api/node_modules/@codesheriff/shared/package.json && \
+    mkdir -p /deploy/api/node_modules/@codesheriff/analyzer && \
+    cp -r packages/analyzer/dist /deploy/api/node_modules/@codesheriff/analyzer/dist && \
+    cp packages/analyzer/package.json /deploy/api/node_modules/@codesheriff/analyzer/package.json
 
 # -----------------------------------------------------------------------------
 # runner — minimal production image

@@ -130,9 +130,18 @@ CMD ["node", "dist/index.js"]
 # Prepare production files
 RUN mkdir -p /deploy/worker && \
     cp -r packages/worker/dist /deploy/worker/dist && \
+    cp -r packages/worker/package.json /deploy/worker/package.json && \
     cp -r packages/db/prisma /deploy/worker/prisma && \
-    cp package.json /deploy/worker/package.json && \
-    cp -r node_modules /deploy/worker/node_modules
+    cp -r node_modules /deploy/worker/node_modules && \
+    mkdir -p /deploy/worker/node_modules/@codesheriff/db && \
+    cp -r packages/db/dist /deploy/worker/node_modules/@codesheriff/db/dist && \
+    cp packages/db/package.json /deploy/worker/node_modules/@codesheriff/db/package.json && \
+    mkdir -p /deploy/worker/node_modules/@codesheriff/shared && \
+    cp -r packages/shared/dist /deploy/worker/node_modules/@codesheriff/shared/dist && \
+    cp packages/shared/package.json /deploy/worker/node_modules/@codesheriff/shared/package.json && \
+    mkdir -p /deploy/worker/node_modules/@codesheriff/analyzer && \
+    cp -r packages/analyzer/dist /deploy/worker/node_modules/@codesheriff/analyzer/dist && \
+    cp packages/analyzer/package.json /deploy/worker/node_modules/@codesheriff/analyzer/package.json
 
 # -----------------------------------------------------------------------------
 # runner — production image with semgrep + trufflehog
