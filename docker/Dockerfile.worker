@@ -62,7 +62,7 @@ RUN ARCH=$(dpkg --print-architecture) && \
 # -----------------------------------------------------------------------------
 FROM base AS deps
 
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY .npmrc pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY packages/shared/package.json    packages/shared/
 COPY packages/db/package.json        packages/db/
 COPY packages/analyzer/package.json  packages/analyzer/
