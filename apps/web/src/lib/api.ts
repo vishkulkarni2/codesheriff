@@ -20,7 +20,7 @@ import type {
 } from '@codesheriff/shared';
 import type { Finding } from '@codesheriff/shared';
 
-const API_BASE = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000/api/v1';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
 
 // ---------------------------------------------------------------------------
 // Internal fetch wrapper

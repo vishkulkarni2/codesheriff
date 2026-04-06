@@ -29,7 +29,7 @@ import { cn } from '@/lib/utils';
 
 // GitHub App slug — override with NEXT_PUBLIC_GITHUB_APP_SLUG env var
 const GITHUB_APP_SLUG =
-  process.env['NEXT_PUBLIC_GITHUB_APP_SLUG'] ?? 'codesheriff';
+  process.env.NEXT_PUBLIC_GITHUB_APP_SLUG ?? 'codesheriff';
 
 type Step = 'install' | 'pick' | 'scan' | 'done';
 
