@@ -33,6 +33,7 @@ COPY packages/shared/package.json    packages/shared/
 COPY packages/db/package.json        packages/db/
 COPY packages/analyzer/package.json  packages/analyzer/
 COPY packages/api/package.json       packages/api/
+COPY packages/analyzer/package.json packages/analyzer/
 
 # Install all deps (BuildKit pnpm store cache)
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
@@ -49,7 +50,8 @@ FROM deps AS builder
 
 RUN pnpm --filter @codesheriff/db exec prisma generate --schema=prisma/schema.prisma && \
     pnpm --filter @codesheriff/shared build && \
-    pnpm --filter @codesheriff/db    build && \
+    pnpm --filter @codesheriff/db       build && \
+    pnpm --filter @codesheriff/analyzer  build && \
     pnpm --filter @codesheriff/api   build
 
 # Prisma: generate client for the current platform
