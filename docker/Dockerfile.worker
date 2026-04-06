@@ -22,7 +22,8 @@ ARG TRUFFLEHOG_VERSION=3.78.0
 # -----------------------------------------------------------------------------
 FROM node:${NODE_VERSION}-slim AS base
 
-RUN npm install -g pnpm@${PNPM_VERSION}
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/* && \
+    npm install -g pnpm@${PNPM_VERSION}
 
 WORKDIR /repo
 
@@ -78,7 +79,7 @@ COPY turbo.json tsconfig.base.json ./
 # -----------------------------------------------------------------------------
 FROM deps AS builder
 
-RUN pnpm --filter @codesheriff/db exec prisma generate && \
+RUN pnpm --filter @codesheriff/db exec prisma generate --schema=prisma/schema.prisma && \
     pnpm --filter @codesheriff/shared    build && \
     pnpm --filter @codesheriff/db        build && \
     pnpm --filter @codesheriff/analyzer  build && \
