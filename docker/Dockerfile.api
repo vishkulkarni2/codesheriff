@@ -92,4 +92,4 @@ ENV NODE_ENV=production \
     PORT=4000
 
 # Run Prisma migrations then start the server
-CMD ["sh", "-c", "node node_modules/.bin/prisma migrate deploy --schema=prisma/schema.prisma && node dist/index.js"]
+CMD ["node", "dist/index.js"]
