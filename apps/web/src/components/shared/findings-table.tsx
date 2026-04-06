@@ -161,7 +161,7 @@ export function FindingsTable({ findings: initialFindings }: FindingsTableProps)
                   )}
                   <div className="mt-3 flex gap-4 text-xs text-muted-foreground">
                     <span>Category: {finding.category}</span>
-                    <span>Lines: {finding.lineStart}–{finding.lineEnd}</span>
+                    <span>Lines: {finding.lineStart}-{finding.lineEnd}</span>
                   </div>
                 </div>
               )}

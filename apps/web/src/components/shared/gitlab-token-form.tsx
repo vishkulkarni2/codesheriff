@@ -75,7 +75,7 @@ export function GitLabTokenForm({
       setExpiresAt('');
       setStatus('saved');
     } catch {
-      setErrorMsg('Network error — check your connection and try again');
+      setErrorMsg('Network error. Check your connection and try again');
       setStatus('error');
     } finally {
       setSaving(false);
@@ -102,7 +102,7 @@ export function GitLabTokenForm({
         setStatus('error');
       }
     } catch {
-      setErrorMsg('Network error — could not disconnect');
+      setErrorMsg('Network error. Could not disconnect');
       setStatus('error');
     } finally {
       setDisconnecting(false);
@@ -140,7 +140,7 @@ export function GitLabTokenForm({
       {status === 'saved' && (
         <p className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400">
           <CheckCircle2 className="h-4 w-4" />
-          Token saved — GitLab scans are now enabled.
+          Token saved. GitLab scans are now enabled.
         </p>
       )}
       {status === 'disconnected' && (

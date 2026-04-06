@@ -3,7 +3,7 @@
  * Authenticated users are redirected to /dashboard via middleware.
  */
 
-import { SignInButton, SignUpButton } from '@clerk/nextjs';
+import Link from 'next/link';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { ShieldCheck, Zap, GitMerge, LineChart } from 'lucide-react';
@@ -23,16 +23,12 @@ export default async function LandingPage() {
             CodeSheriff
           </div>
           <nav className="flex items-center gap-3">
-            <SignInButton mode="modal">
-              <button className="rounded-md px-4 py-2 text-sm font-medium hover:bg-accent">
-                Sign in
-              </button>
-            </SignInButton>
-            <SignUpButton mode="modal">
-              <button className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-                Get started
-              </button>
-            </SignUpButton>
+            <Link href="/sign-in" className="rounded-md px-4 py-2 text-sm font-medium hover:bg-accent">
+              Sign in
+            </Link>
+            <Link href="/sign-up" className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+              Get started
+            </Link>
           </nav>
         </div>
       </header>
@@ -48,15 +44,13 @@ export default async function LandingPage() {
           </h1>
           <p className="mx-auto mb-10 max-w-2xl text-lg text-muted-foreground">
             CodeSheriff automatically reviews every pull request for hallucinated APIs,
-            hardcoded secrets, IDOR vulnerabilities, and logic bugs — the patterns
+            hardcoded secrets, IDOR vulnerabilities, and logic bugs. The patterns
             AI coding assistants commonly introduce.
           </p>
           <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-            <SignUpButton mode="modal">
-              <button className="rounded-md bg-primary px-6 py-3 font-medium text-primary-foreground hover:bg-primary/90">
-                Start free — no card required
-              </button>
-            </SignUpButton>
+            <Link href="/sign-up" className="inline-block rounded-md bg-primary px-6 py-3 font-medium text-primary-foreground hover:bg-primary/90">
+              Start free, no card required
+            </Link>
             <a
               href="#features"
               className="rounded-md border px-6 py-3 font-medium hover:bg-accent"
@@ -99,7 +93,7 @@ const FEATURES = [
     icon: ShieldCheck,
     title: 'Hallucination detection',
     description:
-      "Catches calls to APIs, methods, and libraries that don't exist — a common AI mistake.",
+      "Catches calls to APIs, methods, and libraries that don't exist, a common AI mistake.",
   },
   {
     icon: Zap,

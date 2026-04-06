@@ -78,7 +78,8 @@ COPY turbo.json tsconfig.base.json ./
 # -----------------------------------------------------------------------------
 FROM deps AS builder
 
-RUN pnpm --filter @codesheriff/shared    build && \
+RUN pnpm --filter @codesheriff/db exec prisma generate && \
+    pnpm --filter @codesheriff/shared    build && \
     pnpm --filter @codesheriff/db        build && \
     pnpm --filter @codesheriff/analyzer  build && \
     pnpm --filter @codesheriff/worker    build

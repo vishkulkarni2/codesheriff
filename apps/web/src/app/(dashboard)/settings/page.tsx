@@ -54,9 +54,9 @@ export default async function SettingsPage() {
         <div className="grid gap-2 text-sm">
           <Row
             label="Name"
-            value={`${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() || '—'}
+            value={`${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() || '-'}
           />
-          <Row label="Email" value={user?.emailAddresses[0]?.emailAddress ?? '—'} />
+          <Row label="Email" value={user?.emailAddresses[0]?.emailAddress ?? '-'} />
           <Row label="User ID" value={userId} mono />
         </div>
         <p className="mt-4 text-xs text-muted-foreground">
@@ -149,8 +149,8 @@ export default async function SettingsPage() {
       {/* Plan */}
       <SettingsSection icon={<CreditCard className="h-4 w-4" />} title="Plan & Billing">
         <div className="grid gap-2 text-sm">
-          <Row label="Current plan" value={org?.plan ?? '—'} />
-          <Row label="Seat limit" value={org ? String(org.seats) : '—'} />
+          <Row label="Current plan" value={org?.plan ?? '-'} />
+          <Row label="Seat limit" value={org ? String(org.seats) : '-'} />
         </div>
         {org?.plan === 'FREE' && (
           <div className="mt-4">

@@ -192,7 +192,7 @@ export function OnboardingWizard() {
                 <p className="mt-1 text-sm text-muted-foreground">
                   Grant CodeSheriff read access to the repositories you want to monitor.
                   Only <code className="rounded bg-muted px-1 text-xs">read</code> permissions
-                  are needed — we never write to your code.
+                  are needed. We never write to your code.
                 </p>
               </div>
             </div>
@@ -202,7 +202,7 @@ export function OnboardingWizard() {
               <ol className="mt-2 flex flex-col gap-1 text-muted-foreground">
                 <li className="flex items-start gap-2">
                   <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  Click the button below — GitHub will open
+                  Click the button below. GitHub will open
                 </li>
                 <li className="flex items-start gap-2">
                   <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
@@ -210,7 +210,7 @@ export function OnboardingWizard() {
                 </li>
                 <li className="flex items-start gap-2">
                   <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  Return here — this page will advance automatically
+                  Return here. This page will advance automatically
                 </li>
               </ol>
             </div>
@@ -410,7 +410,7 @@ function ScanStepTracker({ status, findingsCount }: { status: string; findingsCo
       {isFailed && (
         <p className="flex items-center gap-1.5 text-sm text-destructive">
           <AlertCircle className="h-4 w-4" />
-          Scan failed — check the scan detail page for more information.
+          Scan failed. Check the scan detail page for more information.
         </p>
       )}
     </div>

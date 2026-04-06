@@ -264,7 +264,7 @@ export function TriggerScanButton({
                     />
                     {commitSha.length > 0 && !shaValid && (
                       <p className="mt-1 text-xs text-red-600">
-                        Must be exactly 40 hex characters (0–9, a–f).
+                        Must be exactly 40 hex characters (0-9, a-f).
                       </p>
                     )}
                   </div>

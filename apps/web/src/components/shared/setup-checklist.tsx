@@ -40,7 +40,7 @@ export function SetupChecklist({ hasRepos, hasScans, hasGitLab, hasSlack }: Setu
     {
       done: hasScans,
       label: 'Run your first scan',
-      description: 'Pick a repo and trigger a scan — results appear in under a minute.',
+      description: 'Pick a repo and trigger a scan. Results appear in under a minute.',
       action: hasRepos ? (
         <Link
           href="/repos"

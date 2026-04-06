@@ -4,7 +4,7 @@ const nextConfig = {
   reactStrictMode: true,
 
   // Self-contained output for Docker — includes all required server files
-  output: 'standalone',
+  // output: "standalone",,
 
   // Only allow images from trusted domains
   images: {
