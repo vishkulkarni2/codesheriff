@@ -27,7 +27,7 @@ export function SetupChecklist({ hasRepos, hasScans, hasGitLab, hasSlack }: Setu
       description: 'Install the GitHub App and grant read access to at least one repo.',
       action: (
         <a
-          href={`https://github.com/apps/${process.env.NEXT_PUBLIC_GITHUB_APP_SLUG ?? 'codesheriff'}/installations/new`}
+          href={`https://github.com/apps/${process.env.NEXT_PUBLIC_GITHUB_APP_SLUG ?? 'codesheriff-review'}/installations/new`}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
