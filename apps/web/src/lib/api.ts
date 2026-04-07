@@ -84,7 +84,7 @@ export async function getScan(
 
 export async function triggerScan(
   token: string,
-  body: { repositoryId: string; commitSha: string; branch: string; prNumber?: number; prTitle?: string }
+  body: { repositoryId: string; commitSha?: string; branch: string; prNumber?: number; prTitle?: string }
 ): Promise<ApiResponse<{ scanId: string; status: string }>> {
   return apiFetch('/scans', token, { method: 'POST', body: JSON.stringify(body) });
 }

@@ -36,7 +36,7 @@ interface TriggerScanButtonProps {
 
 type DialogState = 'idle' | 'open' | 'submitting' | 'success' | 'error';
 
-const SHA_RE = /^[0-9a-f]{40}$/i;
+const SHA_RE = /^[0-9a-f]{40}$/i; // Only validated if user provides one
 
 export function TriggerScanButton({
   repositoryId,
@@ -59,7 +59,7 @@ export function TriggerScanButton({
   // Validation
   const shaValid = SHA_RE.test(commitSha);
   const branchValid = branch.trim().length > 0;
-  const canSubmit = shaValid && branchValid;
+  const canSubmit = branchValid; // SHA is optional, API will use branch HEAD
 
   // Focus the first input when dialog opens
   const branchRef = useRef<HTMLInputElement>(null);

@@ -74,7 +74,7 @@ export async function scanRoutes(app: FastifyInstance): Promise<void> {
 
       const { repositoryId, branch, prNumber, prTitle } = parsed.data;
       // Normalise to lowercase — git SHAs are case-insensitive
-      const commitSha = parsed.data.commitSha.toLowerCase();
+      const commitSha = parsed.data.commitSha ? parsed.data.commitSha.toLowerCase() : "0000000000000000000000000000000000000000";
 
       // IDOR prevention: verify repository belongs to authenticated user's org
       const repo = await verifyRepoOwnership(req, reply, repositoryId);
