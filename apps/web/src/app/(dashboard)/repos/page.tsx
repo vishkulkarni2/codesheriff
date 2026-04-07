@@ -1,6 +1,10 @@
 /**
  * Repositories list page — shows all repos connected to the org.
  *
+ * Handles the GitHub App setup_url redirect: after installation, GitHub
+ * redirects to this page with ?installation_id=NNN&setup_action=install.
+ * The page polls for repos if they haven't synced yet.
+ *
  * Displays risk score, language, default branch, and last-scanned time
  * for each repo. Sorted by risk score descending so the most dangerous
  * repo is always at the top.
@@ -12,12 +16,21 @@ import { listRepos } from '@/lib/api';
 import { RiskScoreRing } from '@/components/shared/risk-score-ring';
 import { timeAgo } from '@/lib/utils';
 import Link from 'next/link';
-import { GitBranch, Globe, Lock, Unlock, AlertCircle } from 'lucide-react';
+import { GitBranch, Globe, Lock, Unlock, AlertCircle, CheckCircle2 } from 'lucide-react';
 import type { Repository } from '@codesheriff/shared';
+import { RepoSyncPoller } from './repo-sync-poller';
 
 export const metadata = { title: 'Repositories' };
 
-export default async function ReposPage() {
+// Never cache — we need fresh data after GitHub App installation
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
+
+export default async function ReposPage({
+  searchParams,
+}: {
+  searchParams: { installation_id?: string; setup_action?: string };
+}) {
   const { getToken, userId } = auth();
   if (!userId) redirect('/sign-in');
 
@@ -25,6 +38,9 @@ export default async function ReposPage() {
   if (!token) redirect('/sign-in');
 
   const { data: repos, error } = await listRepos(token);
+
+  // Detect if this is a redirect from GitHub App installation
+  const justInstalled = searchParams.setup_action === 'install' && searchParams.installation_id;
 
   if (error) {
     return (
@@ -43,6 +59,10 @@ export default async function ReposPage() {
     (a, b) => (b.riskScore ?? 0) - (a.riskScore ?? 0)
   );
 
+  // If the user just installed the app but repos haven't synced yet,
+  // show a polling component that auto-refreshes
+  const showSyncPoller = justInstalled && sorted.length === 0;
+
   return (
     <div className="flex flex-col gap-6 p-6">
       {/* Header */}
@@ -55,8 +75,27 @@ export default async function ReposPage() {
         </div>
       </div>
 
-      {/* Empty state */}
-      {sorted.length === 0 && (
+      {/* Just installed success banner */}
+      {justInstalled && sorted.length > 0 && (
+        <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950">
+          <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+          <div>
+            <p className="font-medium text-green-800 dark:text-green-200">
+              GitHub App installed successfully
+            </p>
+            <p className="text-sm text-green-700 dark:text-green-300">
+              {sorted.length} {sorted.length === 1 ? 'repository has' : 'repositories have'} been
+              synced. You can now trigger scans or wait for PR webhooks.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Syncing state — polls until repos appear */}
+      {showSyncPoller && <RepoSyncPoller />}
+
+      {/* Empty state (not from installation redirect) */}
+      {sorted.length === 0 && !showSyncPoller && (
         <div className="flex flex-col items-center gap-4 rounded-xl border bg-card py-20 text-center">
           <GitBranch className="h-10 w-10 text-muted-foreground/40" />
           <div>
@@ -66,7 +105,7 @@ export default async function ReposPage() {
             </p>
           </div>
           <a
-            href="https://github.com/apps/codesheriff-review"
+            href="https://github.com/apps/codesheriff-review/installations/new"
             target="_blank"
             rel="noopener noreferrer"
             className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
