@@ -16,7 +16,14 @@ const isPublicRoute = createRouteMatcher([
 
 export default clerkMiddleware((auth, req) => {
   if (!isPublicRoute(req)) {
-    auth().protect();
+    const { userId, redirectToSignIn } = auth();
+    if (!userId) {
+      // Explicit redirect to /sign-in instead of Clerk's default
+      // protect-rewrite-to-404 behavior, which makes legitimate dashboard
+      // routes look broken to signed-out users (returns 404 instead of
+      // bouncing them to sign in).
+      return redirectToSignIn({ returnBackUrl: req.url });
+    }
   }
 });
 

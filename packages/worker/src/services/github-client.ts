@@ -11,7 +11,7 @@
  */
 
 import { App } from '@octokit/app';
-import type { Octokit } from '@octokit/rest';
+import { Octokit } from '@octokit/rest';
 import type { AnalysisFile } from '@codesheriff/shared';
 import { EXTENSION_TO_LANGUAGE } from '@codesheriff/shared';
 import { logger } from '../utils/logger.js';
@@ -26,10 +26,15 @@ export class GitHubClient {
   private readonly app: App;
 
   constructor(opts: GitHubClientOptions) {
+    // IMPORTANT: pass Octokit class so getInstallationOctokit() returns an
+    // instance with the REST plugin (octokit.rest.*). Without this, @octokit/app
+    // returns a bare core Octokit and every octokit.rest.* call throws
+    // "Cannot read properties of undefined (reading 'repos')".
     this.app = new App({
       appId: opts.appId,
       privateKey: opts.privateKey,
       webhooks: { secret: opts.webhookSecret },
+      Octokit,
     });
   }
 
