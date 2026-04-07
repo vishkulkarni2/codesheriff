@@ -50,7 +50,10 @@ export default async function DashboardPage() {
     );
   }
 
-  const hasRepos  = data.topRiskyRepos.length > 0;
+  // Check for repos: use githubInstallationId (from org) OR topRiskyRepos
+  // New repos that haven't been scanned yet won't appear in topRiskyRepos,
+  // so we also check the org's installation status and repo count.
+  const hasRepos  = !!(orgData?.githubInstallationId) || data.topRiskyRepos.length > 0;
   const hasScans  = data.recentScans.length > 0;
   const hasGitLab = gitlabStatus?.connected ?? false;
   const hasSlack  = !!(orgData?.slackWebhookUrl);

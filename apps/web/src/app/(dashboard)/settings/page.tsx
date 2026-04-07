@@ -18,6 +18,7 @@ import {
   Bell,
   GitBranch,
 } from 'lucide-react';
+import { GitHubSyncButton } from '@/components/shared/github-sync-button';
 
 export const metadata = { title: 'Settings' };
 
@@ -93,7 +94,7 @@ export default async function SettingsPage() {
           <p className="mb-2 text-xs text-muted-foreground">
             Connected via GitHub App installation. Manages webhooks and check runs automatically.
           </p>
-          <div className="text-sm">
+          <div className="flex items-center gap-3 text-sm">
             {org?.githubInstallationId ? (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
                 ✓ Connected · Installation {org.githubInstallationId}
@@ -101,6 +102,9 @@ export default async function SettingsPage() {
             ) : (
               <span className="text-sm text-muted-foreground">Not connected</span>
             )}
+          </div>
+          <div className="mt-3">
+            <GitHubSyncButton hasInstallation={!!org?.githubInstallationId} />
           </div>
         </div>
 

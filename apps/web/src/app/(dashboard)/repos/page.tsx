@@ -12,13 +12,14 @@
 
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { listRepos } from '@/lib/api';
+import { listRepos, getOrgSettings } from '@/lib/api';
 import { RiskScoreRing } from '@/components/shared/risk-score-ring';
 import { timeAgo } from '@/lib/utils';
 import Link from 'next/link';
 import { GitBranch, Globe, Lock, Unlock, AlertCircle, CheckCircle2 } from 'lucide-react';
 import type { Repository } from '@codesheriff/shared';
 import { RepoSyncPoller } from './repo-sync-poller';
+import { GitHubSyncButton } from '@/components/shared/github-sync-button';
 
 export const metadata = { title: 'Repositories' };
 
@@ -37,7 +38,10 @@ export default async function ReposPage({
   const token = await getToken();
   if (!token) redirect('/sign-in');
 
-  const { data: repos, error } = await listRepos(token);
+  const [{ data: repos, error }, { data: orgData }] = await Promise.all([
+    listRepos(token),
+    getOrgSettings(token),
+  ]);
 
   // Detect if this is a redirect from GitHub App installation
   const justInstalled = searchParams.setup_action === 'install' && searchParams.installation_id;
@@ -72,6 +76,19 @@ export default async function ReposPage({
           <p className="text-sm text-muted-foreground">
             {sorted.length} {sorted.length === 1 ? 'repository' : 'repositories'} connected
           </p>
+        </div>
+        <div className="flex items-center gap-3">
+          {orgData?.githubInstallationId && (
+            <GitHubSyncButton hasInstallation={true} />
+          )}
+          <a
+            href="https://github.com/apps/codesheriff-review/installations/new"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            {orgData?.githubInstallationId ? 'Manage GitHub App' : 'Install GitHub App'}
+          </a>
         </div>
       </div>
 

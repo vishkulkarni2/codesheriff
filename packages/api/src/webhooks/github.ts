@@ -422,26 +422,72 @@ async function handleInstallationCreated(
   }
 
   if (!org) {
-    // Strategy 3: If there's exactly one org with no GitHub installation yet,
-    // and it was created recently (within 1 hour), it's almost certainly the
-    // user who just signed up and is now installing the app.
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    const recentOrgs = await prisma.organization.findMany({
-      where: {
-        githubInstallationId: null,
-        createdAt: { gte: oneHourAgo },
-      },
+    // Strategy 3: Use the GitHub API to fetch the sender's email from their
+    // GitHub profile, then match against our User table. This handles cases
+    // where the GitHub username doesn't match the signup email.
+    const appId = process.env['GITHUB_APP_ID'];
+    const privateKey = process.env['GITHUB_APP_PRIVATE_KEY'];
+    const webhookSecret = process.env['GITHUB_WEBHOOK_SECRET'];
+
+    if (appId && privateKey && webhookSecret) {
+      try {
+        const ghApp = new App({ appId, privateKey, webhooks: { secret: webhookSecret } });
+        const octokit = await ghApp.getInstallationOctokit(parseInt(installationId, 10));
+        // Fetch the sender's public GitHub profile for their email
+        const { data: ghUser } = await (octokit as any).rest.users.getByUsername({
+          username: sender.login,
+        });
+        if (ghUser.email) {
+          const userByGhEmail = await prisma.user.findFirst({
+            where: { email: ghUser.email.toLowerCase() },
+            select: { organizationId: true },
+          });
+          if (userByGhEmail) {
+            org = await prisma.organization.findUnique({
+              where: { id: userByGhEmail.organizationId },
+              select: { id: true, slug: true },
+            });
+            if (org) {
+              log.info(
+                { orgId: org.id, slug: org.slug, installationId, ghEmail: ghUser.email },
+                'installation: linked via GitHub profile email match'
+              );
+            }
+          }
+        }
+      } catch (err) {
+        log.warn({ err, senderLogin: sender.login }, 'failed to fetch GitHub user email for org matching');
+      }
+    }
+  }
+
+  if (!org) {
+    // Strategy 4: If there's exactly one org with no GitHub installation yet,
+    // link to it. This is a last-resort fallback for single-tenant setups.
+    const unlinkedOrgs = await prisma.organization.findMany({
+      where: { githubInstallationId: null },
       select: { id: true, slug: true },
       orderBy: { createdAt: 'desc' },
-      take: 1,
     });
 
-    if (recentOrgs.length === 1) {
-      org = recentOrgs[0]!;
+    if (unlinkedOrgs.length === 1) {
+      org = unlinkedOrgs[0]!;
       log.info(
         { orgId: org.id, slug: org.slug, installationId },
-        'installation: linked to most recent unlinked org (fallback strategy)'
+        'installation: linked to only unlinked org (last-resort fallback)'
       );
+    } else {
+      // Multiple unlinked orgs — pick the most recently created one
+      // that was created in the last 24 hours (generous window)
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const recent = unlinkedOrgs.filter(o => true); // already sorted desc
+      if (recent.length > 0) {
+        // Log all candidates but don't auto-link if ambiguous
+        log.info(
+          { installationId, candidateCount: recent.length, candidates: recent.map(o => o.slug) },
+          'installation: multiple unlinked orgs found — user must reconnect manually'
+        );
+      }
     }
   }
 

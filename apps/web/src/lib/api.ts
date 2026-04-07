@@ -190,6 +190,26 @@ export async function getGitLabVcsStatus(token: string): Promise<ApiResponse<Git
 }
 
 // ---------------------------------------------------------------------------
+// GitHub manual sync
+// ---------------------------------------------------------------------------
+
+export interface GitHubSyncResult {
+  installationId: string;
+  syncedRepos: string[];
+  count: number;
+}
+
+export async function syncGitHubRepos(
+  token: string,
+  installationId?: number
+): Promise<ApiResponse<GitHubSyncResult>> {
+  return apiFetch<GitHubSyncResult>('/orgs/current/vcs/github/sync', token, {
+    method: 'POST',
+    body: JSON.stringify(installationId ? { installation_id: installationId } : {}),
+  });
+}
+
+// ---------------------------------------------------------------------------
 // SARIF export
 // ---------------------------------------------------------------------------
 

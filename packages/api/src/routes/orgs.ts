@@ -18,6 +18,7 @@ import { z } from 'zod';
 import { prisma } from '@codesheriff/db';
 import { UserRole, Provider } from '@codesheriff/shared';
 import { encryptToken } from '../utils/token-crypto.js';
+import { App } from '@octokit/app';
 
 /** Validates a Slack incoming webhook URL, or null to clear. */
 const slackWebhookUrlSchema = z
@@ -280,6 +281,156 @@ export async function orgRoutes(app: FastifyInstance): Promise<void> {
       });
 
       return reply.status(204).send();
+    }
+  );
+
+  // ---------------------------------------------------------------------------
+  // POST /api/v1/orgs/current/vcs/github/sync — manual GitHub repo sync
+  //
+  // If the installation webhook failed, users can manually trigger a sync.
+  // This fetches the installation's repos from GitHub and creates/updates
+  // Repository records. Requires OWNER or ADMIN role.
+  //
+  // Also accepts an optional `installation_id` in the request body to link
+  // the installation to the org (for the case where the webhook never arrived).
+  // ---------------------------------------------------------------------------
+  const githubSyncSchema = z.object({
+    installation_id: z.coerce.number().int().positive().optional(),
+  });
+
+  app.post(
+    '/orgs/current/vcs/github/sync',
+    { preHandler: [app.authenticate] },
+    async (req, reply) => {
+      const { role, organizationId } = req.dbUser!;
+
+      if (role === UserRole.MEMBER) {
+        return reply.status(403).send({
+          success: false,
+          data: null,
+          error: 'Only org owners and admins can sync GitHub repos',
+        });
+      }
+
+      const parsed = githubSyncSchema.safeParse(req.body ?? {});
+      const installationIdFromBody = parsed.success ? parsed.data.installation_id : undefined;
+
+      // Get current org
+      const org = await prisma.organization.findUnique({
+        where: { id: organizationId },
+        select: { id: true, githubInstallationId: true },
+      });
+
+      if (!org) {
+        return reply.status(404).send({
+          success: false,
+          data: null,
+          error: 'Organization not found',
+        });
+      }
+
+      // Determine installation ID: from body (new link) or from existing org record
+      let installationId = org.githubInstallationId;
+
+      if (installationIdFromBody) {
+        installationId = String(installationIdFromBody);
+        // Update the org with the new installation ID
+        await prisma.organization.update({
+          where: { id: organizationId },
+          data: { githubInstallationId: installationId },
+        });
+      }
+
+      if (!installationId) {
+        return reply.status(400).send({
+          success: false,
+          data: null,
+          error: 'No GitHub installation linked. Install the GitHub App first, then provide the installation_id.',
+        });
+      }
+
+      // Fetch repos from GitHub using the App credentials
+      const appId = process.env['GITHUB_APP_ID'];
+      const privateKey = process.env['GITHUB_APP_PRIVATE_KEY'];
+      const webhookSecret = process.env['GITHUB_WEBHOOK_SECRET'];
+
+      if (!appId || !privateKey || !webhookSecret) {
+        return reply.status(500).send({
+          success: false,
+          data: null,
+          error: 'GitHub App credentials not configured on the server',
+        });
+      }
+
+      try {
+        const ghApp = new App({
+          appId,
+          privateKey,
+          webhooks: { secret: webhookSecret },
+        });
+
+        const octokit = await ghApp.getInstallationOctokit(parseInt(installationId, 10));
+
+        // Fetch all repos accessible to this installation
+        const { data } = await (octokit as any).request('GET /installation/repositories', {
+          per_page: 100,
+        });
+
+        const repos = data.repositories as Array<{
+          name: string;
+          full_name: string;
+          private: boolean;
+          default_branch: string;
+          language: string | null;
+        }>;
+
+        // Upsert each repository
+        const synced: string[] = [];
+        for (const repo of repos) {
+          await prisma.repository.upsert({
+            where: {
+              organizationId_provider_fullName: {
+                organizationId,
+                provider: Provider.GITHUB,
+                fullName: repo.full_name,
+              },
+            },
+            create: {
+              organizationId,
+              name: repo.name,
+              fullName: repo.full_name,
+              provider: Provider.GITHUB,
+              defaultBranch: repo.default_branch ?? 'main',
+              isPrivate: repo.private,
+              language: repo.language ?? null,
+            },
+            update: {
+              defaultBranch: repo.default_branch ?? 'main',
+              isPrivate: repo.private,
+              language: repo.language ?? null,
+            },
+          });
+          synced.push(repo.full_name);
+        }
+
+        req.log.info(
+          { orgId: organizationId, installationId, syncedCount: synced.length },
+          'manual GitHub repo sync completed'
+        );
+
+        return reply.send({
+          success: true,
+          data: { installationId, syncedRepos: synced, count: synced.length },
+          error: null,
+        });
+      } catch (err) {
+        req.log.error({ err, installationId }, 'GitHub repo sync failed');
+        return reply.status(502).send({
+          success: false,
+          data: null,
+          error: 'Failed to fetch repos from GitHub. The installation may be invalid or suspended.',
+        });
+      }
     }
   );
 }
