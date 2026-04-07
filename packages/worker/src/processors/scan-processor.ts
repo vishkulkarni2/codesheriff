@@ -147,6 +147,20 @@ export async function processScanJob(
     // ----- Step 6: Persist findings -----
     log.info({ count: result.findings.length }, 'persisting findings');
 
+    // Validate ruleIds against the Rule table — detectors may emit ruleIds
+    // for built-in rules that aren't necessarily seeded in every environment.
+    // Any unknown ruleId is coerced to null to avoid FK constraint failures.
+    const referencedRuleIds = Array.from(
+      new Set(result.findings.map((f) => f.ruleId).filter((id): id is string => !!id))
+    );
+    const existingRules = referencedRuleIds.length
+      ? await prisma.rule.findMany({
+          where: { id: { in: referencedRuleIds } },
+          select: { id: true },
+        })
+      : [];
+    const validRuleIds = new Set(existingRules.map((r) => r.id));
+
     // Write findings in batches to avoid hitting Postgres's parameter limit
     const BATCH_SIZE = 100;
     for (let i = 0; i < result.findings.length; i += BATCH_SIZE) {
@@ -155,7 +169,7 @@ export async function processScanJob(
         data: batch.map((f) => ({
           scanId: payload.scanId,
           repositoryId: payload.repositoryId,
-          ruleId: f.ruleId ?? null,
+          ruleId: f.ruleId && validRuleIds.has(f.ruleId) ? f.ruleId : null,
           title: f.title.slice(0, 500),
           description: f.description.slice(0, 2000),
           explanation: (f as typeof f & { explanation?: string }).explanation?.slice(0, 5000) ?? null,
