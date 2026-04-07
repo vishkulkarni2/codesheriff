@@ -433,4 +433,158 @@ export async function orgRoutes(app: FastifyInstance): Promise<void> {
       }
     }
   );
+
+  // ---------------------------------------------------------------------------
+  // POST /api/v1/orgs/current/github/link - link GitHub App installation
+  //
+  // Called from the GitHub App setup_url callback. The user is authenticated
+  // via Clerk (the callback runs in their browser session), so we reliably
+  // know which org to link the installation to.
+  //
+  // Body: { installationId: "123" }
+  // ---------------------------------------------------------------------------
+  const githubLinkSchema = z.object({
+    installationId: z.coerce.string().min(1, 'installationId is required'),
+  });
+
+  app.post(
+    '/orgs/current/github/link',
+    { preHandler: [app.authenticate] },
+    async (req, reply) => {
+      const { role, organizationId } = req.dbUser!;
+
+      if (role === UserRole.MEMBER) {
+        return reply.status(403).send({
+          success: false,
+          data: null,
+          error: 'Only org owners and admins can link GitHub installations',
+        });
+      }
+
+      const parsed = githubLinkSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return reply.status(400).send({
+          success: false,
+          data: null,
+          error: parsed.error.issues.map((i) => i.message).join(', '),
+        });
+      }
+
+      const installationId = parsed.data.installationId;
+
+      // Check if another org already has this installation
+      const existingOrg = await prisma.organization.findFirst({
+        where: {
+          githubInstallationId: installationId,
+          id: { not: organizationId },
+        },
+        select: { id: true },
+      });
+
+      if (existingOrg) {
+        return reply.status(409).send({
+          success: false,
+          data: null,
+          error: 'This GitHub installation is already linked to another organization',
+        });
+      }
+
+      // Link the installation to the org
+      await prisma.organization.update({
+        where: { id: organizationId },
+        data: { githubInstallationId: installationId },
+      });
+
+      req.log.info(
+        { orgId: organizationId, installationId },
+        'GitHub installation linked via setup_url callback'
+      );
+
+      // Now sync repos from the installation
+      const appId = process.env['GITHUB_APP_ID'];
+      const privateKey = process.env['GITHUB_APP_PRIVATE_KEY'];
+      const webhookSecret = process.env['GITHUB_WEBHOOK_SECRET'];
+
+      if (!appId || !privateKey || !webhookSecret) {
+        // Installation linked but cannot sync repos - still a success
+        return reply.send({
+          success: true,
+          data: { installationId, syncedRepos: [], count: 0 },
+          error: null,
+        });
+      }
+
+      try {
+        const ghApp = new App({
+          appId,
+          privateKey,
+          webhooks: { secret: webhookSecret },
+        });
+
+        const octokit = await ghApp.getInstallationOctokit(parseInt(installationId, 10));
+
+        // Fetch all repos accessible to this installation
+        const { data } = await (octokit as any).request('GET /installation/repositories', {
+          per_page: 100,
+        });
+
+        const repos = data.repositories as Array<{
+          name: string;
+          full_name: string;
+          private: boolean;
+          default_branch: string;
+          language: string | null;
+        }>;
+
+        // Upsert each repository
+        const synced: string[] = [];
+        for (const repo of repos) {
+          await prisma.repository.upsert({
+            where: {
+              organizationId_provider_fullName: {
+                organizationId,
+                provider: Provider.GITHUB,
+                fullName: repo.full_name,
+              },
+            },
+            create: {
+              organizationId,
+              name: repo.name,
+              fullName: repo.full_name,
+              provider: Provider.GITHUB,
+              defaultBranch: repo.default_branch ?? 'main',
+              isPrivate: repo.private,
+              language: repo.language ?? null,
+            },
+            update: {
+              defaultBranch: repo.default_branch ?? 'main',
+              isPrivate: repo.private,
+              language: repo.language ?? null,
+            },
+          });
+          synced.push(repo.full_name);
+        }
+
+        req.log.info(
+          { orgId: organizationId, installationId, syncedCount: synced.length },
+          'GitHub repos synced via setup_url callback'
+        );
+
+        return reply.send({
+          success: true,
+          data: { installationId, syncedRepos: synced, count: synced.length },
+          error: null,
+        });
+      } catch (err) {
+        req.log.error({ err, installationId }, 'GitHub repo sync failed during link');
+        // Installation is linked even if sync fails - user can retry with manual sync
+        return reply.status(207).send({
+          success: true,
+          data: { installationId, syncedRepos: [], count: 0 },
+          error: 'Installation linked but repo sync failed. Use the Sync button to retry.',
+        });
+      }
+    }
+  );
+
 }
