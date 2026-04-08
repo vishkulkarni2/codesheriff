@@ -144,6 +144,17 @@ export async function processScanJob(
 
     const result = await pipeline.run(ctx);
 
+    // ----- DIAGNOSTIC: log detector timings and error summary so we can tell
+    //           from production logs which detectors ran and for how long.
+    log.info(
+      {
+        detectorTimings: result.detectorTimings,
+        detectorErrors: result.errors.map((e) => ({ detector: e.detector, message: e.message.slice(0, 200) })),
+        rawFindingsCount: result.findings.length,
+      },
+      'scan diagnostic summary'
+    );
+
     // ----- Step 6: Persist findings -----
     log.info({ count: result.findings.length }, 'persisting findings');
 
