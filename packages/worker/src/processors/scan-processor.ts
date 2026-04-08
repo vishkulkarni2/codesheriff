@@ -440,20 +440,23 @@ function parseDependencies(
 }
 
 function buildFeatureFlags(plan: string): AnalysisFeatureFlags {
-  // LLM-powered detectors are gated by plan tier — FREE tier uses static
-  // analysis only to control Anthropic API costs.
+  // LLM-powered detectors are gated by plan tier — FREE tier normally uses
+  // static analysis only to control Anthropic API costs. The env flags can
+  // FORCE-enable detectors even on FREE plans (used in staging/dogfood).
   const isFree = plan === 'FREE';
+  const forceLlm = process.env['FORCE_LLM_DETECTORS'] === 'true';
+  const llmEligible = !isFree || forceLlm;
 
   return {
     // LLM detectors: disabled on FREE tier unless overridden by env flag
     enableHallucinationDetection:
-      !isFree && process.env['ENABLE_HALLUCINATION_DETECTION'] !== 'false',
+      llmEligible && process.env['ENABLE_HALLUCINATION_DETECTION'] !== 'false',
     enableAuthValidation:
-      !isFree && process.env['ENABLE_AUTH_VALIDATION'] !== 'false',
+      llmEligible && process.env['ENABLE_AUTH_VALIDATION'] !== 'false',
     enableLogicBugDetection:
-      !isFree && process.env['ENABLE_LOGIC_BUG_DETECTION'] !== 'false',
+      llmEligible && process.env['ENABLE_LOGIC_BUG_DETECTION'] !== 'false',
     // Auto-fix: LLM cost — disabled on FREE tier, can be overridden via env flag
-    enableAutoFix: !isFree && process.env['ENABLE_AUTO_FIX'] !== 'false',
+    enableAutoFix: llmEligible && process.env['ENABLE_AUTO_FIX'] !== 'false',
     // Semgrep + TruffleHog run on all plans
     enableSecretsScanning: true,
     enableStaticAnalysis: true,

@@ -83,6 +83,9 @@ services:
         value: info
       - key: WORKER_CONCURRENCY
         value: "3"
+      # Force LLM detectors on for FREE-tier dogfood orgs (cs-test-nodejs etc)
+      - key: FORCE_LLM_DETECTORS
+        value: "true"
       # Secrets — set in Render dashboard (mirror of API)
       - key: DATABASE_URL
         sync: false
