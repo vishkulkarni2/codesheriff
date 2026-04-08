@@ -84,9 +84,18 @@ export async function getScan(
 
 export async function triggerScan(
   token: string,
-  body: { repositoryId: string; commitSha?: string; branch: string; prNumber?: number; prTitle?: string }
+  body: { repositoryId: string; branch: string; commitSha?: string; prNumber?: number; prTitle?: string }
 ): Promise<ApiResponse<{ scanId: string; status: string }>> {
-  return apiFetch('/scans', token, { method: 'POST', body: JSON.stringify(body) });
+  // Only include commitSha in the request body if the caller actually provided one.
+  // The backend resolves the branch HEAD when commitSha is omitted.
+  const payload: Record<string, unknown> = {
+    repositoryId: body.repositoryId,
+    branch: body.branch,
+  };
+  if (body.commitSha) payload.commitSha = body.commitSha;
+  if (body.prNumber !== undefined) payload.prNumber = body.prNumber;
+  if (body.prTitle !== undefined) payload.prTitle = body.prTitle;
+  return apiFetch('/scans', token, { method: 'POST', body: JSON.stringify(payload) });
 }
 
 // ---------------------------------------------------------------------------

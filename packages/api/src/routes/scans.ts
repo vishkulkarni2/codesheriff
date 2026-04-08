@@ -22,10 +22,17 @@ import type { ScanJobPayload } from '@codesheriff/shared';
 import type { Finding } from '@codesheriff/shared';
 import { QUEUE_NAMES } from '@codesheriff/shared';
 import { verifyRepoOwnership } from '../middleware/ownership.js';
+import { App } from '@octokit/app';
 
 const createScanSchema = z.object({
   repositoryId: z.string().cuid(),
-  commitSha: z.string().regex(/^[0-9a-fA-F]{40}$/, 'commitSha must be a 40-char hex SHA'),
+  // commitSha is optional. When omitted, the API resolves the HEAD of the
+  // specified branch via the GitHub App installation. PR webhooks still
+  // pass an explicit SHA so historical/point-in-time scans remain possible.
+  commitSha: z
+    .string()
+    .regex(/^[0-9a-fA-F]{40}$/, 'commitSha must be a 40-char hex SHA')
+    .optional(),
   branch: z.string().min(1).max(255),
   prNumber: z.number().int().positive().optional(),
   prTitle: z.string().max(500).optional(),
@@ -73,28 +80,12 @@ export async function scanRoutes(app: FastifyInstance): Promise<void> {
       }
 
       const { repositoryId, branch, prNumber, prTitle } = parsed.data;
-      // Normalise to lowercase — git SHAs are case-insensitive
-      const commitSha = parsed.data.commitSha ? parsed.data.commitSha.toLowerCase() : "0000000000000000000000000000000000000000";
 
       // IDOR prevention: verify repository belongs to authenticated user's org
       const repo = await verifyRepoOwnership(req, reply, repositoryId);
       if (!repo) return; // verifyRepoOwnership already sent the response
 
-      // Create scan record in QUEUED state
-      const scan = await prisma.scan.create({
-        data: {
-          repositoryId,
-          triggeredBy: ScanTrigger.MANUAL,
-          prNumber: prNumber ?? null,
-          prTitle: prTitle ?? null,
-          branch,
-          commitSha,
-          status: ScanStatus.QUEUED,
-        },
-        select: { id: true, status: true },
-      });
-
-      // Fetch repo details needed by the worker
+      // Fetch repo details needed below (for SHA resolution and the worker payload)
       const repoDetails = await prisma.repository.findUnique({
         where: { id: repositoryId },
         select: {
@@ -113,6 +104,93 @@ export async function scanRoutes(app: FastifyInstance): Promise<void> {
           error: 'Repository details could not be loaded',
         });
       }
+
+      // Resolve the commit SHA. If the caller provided one we trust it (PR
+      // webhooks pass the HEAD of the PR branch). Otherwise we ask GitHub
+      // for the current HEAD of the requested branch so the worker clones
+      // a real, point-in-time commit.
+      let commitSha: string;
+      if (parsed.data.commitSha) {
+        commitSha = parsed.data.commitSha.toLowerCase();
+      } else {
+        const installationId = repoDetails.organization.githubInstallationId;
+        if (!installationId) {
+          return reply.status(400).send({
+            success: false,
+            data: null,
+            error:
+              'Cannot resolve branch HEAD: organization has no GitHub App installation linked.',
+          });
+        }
+
+        const appId = process.env['GITHUB_APP_ID'];
+        const privateKey = process.env['GITHUB_APP_PRIVATE_KEY'];
+        const webhookSecret = process.env['GITHUB_WEBHOOK_SECRET'];
+
+        if (!appId || !privateKey || !webhookSecret) {
+          return reply.status(500).send({
+            success: false,
+            data: null,
+            error: 'GitHub App credentials not configured on the server',
+          });
+        }
+
+        const [owner, name] = repoDetails.fullName.split('/');
+        if (!owner || !name) {
+          return reply.status(500).send({
+            success: false,
+            data: null,
+            error: `Malformed repository fullName: ${repoDetails.fullName}`,
+          });
+        }
+
+        try {
+          const ghApp = new App({
+            appId,
+            privateKey,
+            webhooks: { secret: webhookSecret },
+          });
+          const octokit = await ghApp.getInstallationOctokit(
+            parseInt(installationId, 10)
+          );
+          // Use the untyped request() — installation Octokit in this codebase
+          // does not expose the .rest.* namespace (see orgs.ts for pattern).
+          const { data: branchData } = await (octokit as unknown as {
+            request: (route: string, params: Record<string, unknown>) => Promise<{
+              data: { commit: { sha: string } };
+            }>;
+          }).request('GET /repos/{owner}/{repo}/branches/{branch}', {
+            owner,
+            repo: name,
+            branch,
+          });
+          commitSha = branchData.commit.sha.toLowerCase();
+        } catch (err) {
+          req.log.error(
+            { err, repositoryId, branch },
+            'Failed to resolve branch HEAD via GitHub App'
+          );
+          return reply.status(502).send({
+            success: false,
+            data: null,
+            error: `Could not resolve HEAD of branch "${branch}" on GitHub. Does the branch exist?`,
+          });
+        }
+      }
+
+      // Create scan record in QUEUED state
+      const scan = await prisma.scan.create({
+        data: {
+          repositoryId,
+          triggeredBy: ScanTrigger.MANUAL,
+          prNumber: prNumber ?? null,
+          prTitle: prTitle ?? null,
+          branch,
+          commitSha,
+          status: ScanStatus.QUEUED,
+        },
+        select: { id: true, status: true },
+      });
 
       // Enqueue the scan job — analysis is async
       const jobPayload: ScanJobPayload = {

@@ -3,10 +3,10 @@
 /**
  * TriggerScanButton — opens a modal dialog to trigger a manual scan.
  *
- * The form collects branch + commit SHA (required) and optional PR context.
- * On success it transitions to a "Scan queued" state with a direct link to
- * the new scan's detail page. The modal stays open so the user can copy
- * the scan link before navigating away.
+ * The form collects a branch (defaulted to main) and optional PR context.
+ * The commit SHA is resolved server-side from the branch HEAD — users never
+ * need to know or enter a SHA. On success it transitions to a "Scan queued"
+ * state with a direct link to the new scan's detail page.
  *
  * Client-only — auth token is fetched from Clerk's useAuth() hook.
  */
@@ -22,7 +22,6 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
-  GitCommit,
   GitBranch,
   ExternalLink,
 } from 'lucide-react';
@@ -36,8 +35,6 @@ interface TriggerScanButtonProps {
 
 type DialogState = 'idle' | 'open' | 'submitting' | 'success' | 'error';
 
-const SHA_RE = /^[0-9a-f]{40}$/i; // Only validated if user provides one
-
 export function TriggerScanButton({
   repositoryId,
   defaultBranch = 'main',
@@ -46,20 +43,18 @@ export function TriggerScanButton({
   const { getToken } = useAuth();
   const router = useRouter();
   const [dialogState, setDialogState] = useState<DialogState>('idle');
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [newScanId, setNewScanId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Form fields
   const [branch, setBranch] = useState(defaultBranch);
-  const [commitSha, setCommitSha] = useState('');
   const [prNumber, setPrNumber] = useState('');
   const [prTitle, setPrTitle] = useState('');
 
-  // Validation
-  const shaValid = SHA_RE.test(commitSha);
+  // Validation — branch is the only required field
   const branchValid = branch.trim().length > 0;
-  const canSubmit = branchValid; // SHA is optional, API will use branch HEAD
+  const canSubmit = branchValid;
 
   // Focus the first input when dialog opens
   const branchRef = useRef<HTMLInputElement>(null);
@@ -81,7 +76,6 @@ export function TriggerScanButton({
 
   function handleOpen() {
     setBranch(defaultBranch);
-    setCommitSha('');
     setPrNumber('');
     setPrTitle('');
     setErrorMsg(null);
@@ -111,7 +105,6 @@ export function TriggerScanButton({
       const parsedPrTitle = prTitle.trim() || undefined;
       const res = await triggerScan(token, {
         repositoryId,
-        commitSha: commitSha.toLowerCase(),
         branch: branch.trim(),
         ...(parsedPrNumber !== undefined ? { prNumber: parsedPrNumber } : {}),
         ...(parsedPrTitle !== undefined ? { prTitle: parsedPrTitle } : {}),
@@ -236,37 +229,9 @@ export function TriggerScanButton({
                         'disabled:cursor-not-allowed disabled:opacity-50'
                       )}
                     />
-                  </div>
-
-                  {/* Commit SHA */}
-                  <div>
-                    <label
-                      htmlFor="ts-sha"
-                      className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground"
-                    >
-                      <GitCommit className="h-3.5 w-3.5" />
-                      Commit SHA <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="ts-sha"
-                      value={commitSha}
-                      onChange={(e) => setCommitSha(e.target.value.trim())}
-                      placeholder="40-character hex SHA"
-                      maxLength={40}
-                      spellCheck={false}
-                      disabled={dialogState === 'submitting'}
-                      className={cn(
-                        'w-full rounded-md border bg-background px-3 py-2 font-mono text-sm',
-                        'focus:outline-none focus:ring-1 focus:ring-ring',
-                        'disabled:cursor-not-allowed disabled:opacity-50',
-                        commitSha.length > 0 && !shaValid && 'border-red-400 focus:ring-red-400'
-                      )}
-                    />
-                    {commitSha.length > 0 && !shaValid && (
-                      <p className="mt-1 text-xs text-red-600">
-                        Must be exactly 40 hex characters (0-9, a-f).
-                      </p>
-                    )}
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      The latest commit on this branch will be scanned.
+                    </p>
                   </div>
 
                   {/* Optional PR context — collapsible section */}
@@ -350,7 +315,7 @@ export function TriggerScanButton({
                   ) : (
                     <>
                       <Play className="h-3.5 w-3.5 fill-current" />
-                      Queue scan
+                      Scan
                     </>
                   )}
                 </button>
