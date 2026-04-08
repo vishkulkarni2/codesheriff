@@ -68,8 +68,10 @@ RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends python3 python3-pip python3-venv openssl ca-certificates git && \
     rm -rf /var/lib/apt/lists/* && \
     python3 -m venv /opt/semgrep-venv && \
-    /opt/semgrep-venv/bin/pip install --no-cache-dir "semgrep==${SEMGREP_VERSION}" && \
-    ln -sf /opt/semgrep-venv/bin/semgrep /usr/local/bin/semgrep
+    /opt/semgrep-venv/bin/pip install --no-cache-dir "semgrep==${SEMGREP_VERSION}"
+
+# Add semgrep venv to PATH so pysemgrep helper can be found
+ENV PATH="/opt/semgrep-venv/bin:${PATH}"
 COPY --from=trufflehog-stage /usr/local/bin/trufflehog /usr/local/bin/trufflehog
 WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 --ingroup nodejs sheriffworker
