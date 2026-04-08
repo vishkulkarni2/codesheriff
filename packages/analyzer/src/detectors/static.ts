@@ -60,6 +60,14 @@ const CATEGORY_KEYWORDS: [RegExp, FindingCategory][] = [
 
 export class StaticAnalyzer {
   /**
+   * Per-run diagnostic captured on every detect() call. Read by the pipeline
+   * after detect() completes and forwarded into PipelineResult.detectorDiagnostics
+   * so it can be inspected via the /api/v1/debug/scan-diagnostic endpoint
+   * without needing access to pino / Render logs.
+   */
+  public lastDiagnostic: Record<string, unknown> | null = null;
+
+  /**
    * Run semgrep on the provided files using built-in + custom org rules.
    *
    * @param customRuleYaml - Optional additional YAML rule content (org-specific)
@@ -171,6 +179,41 @@ export class StaticAnalyzer {
       const findings = semgrepOutput.results.map((match) =>
         this.toRawFinding(match, tmpDir, activeFiles)
       ).filter((f): f is RawFinding => f !== null);
+
+      // Capture the full diagnostic for the Redis stash so we can debug
+      // silent-zero-results scans without Render log access.
+      this.lastDiagnostic = {
+        rulesDir: BUILTIN_RULES_DIR,
+        rulesDirExists: existsSync(BUILTIN_RULES_DIR),
+        fileCount: activeFiles.length,
+        sampleInputFiles: activeFiles.slice(0, 5).map((f) => ({
+          path: f.path,
+          contentLen: f.content?.length ?? 0,
+          contentSample: (f.content ?? '').slice(0, 200),
+        })),
+        tmpDir,
+        sampleArgs: args.slice(0, 6),
+        exitCode: result.exitCode,
+        stdoutLen: result.stdout.length,
+        stderrLen: result.stderr.length,
+        stderrSample: result.stderr.slice(0, 1500),
+        stdoutSample: result.stdout.slice(0, 800),
+        rawResultCount: semgrepOutput.results.length,
+        semgrepErrors: semgrepOutput.errors?.slice(0, 10) ?? [],
+        semgrepErrorCount: semgrepOutput.errors?.length ?? 0,
+        envelope: envelope
+          ? {
+              pathsScannedCount: envelope.paths?.scanned?.length ?? null,
+              pathsScannedSample: envelope.paths?.scanned?.slice?.(0, 5) ?? null,
+              skippedRulesCount: Array.isArray(envelope.skipped_rules)
+                ? envelope.skipped_rules.length
+                : null,
+            }
+          : null,
+        toRawFindingDroppedCount: semgrepOutput.results.length - findings.length,
+        finalFindingCount: findings.length,
+        timestamp: new Date().toISOString(),
+      };
 
       log.info(
         { fileCount: activeFiles.length, findings: findings.length, rawSemgrepResultCount: semgrepOutput.results.length },

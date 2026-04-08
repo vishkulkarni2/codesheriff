@@ -223,6 +223,13 @@ export interface PipelineResult {
   durationMs: number;
   detectorTimings: Record<DetectorName, number>;
   errors: PipelineError[];
+  /**
+   * Optional per-detector raw runtime diagnostics. Populated by detectors
+   * that want to surface debug info to the Redis diagnostic stash without
+   * going through full pino logs. Used for the StaticAnalyzer / semgrep
+   * silent-zero-results investigation; safe to extend per detector.
+   */
+  detectorDiagnostics?: Record<string, unknown>;
 }
 
 export interface PipelineError {

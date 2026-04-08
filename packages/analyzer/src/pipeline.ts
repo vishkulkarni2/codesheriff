@@ -137,6 +137,7 @@ export class AnalysisPipeline {
     // -------------------------------------------------------------------------
     // Stage 3: StaticAnalyzer — semgrep, always runs
     // -------------------------------------------------------------------------
+    const detectorDiagnostics: Record<string, unknown> = {};
     if (ctx.features.enableStaticAnalysis) {
       const t = Date.now();
       try {
@@ -155,6 +156,11 @@ export class AnalysisPipeline {
         log.error({ err }, 'StaticAnalyzer failed');
       }
       timings['StaticAnalyzer'] = Date.now() - t;
+      // Capture the per-run diagnostic regardless of success/failure so we
+      // can inspect what semgrep actually did via the debug endpoint.
+      if (this.staticAnalyzer.lastDiagnostic) {
+        detectorDiagnostics['StaticAnalyzer'] = this.staticAnalyzer.lastDiagnostic;
+      }
     }
 
     // -------------------------------------------------------------------------
@@ -453,7 +459,7 @@ export class AnalysisPipeline {
       'pipeline complete'
     );
 
-    return {
+    const out: PipelineResult = {
       scanId: ctx.scanId,
       findings,
       riskScore: scored.riskScore,
@@ -461,5 +467,9 @@ export class AnalysisPipeline {
       detectorTimings: timings as Record<DetectorName, number>,
       errors,
     };
+    if (Object.keys(detectorDiagnostics).length > 0) {
+      out.detectorDiagnostics = detectorDiagnostics;
+    }
+    return out;
   }
 }

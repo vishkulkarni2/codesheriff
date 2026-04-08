@@ -182,6 +182,11 @@ export async function processScanJob(
         filePath: f.filePath,
         lineStart: f.lineStart,
       })),
+      // Per-detector raw runtime diagnostics surfaced from inside the
+      // analyzer (e.g., StaticAnalyzer's semgrep stdout/stderr/envelope).
+      // This is what we curl via /api/v1/debug/scan-diagnostic to debug
+      // silent-zero-results scans without Render log access.
+      detectorDiagnostics: result.detectorDiagnostics ?? null,
       timestamp: new Date().toISOString(),
     };
     log.info(diagnostic, 'scan diagnostic summary');
