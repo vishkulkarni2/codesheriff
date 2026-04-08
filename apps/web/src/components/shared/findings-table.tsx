@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { SeverityBadge } from './severity-badge';
 import { suppressFinding, markFalsePositive } from '@/lib/api';
@@ -33,12 +33,27 @@ interface FindingsTableProps {
   scanId: string;
 }
 
+type FindingOverride = Partial<Pick<Finding, 'suppressed' | 'falsePositive'>>;
+
 export function FindingsTable({ findings: initialFindings }: FindingsTableProps) {
   const { getToken } = useAuth();
-  const [findings, setFindings] = useState(initialFindings);
+  // Local optimistic overrides keyed by finding id. The prop (`initialFindings`)
+  // is the ALWAYS-fresh source of truth from the server — keeping a separate
+  // useState(initialFindings) was the bug that broke both auto-refresh and the
+  // severity filter, because useState only seeds on first mount and ignored
+  // subsequent prop changes from the parent server component re-rendering.
+  const [overrides, setOverrides] = useState<Record<string, FindingOverride>>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+
+  // Merge server findings with any optimistic overrides applied locally
+  // (suppress, markFalsePositive). New props from a parent re-render flow
+  // through immediately; local mutations stay sticky until the next refetch.
+  const findings = useMemo(
+    () => initialFindings.map((f) => ({ ...f, ...overrides[f.id] })),
+    [initialFindings, overrides]
+  );
 
   async function suppress(findingId: string) {
     const token = await getToken();
@@ -50,9 +65,7 @@ export function FindingsTable({ findings: initialFindings }: FindingsTableProps)
         setError('Failed to suppress finding. Please try again.');
         return;
       }
-      setFindings((prev) =>
-        prev.map((f) => (f.id === findingId ? { ...f, suppressed: true } : f))
-      );
+      setOverrides((prev) => ({ ...prev, [findingId]: { ...prev[findingId], suppressed: true } }));
     });
   }
 
@@ -66,9 +79,10 @@ export function FindingsTable({ findings: initialFindings }: FindingsTableProps)
         setError('Failed to mark false positive. Please try again.');
         return;
       }
-      setFindings((prev) =>
-        prev.map((f) => (f.id === findingId ? { ...f, falsePositive: true } : f))
-      );
+      setOverrides((prev) => ({
+        ...prev,
+        [findingId]: { ...prev[findingId], falsePositive: true },
+      }));
     });
   }
 
