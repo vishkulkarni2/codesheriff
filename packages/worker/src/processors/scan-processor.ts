@@ -187,6 +187,11 @@ export async function processScanJob(
       // This is what we curl via /api/v1/debug/scan-diagnostic to debug
       // silent-zero-results scans without Render log access.
       detectorDiagnostics: result.detectorDiagnostics ?? null,
+      // Build marker. If this string does not appear in the deployed
+      // diagnostic, the worker is serving a stale build despite Render
+      // reporting deploy success. Bump this on any commit where you need
+      // to confirm the rollout actually landed on the worker process.
+      buildMarker: 'static-diag-onfinally-2026-04-08-A',
       timestamp: new Date().toISOString(),
     };
     log.info(diagnostic, 'scan diagnostic summary');
