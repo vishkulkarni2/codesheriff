@@ -80,9 +80,36 @@ export class StaticAnalyzer {
     const log = getScanLogger(scanId, 'StaticAnalyzer');
 
     const activeFiles = files.filter((f) => f.status !== 'deleted');
-    if (activeFiles.length === 0) return [];
+    if (activeFiles.length === 0) {
+      this.lastDiagnostic = {
+        outcome: 'no-active-files',
+        timestamp: new Date().toISOString(),
+      };
+      return [];
+    }
+
+    // Per-run diagnostic accumulator. Populated incrementally so we capture
+    // SOMETHING on every code path — including early-return failure modes —
+    // and the diagnostic gets surfaced to /api/v1/debug/scan-diagnostic
+    // regardless of whether semgrep succeeded, exited non-zero, threw, or
+    // produced unparseable output. The previous version only set this on
+    // the success path, which is exactly the path that does NOT need
+    // debugging.
+    const diag: Record<string, unknown> = {
+      outcome: 'unknown',
+      rulesDir: BUILTIN_RULES_DIR,
+      rulesDirExists: existsSync(BUILTIN_RULES_DIR),
+      fileCount: activeFiles.length,
+      sampleInputFiles: activeFiles.slice(0, 5).map((f) => ({
+        path: f.path,
+        contentLen: f.content?.length ?? 0,
+        contentSample: (f.content ?? '').slice(0, 200),
+      })),
+      timestamp: new Date().toISOString(),
+    };
 
     const tmpDir = await mkdtemp(join(tmpdir(), 'codesheriff-semgrep-'));
+    diag['tmpDir'] = tmpDir;
 
     try {
       await this.writeFilesToTmp(tmpDir, activeFiles);
@@ -95,7 +122,6 @@ export class StaticAnalyzer {
         `--config=${BUILTIN_RULES_DIR}`,
       ];
 
-      // If org has custom rules, write them to a temp file and add to config
       if (customRuleYaml) {
         const customRulesPath = join(tmpDir, '__custom_rules__.yaml');
         await writeFile(customRulesPath, customRuleYaml, 'utf8');
@@ -103,11 +129,12 @@ export class StaticAnalyzer {
       }
 
       args.push(tmpDir);
+      diag['sampleArgs'] = args.slice(0, 6);
 
       log.info(
         {
           rulesDir: BUILTIN_RULES_DIR,
-          rulesDirExists: existsSync(BUILTIN_RULES_DIR),
+          rulesDirExists: diag['rulesDirExists'],
           fileCount: activeFiles.length,
           tmpDir,
           sampleArgs: args.slice(0, 6),
@@ -119,13 +146,17 @@ export class StaticAnalyzer {
         cwd: tmpDir,
       });
 
+      diag['timedOut'] = result.timedOut;
+      diag['exitCode'] = result.exitCode;
+      diag['stdoutLen'] = result.stdout.length;
+      diag['stderrLen'] = result.stderr.length;
+      diag['stderrSample'] = result.stderr.slice(0, 1500);
+      diag['stdoutSample'] = result.stdout.slice(0, 800);
+
       if (result.timedOut) {
         log.warn('semgrep timed out — partial results may be missing');
       }
 
-      // ALWAYS log exit code, stdout/stderr length, and a stderr sample.
-      // Without this, a silent zero-finding scan looks identical to a successful
-      // zero-finding scan and we cannot tell which one is happening in prod.
       log.info(
         {
           exitCode: result.exitCode,
@@ -137,21 +168,24 @@ export class StaticAnalyzer {
         'semgrep finished'
       );
 
-      // semgrep exits 1 when findings are present, 0 when clean
+      // semgrep exits 0 = no findings, 1 = findings present, >1 = error
       if (result.exitCode > 1) {
+        diag['outcome'] = 'semgrep-exit-nonzero';
         log.error({ exitCode: result.exitCode, stderr: result.stderr }, 'semgrep error');
         return [];
       }
 
       const semgrepOutput = safeParseSemgrep(result.stdout);
       if (!semgrepOutput) {
+        diag['outcome'] = 'json-parse-failed';
         log.error({ stdoutSample: result.stdout.slice(0, 1000) }, 'Failed to parse semgrep JSON output');
         return [];
       }
 
-      // If semgrep silently failed to load any rules, the JSON output has
-      // results=[] and errors=[<RuleParseError>...]. Surface this loudly so
-      // we never again spend hours debugging a silent rules-not-loading bug.
+      diag['rawResultCount'] = semgrepOutput.results.length;
+      diag['semgrepErrors'] = semgrepOutput.errors?.slice(0, 10) ?? [];
+      diag['semgrepErrorCount'] = semgrepOutput.errors?.length ?? 0;
+
       if (semgrepOutput.errors && semgrepOutput.errors.length > 0) {
         log.error(
           {
@@ -162,9 +196,17 @@ export class StaticAnalyzer {
         );
       }
 
-      // Capture diagnostic counters from the semgrep JSON envelope so we can
-      // see at a glance whether files were even scanned or rules were skipped.
       const envelope = result.stdout ? safeParseEnvelope(result.stdout) : null;
+      diag['envelope'] = envelope
+        ? {
+            pathsScannedCount: envelope.paths?.scanned?.length ?? null,
+            pathsScannedSample: envelope.paths?.scanned?.slice?.(0, 5) ?? null,
+            skippedRulesCount: Array.isArray(envelope.skipped_rules)
+              ? envelope.skipped_rules.length
+              : null,
+          }
+        : null;
+
       log.info(
         {
           rawResultCount: semgrepOutput.results.length,
@@ -180,40 +222,9 @@ export class StaticAnalyzer {
         this.toRawFinding(match, tmpDir, activeFiles)
       ).filter((f): f is RawFinding => f !== null);
 
-      // Capture the full diagnostic for the Redis stash so we can debug
-      // silent-zero-results scans without Render log access.
-      this.lastDiagnostic = {
-        rulesDir: BUILTIN_RULES_DIR,
-        rulesDirExists: existsSync(BUILTIN_RULES_DIR),
-        fileCount: activeFiles.length,
-        sampleInputFiles: activeFiles.slice(0, 5).map((f) => ({
-          path: f.path,
-          contentLen: f.content?.length ?? 0,
-          contentSample: (f.content ?? '').slice(0, 200),
-        })),
-        tmpDir,
-        sampleArgs: args.slice(0, 6),
-        exitCode: result.exitCode,
-        stdoutLen: result.stdout.length,
-        stderrLen: result.stderr.length,
-        stderrSample: result.stderr.slice(0, 1500),
-        stdoutSample: result.stdout.slice(0, 800),
-        rawResultCount: semgrepOutput.results.length,
-        semgrepErrors: semgrepOutput.errors?.slice(0, 10) ?? [],
-        semgrepErrorCount: semgrepOutput.errors?.length ?? 0,
-        envelope: envelope
-          ? {
-              pathsScannedCount: envelope.paths?.scanned?.length ?? null,
-              pathsScannedSample: envelope.paths?.scanned?.slice?.(0, 5) ?? null,
-              skippedRulesCount: Array.isArray(envelope.skipped_rules)
-                ? envelope.skipped_rules.length
-                : null,
-            }
-          : null,
-        toRawFindingDroppedCount: semgrepOutput.results.length - findings.length,
-        finalFindingCount: findings.length,
-        timestamp: new Date().toISOString(),
-      };
+      diag['outcome'] = 'success';
+      diag['toRawFindingDroppedCount'] = semgrepOutput.results.length - findings.length;
+      diag['finalFindingCount'] = findings.length;
 
       log.info(
         { fileCount: activeFiles.length, findings: findings.length, rawSemgrepResultCount: semgrepOutput.results.length },
@@ -222,14 +233,18 @@ export class StaticAnalyzer {
       return findings;
     } catch (err) {
       if ((err as { code?: string }).code === 'ENOENT') {
+        diag['outcome'] = 'semgrep-not-installed';
         log.warn(
           'semgrep not installed — skipping static analysis. Install with: brew install semgrep'
         );
         return [];
       }
+      diag['outcome'] = 'unexpected-exception';
+      diag['exceptionMessage'] = String(err).slice(0, 800);
       log.error({ err }, 'StaticAnalyzer unexpected error');
       return [];
     } finally {
+      this.lastDiagnostic = diag;
       await rm(tmpDir, { recursive: true, force: true });
     }
   }
