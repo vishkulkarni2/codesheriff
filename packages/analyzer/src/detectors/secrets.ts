@@ -40,6 +40,11 @@ export class SecretsScanner {
     try {
       await this.writeFilesToTmp(tmpDir, activeFiles);
 
+      // NOTE: --only-verified was removed because it requires live network
+      // verification of every detector — most hardcoded secrets in test/dev code
+      // (and many in real codebases) cannot be verified, so we were silently
+      // dropping every unverified hit. We now report all detector matches and
+      // let downstream filtering / severity handle noise.
       const result = await runSubprocess(
         'trufflehog',
         [
@@ -47,7 +52,6 @@ export class SecretsScanner {
           tmpDir,
           '--json',
           '--no-update',
-          '--only-verified', // Only report verified (live) secrets to reduce noise
         ],
         {
           timeoutMs: PIPELINE_DEFAULTS.TRUFFLEHOG_TIMEOUT_MS,

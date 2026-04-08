@@ -11,12 +11,10 @@ RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists
     npm install -g pnpm@${PNPM_VERSION}
 WORKDIR /repo
 
-# --- tools ---
-FROM python:3.12-slim AS tools
-ARG SEMGREP_VERSION
+# --- trufflehog binary stage ---
+FROM debian:bookworm-slim AS trufflehog-stage
 ARG TRUFFLEHOG_VERSION
-RUN pip install --no-cache-dir semgrep==${SEMGREP_VERSION}
-RUN apt-get update -qq && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -qq && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/*
 RUN ARCH=$(dpkg --print-architecture) && \
     case "$ARCH" in amd64) TH_ARCH="amd64" ;; arm64) TH_ARCH="arm64" ;; *) exit 1 ;; esac && \
     curl -sSfL "https://github.com/trufflesecurity/trufflehog/releases/download/v${TRUFFLEHOG_VERSION}/trufflehog_${TRUFFLEHOG_VERSION}_linux_${TH_ARCH}.tar.gz" -o /tmp/trufflehog.tar.gz && \
@@ -31,6 +29,7 @@ COPY packages/analyzer/package.json  packages/analyzer/
 COPY packages/worker/package.json    packages/worker/
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile
 COPY packages/ packages/
+COPY rules/ rules/
 COPY turbo.json tsconfig.base.json ./
 
 # --- builder ---
@@ -45,6 +44,7 @@ RUN mkdir -p /deploy/worker && \
     cp -r packages/worker/dist /deploy/worker/dist && \
     cp -r packages/worker/package.json /deploy/worker/package.json && \
     cp -r packages/db/prisma /deploy/worker/prisma && \
+    cp -r rules /deploy/worker/rules && \
     cp -r node_modules /deploy/worker/node_modules && \
     mkdir -p /deploy/worker/node_modules/@codesheriff/db && \
     cp -r packages/db/dist /deploy/worker/node_modules/@codesheriff/db/dist && \
@@ -57,16 +57,25 @@ RUN mkdir -p /deploy/worker && \
     cp packages/analyzer/package.json /deploy/worker/node_modules/@codesheriff/analyzer/package.json
 
 # --- runner ---
+# Install semgrep from pip into a venv using system Python so it actually
+# runs at runtime. The previous setup copied semgrep from a python:3.12
+# stage into a Debian python3.11 runner, leaving it broken (wrong shebang
+# / missing modules) and silently disabling static analysis.
 FROM node:${NODE_VERSION}-slim AS runner
+ARG SEMGREP_VERSION
+ENV SEMGREP_SEND_METRICS=off
 RUN apt-get update -qq && \
-    apt-get install -y --no-install-recommends python3 python3-pip python3-venv openssl ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
-COPY --from=tools /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=tools /usr/local/bin/semgrep /usr/local/bin/semgrep
-COPY --from=tools /usr/local/bin/trufflehog /usr/local/bin/trufflehog
+    apt-get install -y --no-install-recommends python3 python3-pip python3-venv openssl ca-certificates git && \
+    rm -rf /var/lib/apt/lists/* && \
+    python3 -m venv /opt/semgrep-venv && \
+    /opt/semgrep-venv/bin/pip install --no-cache-dir "semgrep==${SEMGREP_VERSION}" && \
+    ln -sf /opt/semgrep-venv/bin/semgrep /usr/local/bin/semgrep
+COPY --from=trufflehog-stage /usr/local/bin/trufflehog /usr/local/bin/trufflehog
 WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 --ingroup nodejs sheriffworker
 COPY --from=builder --chown=sheriffworker:nodejs /deploy/worker ./
+# Sanity check at build time — fail the image build if either tool is broken.
+RUN semgrep --version && trufflehog --version
 USER sheriffworker
 ENV NODE_ENV=production
 CMD ["node", "dist/index.js"]

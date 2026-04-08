@@ -187,6 +187,87 @@ export class GitHubClient {
   }
 
   /**
+   * Fetch the FULL set of source files in a branch / commit, not just the
+   * diff against a parent. Used for manual (whole-branch) scans where there
+   * is no PR context. We use the git tree API with recursive=1 and then
+   * download each blob in parallel with a concurrency cap.
+   *
+   * Skips obvious non-source files (binaries, lock files, deps) so we don't
+   * waste analysis budget on noise.
+   */
+  async getBranchTreeFiles(
+    installationId: string,
+    owner: string,
+    repo: string,
+    commitSha: string,
+    maxFiles: number
+  ): Promise<AnalysisFile[]> {
+    const octokit = await this.getInstallationOctokit(installationId);
+
+    // 1. Look up the commit to get its tree SHA
+    const commitResp = await octokit.rest.repos.getCommit({ owner, repo, ref: commitSha });
+    const treeSha = commitResp.data.commit.tree.sha;
+
+    // 2. Pull the full recursive tree
+    const treeResp = await octokit.rest.git.getTree({
+      owner,
+      repo,
+      tree_sha: treeSha,
+      recursive: 'true',
+    });
+
+    if (treeResp.data.truncated) {
+      logger.warn({ owner, repo }, 'getBranchTreeFiles: tree truncated by GitHub API — large repo');
+    }
+
+    // 3. Filter to scannable source files only
+    const scannable = (treeResp.data.tree ?? [])
+      .filter((entry) => entry.type === 'blob' && typeof entry.path === 'string')
+      .filter((entry) => isScannableSourcePath(entry.path as string))
+      .slice(0, maxFiles);
+
+    logger.info(
+      { owner, repo, commitSha, totalTreeEntries: treeResp.data.tree?.length ?? 0, scannable: scannable.length },
+      'getBranchTreeFiles: filtered tree'
+    );
+
+    // 4. Fetch contents in parallel
+    const analysisFiles = await pMapWithConcurrency(
+      scannable,
+      async (entry) => {
+        const path = entry.path as string;
+        try {
+          const contentResp = await octokit.rest.repos.getContent({
+            owner,
+            repo,
+            path,
+            ref: commitSha,
+          });
+          const data = contentResp.data;
+          if (Array.isArray(data) || data.type !== 'file') return null;
+          // Skip very large files (>200KB) — likely generated / noise
+          if (data.size > 200_000) return null;
+          const content = Buffer.from(data.content, 'base64').toString('utf8');
+          return {
+            path,
+            content,
+            language: inferLanguage(path),
+            lineCount: content.split('\n').length,
+            status: 'modified' as const,
+            patch: null,
+          };
+        } catch (err) {
+          logger.warn({ err, path }, 'getBranchTreeFiles: failed to fetch blob');
+          return null;
+        }
+      },
+      5
+    );
+
+    return analysisFiles.filter((f) => f !== null) as AnalysisFile[];
+  }
+
+  /**
    * Create or update a GitHub Check Run for a PR/commit.
    */
   async createCheckRun(
@@ -307,4 +388,31 @@ async function pMapWithConcurrency<T, R>(
   }
 
   return results;
+}
+
+/**
+ * Whitelist of source file extensions worth scanning. Anything else
+ * (binaries, images, lock files, dist artifacts) is skipped.
+ */
+const SCANNABLE_EXTENSIONS = new Set<string>([
+  '.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs',
+  '.py', '.rb', '.go', '.java', '.kt', '.rs',
+  '.php', '.cs', '.cpp', '.cc', '.c', '.h', '.hpp',
+  '.scala', '.swift', '.m', '.mm',
+  '.sh', '.bash', '.zsh',
+  '.sql', '.graphql', '.gql',
+  '.yaml', '.yml', '.json', '.toml',
+  '.tf', '.hcl',
+  '.html', '.vue', '.svelte',
+]);
+
+const SKIP_PATH_RE = /(?:^|\/)(?:node_modules|dist|build|out|coverage|vendor|__pycache__|\.git|\.next|\.nuxt|target)\//;
+
+function isScannableSourcePath(path: string): boolean {
+  if (SKIP_PATH_RE.test(path)) return false;
+  if (path.endsWith('.min.js') || path.endsWith('.min.css')) return false;
+  if (path.endsWith('.lock') || path.endsWith('-lock.json') || path.endsWith('.lock.json')) return false;
+  const dot = path.lastIndexOf('.');
+  if (dot < 0) return false;
+  return SCANNABLE_EXTENSIONS.has(path.slice(dot));
 }

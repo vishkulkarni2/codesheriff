@@ -20,11 +20,29 @@ import { runSubprocess } from '../utils/subprocess.js';
 import { getScanLogger } from '../utils/logger.js';
 import { PIPELINE_DEFAULTS } from '@codesheriff/shared';
 
-// Path to CodeSheriff's built-in semgrep rules directory (relative to repo root)
-// In production this would be bundled with the package; for now resolve relative
-const BUILTIN_RULES_DIR = resolve(
-  new URL('../../../../rules', import.meta.url).pathname
-);
+// Path to CodeSheriff's built-in semgrep rules directory.
+// Resolution order:
+//   1. SEMGREP_RULES_DIR env var (deployments may pin a specific path)
+//   2. /app/rules — production runner image bundles rules here
+//   3. Relative walk from this source file (dev / monorepo build)
+// Falling back gracefully avoids the silent-no-rules failure mode where
+// semgrep runs against an empty config and returns zero findings.
+import { existsSync } from 'node:fs';
+function resolveRulesDir(): string {
+  const fromEnv = process.env['SEMGREP_RULES_DIR'];
+  if (fromEnv && existsSync(fromEnv)) return fromEnv;
+  if (existsSync('/app/rules')) return '/app/rules';
+  // Walk up from this file looking for a sibling rules/ directory
+  // (handles both src/ during dev and dist/ after build)
+  const here = new URL('.', import.meta.url).pathname;
+  for (let depth = 0; depth < 8; depth++) {
+    const candidate = resolve(here, '../'.repeat(depth), 'rules');
+    if (existsSync(candidate)) return candidate;
+  }
+  // Last resort — return the original relative guess so semgrep errors loudly
+  return resolve(new URL('../../../../rules', import.meta.url).pathname);
+}
+const BUILTIN_RULES_DIR = resolveRulesDir();
 
 const SEVERITY_MAP: Record<string, Severity> = {
   ERROR: Severity.CRITICAL,
@@ -78,6 +96,7 @@ export class StaticAnalyzer {
 
       args.push(tmpDir);
 
+      log.info({ rulesDir: BUILTIN_RULES_DIR, fileCount: activeFiles.length }, 'semgrep starting');
       const result = await runSubprocess('semgrep', args, {
         timeoutMs: PIPELINE_DEFAULTS.SEMGREP_TIMEOUT_MS,
         cwd: tmpDir,

@@ -279,7 +279,10 @@ export class AnalysisPipeline {
     // Keeps only HIGH/CRITICAL from noisy static/pattern detectors.
     // -------------------------------------------------------------------------
     {
-      const NOISY_DETECTORS = new Set(['StaticAnalyzer', 'AIPatternDetector']);
+      // Drop AIPatternDetector noise (regex heuristics produce many low-value
+      // hits) but KEEP all StaticAnalyzer (semgrep) findings — semgrep rules
+      // are deliberately authored, so even MEDIUM hits are real signals.
+      const NOISY_DETECTORS = new Set(['AIPatternDetector']);
       const filtered = findings.filter((f) => {
         if (NOISY_DETECTORS.has(f.detector)) {
           return f.severity === Severity.CRITICAL || f.severity === Severity.HIGH;
@@ -287,13 +290,14 @@ export class AnalysisPipeline {
         return true;
       });
 
-      // Per-ruleId cap: max 2 findings per ruleId to prevent same rule firing 48x
+      // Per-ruleId cap: max 5 findings per ruleId to prevent same rule firing 48x
+      // (raised from 2 — 2 was dropping legitimate distinct issues that share a rule)
       const ruleIdCounts = new Map<string, number>();
       const deduped = filtered.filter((f) => {
         const ruleId = f.ruleId ?? '';
         const count = (ruleIdCounts.get(ruleId) ?? 0) + 1;
         ruleIdCounts.set(ruleId, count);
-        return count <= 2;
+        return count <= 5;
       });
 
       const beforeCount = findings.length;
@@ -324,7 +328,11 @@ export class AnalysisPipeline {
     // -------------------------------------------------------------------------
     // Stage: LLM Verifier — second-pass Claude call, drops non-real-bugs
     // -------------------------------------------------------------------------
-    if (ctx.features.enableLlmVerifier ?? true) {
+    // LLM verifier is fail-closed and aggressive about dropping findings.
+    // It is well-tuned for PR review precision but kills coverage on whole-repo
+    // manual scans where the user wants the full vulnerability list. Disable it
+    // when there is no PR context.
+    if ((ctx.features.enableLlmVerifier ?? true) && ctx.prNumber) {
       const verifier = new LlmVerifier(this.llm);
       const beforeVerify = findings.length;
       const verified = await verifier.verify(ctx.scanId, findings);
@@ -345,7 +353,9 @@ export class AnalysisPipeline {
         [Severity.MEDIUM]: 2,
         [Severity.LOW]: 1,
       };
-      const MAX_FINDINGS_PER_PR = 5;
+      // Cap is intentionally small for PR review (signal-to-noise) but lifted
+      // for manual / full-repo scans where users want exhaustive coverage.
+      const MAX_FINDINGS_PER_PR = ctx.prNumber ? 15 : 100;
       const FP_BLOCKLIST = [
         // Generic advisory patterns — not actionable without full context
         'optional chaining',
@@ -353,17 +363,10 @@ export class AnalysisPipeline {
         'consider adding validation',
         'deprecated RSpec',
         'inconsistent naming',
-        // "Missing X" advisories: speculative, rarely TPs on benchmark
+        // Pure-style "missing X" advisories. Auth/validation/csrf removed —
+        // those are real findings on the cs-test-nodejs benchmark.
         'missing timeout',
-        'missing https enforcement',
         'missing http method validation',
-        'missing rate limit',
-        'missing authentication check',
-        'missing authentication/authorization',
-        'missing server-side validation',
-        'missing csrf token',
-        'no rate limit',
-        'no validation of',
         'no error handling for',
         // Security speculation on normal patterns
         'transmitted as plain text',

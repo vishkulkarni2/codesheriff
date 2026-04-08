@@ -323,7 +323,12 @@ async function fetchFiles(
         maxFiles
       );
     } else {
-      return deps.githubClient.getPushFiles(
+      // Manual / branch scan: walk the FULL repo tree at this commit, not the
+      // diff against a parent. Push events used to call getPushFiles which
+      // only returns files changed in the head commit, so manual scans on
+      // long-lived branches were silently scanning ~zero files.
+      log.info({ owner, repo, commitSha: payload.commitSha }, 'manual scan: fetching full branch tree');
+      return deps.githubClient.getBranchTreeFiles(
         payload.installationId,
         owner,
         repo,
