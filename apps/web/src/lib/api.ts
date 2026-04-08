@@ -31,7 +31,12 @@ async function apiFetch<T>(
   token: string,
   init: RequestInit = {}
 ): Promise<ApiResponse<T>> {
+  // cache: 'no-store' is critical: this client is used by both server
+  // components and client polling. Next.js 14 fetch() caches by default
+  // in server components, which makes router.refresh() return stale data
+  // and breaks the live scan progress / findings auto-update flow.
   const res = await fetch(`${API_BASE}${path}`, {
+    cache: 'no-store',
     ...init,
     headers: {
       'Content-Type': 'application/json',

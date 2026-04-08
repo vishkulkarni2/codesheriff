@@ -27,6 +27,12 @@ interface ScanPageProps {
 
 export const metadata = { title: 'Scan details' };
 
+// Force this page to be dynamically rendered on every request. Without this,
+// router.refresh() from the live progress banner can return a cached HTML
+// payload and the page never visibly updates without a hard reload.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function ScanDetailPage({ params, searchParams }: ScanPageProps) {
   const { getToken, userId } = auth();
   if (!userId) redirect('/sign-in');

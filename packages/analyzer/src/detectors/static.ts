@@ -12,7 +12,7 @@
  */
 
 import { mkdtemp, writeFile, rm, mkdir } from 'node:fs/promises';
-import { join, dirname, resolve } from 'node:path';
+import { join, dirname, resolve, relative as pathRelative } from 'node:path';
 import { tmpdir } from 'node:os';
 import type { AnalysisFile, RawFinding, SemgrepResult } from '@codesheriff/shared';
 import { Severity, FindingCategory } from '@codesheriff/shared';
@@ -161,14 +161,32 @@ export class StaticAnalyzer {
     tmpDir: string,
     files: AnalysisFile[]
   ): RawFinding | null {
-    // Strip the temp dir prefix from path to get the original relative path
-    const relativePath = match.path.startsWith(tmpDir)
-      ? match.path.slice(tmpDir.length).replace(/^\//, '')
-      : match.path;
+    // Resolve the semgrep-reported path back to the original repo-relative path.
+    // Use node's path.relative so we handle every shape semgrep can produce
+    // (absolute /tmp/.../server.js, ./server.js, server.js, with or without
+    // trailing slashes). The previous startsWith() check silently dropped
+    // every finding when the prefix didn't match exactly — which was the
+    // observed prod failure mode where local returned 9 findings and the
+    // worker returned 0.
+    let relativePath = pathRelative(tmpDir, match.path);
+    if (relativePath.startsWith('..') || relativePath === '') {
+      // semgrep gave us a path that isn't under tmpDir at all — fall back
+      // to whatever it reported, stripped of any leading "./".
+      relativePath = match.path.replace(/^\.\//, '');
+    }
 
-    // Validate the resolved path is within the expected set of files
+    // Best-effort match against the input file set. If the lookup fails we
+    // STILL surface the finding rather than dropping it on the floor — a
+    // slightly-off filePath is far better than a silently-missing critical
+    // vulnerability.
     const sourceFile = files.find((f) => f.path === relativePath);
-    if (!sourceFile) return null;
+    if (!sourceFile) {
+      // Try a basename fallback before giving up — useful when semgrep
+      // normalizes nested paths differently than we expect.
+      const base = relativePath.split('/').pop();
+      const byBase = base ? files.find((f) => f.path.endsWith('/' + base) || f.path === base) : undefined;
+      if (byBase) relativePath = byBase.path;
+    }
 
     const severity =
       SEVERITY_MAP[match.extra.severity.toUpperCase()] ?? Severity.MEDIUM;

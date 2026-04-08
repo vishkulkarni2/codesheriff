@@ -491,31 +491,19 @@ function parseDependencies(
   return {};
 }
 
-function buildFeatureFlags(plan: string): AnalysisFeatureFlags {
-  // LLM-powered detectors are gated by plan tier — FREE tier normally uses
-  // static analysis only to control Anthropic API costs. The env flags can
-  // FORCE-enable detectors even on FREE plans (used in staging/dogfood).
-  const isFree = plan === 'FREE';
-  const forceLlm = process.env['FORCE_LLM_DETECTORS'] === 'true';
-  const llmEligible = !isFree || forceLlm;
-
+function buildFeatureFlags(_plan: string): AnalysisFeatureFlags {
+  // CodeSheriff is a managed product — we eat the Anthropic cost on the user's
+  // behalf as part of the subscription. Every scan gets the full detector
+  // pipeline regardless of plan tier. Individual detectors can still be
+  // disabled per-deployment via env flags for emergency cost control.
   return {
-    // LLM detectors: disabled on FREE tier unless overridden by env flag
-    enableHallucinationDetection:
-      llmEligible && process.env['ENABLE_HALLUCINATION_DETECTION'] !== 'false',
-    enableAuthValidation:
-      llmEligible && process.env['ENABLE_AUTH_VALIDATION'] !== 'false',
-    enableLogicBugDetection:
-      llmEligible && process.env['ENABLE_LOGIC_BUG_DETECTION'] !== 'false',
-    // Auto-fix: LLM cost — disabled on FREE tier, can be overridden via env flag
-    enableAutoFix: llmEligible && process.env['ENABLE_AUTO_FIX'] !== 'false',
-    // Semgrep + TruffleHog run on all plans
+    enableHallucinationDetection: process.env['ENABLE_HALLUCINATION_DETECTION'] !== 'false',
+    enableAuthValidation: process.env['ENABLE_AUTH_VALIDATION'] !== 'false',
+    enableLogicBugDetection: process.env['ENABLE_LOGIC_BUG_DETECTION'] !== 'false',
+    enableAutoFix: process.env['ENABLE_AUTO_FIX'] !== 'false',
     enableSecretsScanning: true,
     enableStaticAnalysis: true,
-    // FREE plan gets a smaller file cap to limit resource usage
-    maxFilesPerScan: isFree
-      ? Math.min(parseInt(process.env['MAX_FILES_PER_SCAN'] ?? '50', 10), 20)
-      : parseInt(process.env['MAX_FILES_PER_SCAN'] ?? '50', 10),
+    maxFilesPerScan: parseInt(process.env['MAX_FILES_PER_SCAN'] ?? '50', 10),
     maxLinesPerFile: parseInt(process.env['MAX_LINES_PER_FILE'] ?? '1000', 10),
   };
 }
