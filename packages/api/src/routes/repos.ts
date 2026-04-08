@@ -10,6 +10,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { prisma } from '@codesheriff/db';
 import { verifyRepoOwnership } from '../middleware/ownership.js';
+import { App } from '@octokit/app';
 
 const riskHistoryQuerySchema = z.object({
   days: z.coerce.number().int().min(7).max(90).default(90),
@@ -125,6 +126,124 @@ export async function repoRoutes(app: FastifyInstance): Promise<void> {
       }));
 
       return reply.send({ success: true, data, error: null });
+    }
+  );
+
+  // ---------------------------------------------------------------------------
+  // GET /api/v1/repos/:id/branches — list branches via the GitHub App
+  // ---------------------------------------------------------------------------
+  app.get(
+    '/repos/:id/branches',
+    { preHandler: [app.authenticate] },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+
+      // IDOR prevention: verify the org owns this repo before exposing branch names
+      const repo = await prisma.repository.findFirst({
+        where: { id, organizationId: req.dbUser!.organizationId },
+        select: {
+          fullName: true,
+          defaultBranch: true,
+          provider: true,
+          organization: { select: { githubInstallationId: true } },
+        },
+      });
+
+      if (!repo) {
+        return reply
+          .status(404)
+          .send({ success: false, data: null, error: 'Repository not found' });
+      }
+
+      const installationId = repo.organization.githubInstallationId;
+      if (!installationId) {
+        // Graceful degradation: return just the default branch so the UI
+        // still has something to pre-fill, with a flag indicating it could
+        // not enumerate the full list.
+        return reply.send({
+          success: true,
+          data: {
+            defaultBranch: repo.defaultBranch,
+            branches: [repo.defaultBranch],
+            partial: true,
+          },
+          error: null,
+        });
+      }
+
+      const appId = process.env['GITHUB_APP_ID'];
+      const privateKey = process.env['GITHUB_APP_PRIVATE_KEY'];
+      const webhookSecret = process.env['GITHUB_WEBHOOK_SECRET'];
+      if (!appId || !privateKey || !webhookSecret) {
+        return reply.status(500).send({
+          success: false,
+          data: null,
+          error: 'GitHub App credentials not configured on the server',
+        });
+      }
+
+      const [owner, name] = repo.fullName.split('/');
+      if (!owner || !name) {
+        return reply.status(500).send({
+          success: false,
+          data: null,
+          error: `Malformed repository fullName: ${repo.fullName}`,
+        });
+      }
+
+      try {
+        const ghApp = new App({
+          appId,
+          privateKey,
+          webhooks: { secret: webhookSecret },
+        });
+        const octokit = await ghApp.getInstallationOctokit(
+          parseInt(installationId, 10)
+        );
+        // Walk pages — most repos have <100 branches; cap at 300 to be safe
+        const branches: string[] = [];
+        for (let page = 1; page <= 3; page++) {
+          const { data } = await (octokit as unknown as {
+            request: (route: string, params: Record<string, unknown>) => Promise<{
+              data: Array<{ name: string }>;
+            }>;
+          }).request('GET /repos/{owner}/{repo}/branches', {
+            owner,
+            repo: name,
+            per_page: 100,
+            page,
+          });
+          for (const b of data) {
+            if (typeof b.name === 'string') branches.push(b.name);
+          }
+          if (data.length < 100) break;
+        }
+
+        return reply.send({
+          success: true,
+          data: {
+            defaultBranch: repo.defaultBranch,
+            branches,
+            partial: false,
+          },
+          error: null,
+        });
+      } catch (err) {
+        req.log.warn(
+          { err, repoId: id },
+          'failed to fetch branches via GitHub App'
+        );
+        // Fail soft so the UI still works — caller can fall back to text input
+        return reply.send({
+          success: true,
+          data: {
+            defaultBranch: repo.defaultBranch,
+            branches: [repo.defaultBranch],
+            partial: true,
+          },
+          error: null,
+        });
+      }
     }
   );
 }

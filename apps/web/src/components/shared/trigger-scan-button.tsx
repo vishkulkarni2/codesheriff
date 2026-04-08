@@ -14,7 +14,7 @@
 import { useState, useTransition, useRef, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
-import { triggerScan } from '@/lib/api';
+import { triggerScan, listRepoBranches } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import {
   Play,
@@ -52,6 +52,11 @@ export function TriggerScanButton({
   const [prNumber, setPrNumber] = useState('');
   const [prTitle, setPrTitle] = useState('');
 
+  // Branch list (fetched from GitHub via the API on dialog open)
+  const [branches, setBranches] = useState<string[] | null>(null);
+  const [branchesLoading, setBranchesLoading] = useState(false);
+  const [branchInputMode, setBranchInputMode] = useState<'select' | 'custom'>('select');
+
   // Validation — branch is the only required field
   const branchValid = branch.trim().length > 0;
   const canSubmit = branchValid;
@@ -80,7 +85,33 @@ export function TriggerScanButton({
     setPrTitle('');
     setErrorMsg(null);
     setNewScanId(null);
+    setBranches(null);
+    setBranchInputMode('select');
     setDialogState('open');
+
+    // Fetch the branch list in the background — non-blocking, falls back
+    // gracefully to a free-text input if the request fails or the API
+    // returns a partial result.
+    (async () => {
+      setBranchesLoading(true);
+      try {
+        const token = await getToken();
+        if (!token) return;
+        const res = await listRepoBranches(token, repositoryId);
+        if (res.success && res.data) {
+          setBranches(res.data.branches);
+          // If the API only returned the default branch (degraded), let the
+          // user type a custom branch instead of forcing the dropdown.
+          if (res.data.partial) setBranchInputMode('custom');
+        } else {
+          setBranchInputMode('custom');
+        }
+      } catch {
+        setBranchInputMode('custom');
+      } finally {
+        setBranchesLoading(false);
+      }
+    })();
   }
 
   function handleClose() {
@@ -211,26 +242,71 @@ export function TriggerScanButton({
                   <div>
                     <label
                       htmlFor="ts-branch"
-                      className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground"
+                      className="mb-1.5 flex items-center justify-between gap-1.5 text-xs font-medium text-muted-foreground"
                     >
-                      <GitBranch className="h-3.5 w-3.5" />
-                      Branch <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="ts-branch"
-                      ref={branchRef}
-                      value={branch}
-                      onChange={(e) => setBranch(e.target.value)}
-                      placeholder="main"
-                      disabled={dialogState === 'submitting'}
-                      className={cn(
-                        'w-full rounded-md border bg-background px-3 py-2 text-sm',
-                        'focus:outline-none focus:ring-1 focus:ring-ring',
-                        'disabled:cursor-not-allowed disabled:opacity-50'
+                      <span className="flex items-center gap-1.5">
+                        <GitBranch className="h-3.5 w-3.5" />
+                        Branch <span className="text-red-500">*</span>
+                      </span>
+                      {branches && branches.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setBranchInputMode((m) => (m === 'select' ? 'custom' : 'select'))
+                          }
+                          className="text-xs font-normal text-primary hover:underline"
+                          disabled={dialogState === 'submitting'}
+                        >
+                          {branchInputMode === 'select' ? 'Type a branch name' : 'Pick from list'}
+                        </button>
                       )}
-                    />
+                    </label>
+
+                    {branchInputMode === 'select' && branches && branches.length > 0 ? (
+                      <select
+                        id="ts-branch"
+                        value={branch}
+                        onChange={(e) => setBranch(e.target.value)}
+                        disabled={dialogState === 'submitting'}
+                        className={cn(
+                          'w-full rounded-md border bg-background px-3 py-2 text-sm',
+                          'focus:outline-none focus:ring-1 focus:ring-ring',
+                          'disabled:cursor-not-allowed disabled:opacity-50'
+                        )}
+                      >
+                        {/* Make sure the active branch is in the list even if
+                            it was somehow not returned by the API */}
+                        {(branches.includes(branch) ? branches : [branch, ...branches]).map(
+                          (b) => (
+                            <option key={b} value={b}>
+                              {b}
+                              {b === defaultBranch ? ' (default)' : ''}
+                            </option>
+                          )
+                        )}
+                      </select>
+                    ) : (
+                      <input
+                        id="ts-branch"
+                        ref={branchRef}
+                        value={branch}
+                        onChange={(e) => setBranch(e.target.value)}
+                        placeholder={defaultBranch || 'main'}
+                        disabled={dialogState === 'submitting'}
+                        className={cn(
+                          'w-full rounded-md border bg-background px-3 py-2 text-sm',
+                          'focus:outline-none focus:ring-1 focus:ring-ring',
+                          'disabled:cursor-not-allowed disabled:opacity-50'
+                        )}
+                      />
+                    )}
+
                     <p className="mt-1.5 text-xs text-muted-foreground">
-                      The latest commit on this branch will be scanned.
+                      {branchesLoading
+                        ? 'Loading branches…'
+                        : branches && branches.length > 0
+                          ? `${branches.length} branch${branches.length === 1 ? '' : 'es'} available. The latest commit on this branch will be scanned.`
+                          : 'The latest commit on this branch will be scanned.'}
                     </p>
                   </div>
 

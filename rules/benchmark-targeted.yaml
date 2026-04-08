@@ -11,20 +11,21 @@ rules:
   # ── INCORRECT_VALUE patterns ────────────────────────────────────────────────
 
   - id: java-optional-get-without-check
-    pattern: |
-      $OPT.get()
-    pattern-not-inside: |
-      if ($OPT.isPresent()) {
-          ...
-      }
-    pattern-not-inside: |
-      $OPT.ifPresent(...)
-    pattern-not-inside: |
-      $OPT.orElse(...)
-    pattern-not-inside: |
-      $OPT.orElseGet(...)
-    pattern-not-inside: |
-      $OPT.orElseThrow(...)
+    patterns:
+      - pattern: |
+          $OPT.get()
+      - pattern-not-inside: |
+          if ($OPT.isPresent()) {
+              ...
+          }
+      - pattern-not-inside: |
+          $OPT.ifPresent(...)
+      - pattern-not-inside: |
+          $OPT.orElse(...)
+      - pattern-not-inside: |
+          $OPT.orElseGet(...)
+      - pattern-not-inside: |
+          $OPT.orElseThrow(...)
     message: >
       Calling Optional.get() without first checking isPresent() will throw
       NoSuchElementException if the Optional is empty. Use isPresent(), orElse(),
@@ -43,18 +44,19 @@ rules:
 
   - id: java-instanceof-before-cast
     patterns:
-      - pattern: |
-          ($TYPE) $VAR
-      - pattern: |
-          ($TYPE) $OBJ.$METHOD(...)
-    pattern-not-inside: |
-      if ($VAR instanceof $TYPE) {
-          ...
-      }
-    pattern-not-inside: |
-      if ($OBJ instanceof $TYPE) {
-          ...
-      }
+      - pattern-either:
+          - pattern: |
+              ($TYPE) $VAR
+          - pattern: |
+              ($TYPE) $OBJ.$METHOD(...)
+      - pattern-not-inside: |
+          if ($VAR instanceof $TYPE) {
+              ...
+          }
+      - pattern-not-inside: |
+          if ($OBJ instanceof $TYPE) {
+              ...
+          }
     message: >
       Unsafe cast without prior instanceof check. If the object is not of the
       expected type, this will throw a ClassCastException at runtime. Add an
@@ -75,13 +77,14 @@ rules:
 
   - id: python-dict-nested-access-no-guard
     patterns:
-      - pattern: $DICT[$KEY1][$KEY2]
-      - pattern: $DICT[$KEY1][$KEY2][$KEY3]
-    pattern-not-inside: |
-      if $KEY1 in $DICT:
-          ...
-    pattern-not-inside: |
-      $DICT.get($KEY1, ...)
+      - pattern-either:
+          - pattern: $DICT[$KEY1][$KEY2]
+          - pattern: $DICT[$KEY1][$KEY2][$KEY3]
+      - pattern-not-inside: |
+          if $KEY1 in $DICT:
+              ...
+      - pattern-not-inside: |
+          $DICT.get($KEY1, ...)
     message: >
       Nested dictionary access without existence check can raise KeyError if the
       outer key is absent. Use dict.get() with a default, the 'in' operator, or
@@ -102,14 +105,15 @@ rules:
 
   - id: ruby-hash-nested-access-no-dig
     patterns:
-      - pattern: $HASH[$KEY1][$KEY2]
-      - pattern: $HASH[$KEY1][$KEY2][$KEY3]
-    pattern-not-inside: |
-      if $HASH[$KEY1]
-          ...
-      end
-    pattern-not-inside: |
-      $HASH.dig(...)
+      - pattern-either:
+          - pattern: $HASH[$KEY1][$KEY2]
+          - pattern: $HASH[$KEY1][$KEY2][$KEY3]
+      - pattern-not-inside: |
+          if $HASH[$KEY1]
+              ...
+          end
+      - pattern-not-inside: |
+          $HASH.dig(...)
     message: >
       Nested hash access without nil check can raise NoMethodError if an
       intermediate key is nil. Use Hash#dig for safe nested access:
@@ -127,19 +131,20 @@ rules:
 
   - id: go-nil-dereference-after-return
     patterns:
-      - pattern: |
+      - pattern-either:
+          - pattern: |
+              $VAL, $ERR := $FUNC(...)
+              $VAL.$FIELD
+          - pattern: |
+              $VAL, $ERR := $FUNC(...)
+              $VAL.$METHOD(...)
+      - pattern-not-inside: |
           $VAL, $ERR := $FUNC(...)
-          $VAL.$FIELD
-      - pattern: |
-          $VAL, $ERR := $FUNC(...)
-          $VAL.$METHOD(...)
-    pattern-not-inside: |
-      $VAL, $ERR := $FUNC(...)
-      if $ERR != nil {
+          if $ERR != nil {
+              ...
+          }
           ...
-      }
-      ...
-      $VAL.$FIELD
+          $VAL.$FIELD
     message: >
       Value from a function that returns (T, error) is used without checking
       the error first. If the function returns an error, the value may be nil,
@@ -192,24 +197,25 @@ rules:
 
   - id: java-broad-exception-catch
     patterns:
-      - pattern: |
-          try {
-              ...
-          } catch (RuntimeException $E) {
-              ...
-          }
-      - pattern: |
+      - pattern-either:
+          - pattern: |
+              try {
+                  ...
+              } catch (RuntimeException $E) {
+                  ...
+              }
+          - pattern: |
+              try {
+                  ...
+              } catch (Exception $E) {
+                  ...
+              }
+      - pattern-not-inside: |
           try {
               ...
           } catch (Exception $E) {
-              ...
+              throw $E;
           }
-    pattern-not-inside: |
-      try {
-          ...
-      } catch (Exception $E) {
-          throw $E;
-      }
     message: >
       Catching RuntimeException or Exception is overly broad and can hide
       unexpected errors. Catch the specific exception type(s) that can be thrown
@@ -307,7 +313,6 @@ rules:
   - id: python-test-time-sleep
     patterns:
       - pattern: time.sleep($N)
-      - pattern: import time\n...\ntime.sleep($N)
     message: >
       Fixed sleep in tests is flaky — the sleep duration may be too short under
       load, or too long when the condition resolves quickly. Replace with an

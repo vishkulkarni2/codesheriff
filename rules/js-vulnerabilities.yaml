@@ -1,0 +1,212 @@
+rules:
+  # ---------------------------------------------------------------------------
+  # JavaScript / TypeScript common web vulnerabilities
+  #
+  # These rules target the categories that the LLM detectors cannot reliably
+  # find on their own (path traversal, open redirect, prototype pollution,
+  # hardcoded credentials below the regex-detector threshold, IDOR, etc).
+  # They are deliberately scoped narrowly to express-style web handlers
+  # so they do not produce false positives on unrelated code.
+  # ---------------------------------------------------------------------------
+
+  - id: js-hardcoded-credential
+    patterns:
+      - pattern-either:
+          - pattern: |
+              const $NAME = "...";
+          - pattern: |
+              let $NAME = "...";
+          - pattern: |
+              var $NAME = "...";
+      - metavariable-regex:
+          metavariable: $NAME
+          regex: '(?i).*(secret|password|passwd|api[_-]?key|token|private[_-]?key|access[_-]?key).*'
+      - pattern-not: |
+          const $NAME = process.env.$ANY;
+      - pattern-not: |
+          const $NAME = process.env["..."];
+      - pattern-not: |
+          const $NAME = "";
+    message: >
+      Hardcoded credential detected. Secrets, passwords, API keys, and tokens
+      must be loaded from environment variables or a secrets manager — never
+      embedded in source code.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: secret
+      cwe: CWE-798
+
+  - id: js-path-traversal-fs-read
+    patterns:
+      - pattern-either:
+          - pattern: fs.readFile($PATH, ...)
+          - pattern: fs.readFileSync($PATH, ...)
+          - pattern: fs.createReadStream($PATH, ...)
+          - pattern: fs.promises.readFile($PATH, ...)
+      - pattern-either:
+          - pattern: fs.readFileSync("..." + $X, ...)
+          - pattern: fs.readFileSync(`...${$X}...`, ...)
+          - pattern: fs.readFileSync($X + "...", ...)
+          - pattern: fs.readFile("..." + $X, ...)
+          - pattern: fs.readFile(`...${$X}...`, ...)
+          - pattern: fs.createReadStream("..." + $X, ...)
+          - pattern: fs.createReadStream(`...${$X}...`, ...)
+    message: >
+      Possible path traversal — the file path is constructed from a string
+      concatenation or template literal that may include unvalidated user
+      input. Use path.resolve() with a strict allowlist or path.basename()
+      and verify the final path is inside the intended directory.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      cwe: CWE-22
+
+  - id: js-open-redirect
+    patterns:
+      - pattern-either:
+          - pattern: res.redirect(req.query.$X)
+          - pattern: res.redirect(req.body.$X)
+          - pattern: res.redirect(req.params.$X)
+          - pattern: res.redirect($CODE, req.query.$X)
+          - pattern: res.redirect($CODE, req.body.$X)
+          - pattern: res.redirect($CODE, req.params.$X)
+    message: >
+      Open redirect — res.redirect() is called with an unvalidated user-
+      controlled value. Attackers can craft links that redirect victims to
+      arbitrary external domains. Validate the target against an allowlist of
+      known-safe paths before redirecting.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      cwe: CWE-601
+
+  - id: js-prototype-pollution-merge
+    patterns:
+      - pattern-either:
+          - pattern: |
+              for (const $K in $SRC) {
+                $DST[$K] = $SRC[$K];
+              }
+          - pattern: |
+              for (let $K in $SRC) {
+                $DST[$K] = $SRC[$K];
+              }
+          - pattern: |
+              for (var $K in $SRC) {
+                $DST[$K] = $SRC[$K];
+              }
+      - pattern-not: |
+          for (const $K in $SRC) {
+            if (Object.prototype.hasOwnProperty.call($SRC, $K)) {
+              ...
+            }
+          }
+    message: >
+      Possible prototype pollution — copying user-supplied object keys into
+      a target without filtering "__proto__", "constructor", or "prototype"
+      can let an attacker mutate Object.prototype. Use Object.assign with a
+      sanitized source, a Map, or explicitly skip dangerous keys.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      cwe: CWE-1321
+
+  - id: js-jwt-none-algorithm
+    patterns:
+      - pattern-either:
+          - pattern: |
+              jwt.verify($T, $S, { algorithms: [..., "none", ...] })
+          - pattern: |
+              jwt.verify($T, $S, { algorithms: [..., "None", ...] })
+          - pattern: |
+              jwt.verify($T, $S, { algorithms: [..., "NONE", ...] })
+    message: >
+      JWT verification accepts the "none" algorithm. An attacker can forge
+      a token with alg=none and bypass signature verification entirely.
+      Restrict algorithms to a specific signing scheme such as ["HS256"] or
+      ["RS256"].
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: auth
+      cwe: CWE-327
+
+  - id: js-sql-string-concat
+    patterns:
+      - pattern-either:
+          - pattern: $DB.query("..." + $X, ...)
+          - pattern: $DB.query(`...${$X}...`, ...)
+          - pattern: $DB.query($X + "...", ...)
+          - pattern: $DB.execute("..." + $X, ...)
+          - pattern: $DB.execute(`...${$X}...`, ...)
+    message: >
+      Possible SQL injection — the query is built from string concatenation
+      or a template literal interpolating a variable. Use parameterized
+      queries (placeholders + values array) instead.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: security
+      cwe: CWE-89
+
+  - id: js-idor-route-userid-no-auth
+    patterns:
+      - pattern-either:
+          - pattern: |
+              app.$METHOD("$ROUTE", ($REQ, $RES) => {
+                ...
+                $DB.query(..., [$REQ.params.$USERID, ...], ...);
+                ...
+              })
+          - pattern: |
+              app.$METHOD("$ROUTE", function($REQ, $RES) {
+                ...
+                $DB.query(..., [$REQ.params.$USERID, ...], ...);
+                ...
+              })
+      - metavariable-regex:
+          metavariable: $METHOD
+          regex: '^(get|post|put|patch|delete)$'
+      - metavariable-regex:
+          metavariable: $USERID
+          regex: '^(userId|user_id|userID|uid|accountId|account_id|customerId)$'
+      - pattern-not-inside: |
+          app.$METHOD("$ROUTE", $AUTH, ($REQ, $RES) => { ... })
+      - pattern-not-inside: |
+          app.$METHOD("$ROUTE", ($REQ, $RES) => {
+            ...
+            if ($REQ.user) { ... }
+            ...
+          })
+    message: >
+      Possible IDOR — the route reads a user identifier from req.params and
+      uses it directly in a database query without an apparent authorization
+      check. Verify that the requesting user is allowed to access the
+      requested object before responding.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: auth
+      cwe: CWE-639
+
+  - id: js-loose-auth-equality
+    patterns:
+      - pattern-either:
+          - pattern: |
+              if ($USER == "..." && $PASS == "...") { ... }
+          - pattern: |
+              if ($USER == $X && $PASS == $Y) { ... }
+    message: >
+      Authentication uses == (loose equality) instead of === (strict
+      equality), which can lead to type coercion bypasses and is also not a
+      constant-time comparison. Use a constant-time comparison and a proper
+      password hashing scheme.
+    severity: ERROR
+    languages: [javascript, typescript]
+    metadata:
+      category: auth
+      cwe: CWE-697

@@ -135,6 +135,20 @@ export async function getRepo(token: string, repoId: string): Promise<ApiRespons
   return apiFetch(`/repos/${encodeURIComponent(repoId)}`, token);
 }
 
+export interface RepoBranches {
+  defaultBranch: string;
+  branches: string[];
+  /** True when the API could not enumerate the full list (degraded fallback) */
+  partial: boolean;
+}
+
+export async function listRepoBranches(
+  token: string,
+  repoId: string
+): Promise<ApiResponse<RepoBranches>> {
+  return apiFetch<RepoBranches>(`/repos/${encodeURIComponent(repoId)}/branches`, token);
+}
+
 // ---------------------------------------------------------------------------
 // Rules
 // ---------------------------------------------------------------------------
