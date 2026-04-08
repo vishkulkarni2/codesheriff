@@ -21,6 +21,7 @@
 
 import type { Job } from 'bullmq';
 import type { Logger } from 'pino';
+import { readdirSync, existsSync } from 'node:fs';
 import { prisma } from '@codesheriff/db';
 import { ScanStatus, Provider, Severity, PIPELINE_DEFAULTS } from '@codesheriff/shared';
 import type { ScanJobPayload, AnalysisContext, AnalysisFeatureFlags } from '@codesheriff/shared';
@@ -32,6 +33,17 @@ import { decryptToken } from '../services/token-crypto.js';
 import { buildPRSummaryComment, buildInlineComment } from '../services/pr-comment.js';
 import { sendSlackNotification } from '../services/slack-notifier.js';
 import { logger } from '../utils/logger.js';
+
+function listRulesDir(): { path: string; files: string[] } | null {
+  for (const path of ['/app/rules', process.cwd() + '/rules']) {
+    if (existsSync(path)) {
+      try {
+        return { path, files: readdirSync(path).sort() };
+      } catch { /* ignore */ }
+    }
+  }
+  return null;
+}
 
 interface ScanProcessorDeps {
   redis: Redis;
@@ -150,6 +162,8 @@ export async function processScanJob(
       scanId: payload.scanId,
       fileCount: files.length,
       sampleFilePaths: files.slice(0, 5).map((f) => f.path),
+      rulesDir: listRulesDir(),
+      semgrepRulesDirEnv: process.env['SEMGREP_RULES_DIR'] ?? null,
       detectorTimings: result.detectorTimings,
       detectorErrors: result.errors.map((e) => ({
         detector: e.detector,
@@ -160,6 +174,14 @@ export async function processScanJob(
         acc[f.detector] = (acc[f.detector] ?? 0) + 1;
         return acc;
       }, {}),
+      rawFindingsSample: result.findings.slice(0, 20).map((f) => ({
+        detector: f.detector,
+        severity: f.severity,
+        ruleId: f.ruleId,
+        title: f.title.slice(0, 120),
+        filePath: f.filePath,
+        lineStart: f.lineStart,
+      })),
       timestamp: new Date().toISOString(),
     };
     log.info(diagnostic, 'scan diagnostic summary');
