@@ -19,6 +19,8 @@ import { processDigestJob } from './processors/digest-processor.js';
 import { GitHubClient } from './services/github-client.js';
 import { GitLabClient } from './services/gitlab-client.js';
 import { logger } from './utils/logger.js';
+import { spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 
 function assertRequiredEnv(keys: string[]): void {
   const missing = keys.filter((k) => !process.env[k]);
@@ -28,7 +30,27 @@ function assertRequiredEnv(keys: string[]): void {
   }
 }
 
+function checkScanToolsAvailable(): void {
+  // Log whether semgrep/trufflehog/rules are reachable from this process.
+  // This is the single piece of info that was missing when scans were
+  // silently producing zero StaticAnalyzer/SecretsScanner findings.
+  const toolInfo: Record<string, string | boolean> = {};
+  for (const bin of ['semgrep', 'trufflehog']) {
+    try {
+      const r = spawnSync(bin, ['--version'], { encoding: 'utf8', timeout: 5000 });
+      toolInfo[bin] = r.status === 0 ? (r.stdout || r.stderr).trim().split('\n')[0] ?? 'ok' : `exit ${r.status}`;
+    } catch (err) {
+      toolInfo[bin] = `error: ${(err as Error).message}`;
+    }
+  }
+  toolInfo['rulesDirEnv'] = process.env['SEMGREP_RULES_DIR'] ?? '(unset)';
+  toolInfo['rulesDirAppExists'] = existsSync('/app/rules');
+  toolInfo['forceLlmDetectors'] = process.env['FORCE_LLM_DETECTORS'] ?? '(unset)';
+  logger.info(toolInfo, 'worker scan tool availability check');
+}
+
 async function main(): Promise<void> {
+  checkScanToolsAvailable();
   assertRequiredEnv([
     'DATABASE_URL',
     'REDIS_URL',
