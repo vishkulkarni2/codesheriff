@@ -144,16 +144,35 @@ export async function processScanJob(
 
     const result = await pipeline.run(ctx);
 
-    // ----- DIAGNOSTIC: log detector timings and error summary so we can tell
-    //           from production logs which detectors ran and for how long.
-    log.info(
-      {
-        detectorTimings: result.detectorTimings,
-        detectorErrors: result.errors.map((e) => ({ detector: e.detector, message: e.message.slice(0, 200) })),
-        rawFindingsCount: result.findings.length,
-      },
-      'scan diagnostic summary'
-    );
+    // ----- DIAGNOSTIC: log + stash detector timings/errors in Redis so we
+    //           can inspect scan internals without Render log access.
+    const diagnostic = {
+      scanId: payload.scanId,
+      fileCount: files.length,
+      sampleFilePaths: files.slice(0, 5).map((f) => f.path),
+      detectorTimings: result.detectorTimings,
+      detectorErrors: result.errors.map((e) => ({
+        detector: e.detector,
+        message: e.message.slice(0, 500),
+      })),
+      rawFindingsCount: result.findings.length,
+      rawFindingDetectors: result.findings.reduce<Record<string, number>>((acc, f) => {
+        acc[f.detector] = (acc[f.detector] ?? 0) + 1;
+        return acc;
+      }, {}),
+      timestamp: new Date().toISOString(),
+    };
+    log.info(diagnostic, 'scan diagnostic summary');
+    try {
+      await deps.redis.setex(
+        `scan_diagnostic:${payload.scanId}`,
+        3600,
+        JSON.stringify(diagnostic),
+      );
+      await deps.redis.setex('scan_diagnostic:last', 3600, JSON.stringify(diagnostic));
+    } catch (err) {
+      log.warn({ err }, 'failed to write scan diagnostic to redis');
+    }
 
     // ----- Step 6: Persist findings -----
     log.info({ count: result.findings.length }, 'persisting findings');
