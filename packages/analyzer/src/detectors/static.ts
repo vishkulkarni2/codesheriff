@@ -96,7 +96,16 @@ export class StaticAnalyzer {
 
       args.push(tmpDir);
 
-      log.info({ rulesDir: BUILTIN_RULES_DIR, fileCount: activeFiles.length }, 'semgrep starting');
+      log.info(
+        {
+          rulesDir: BUILTIN_RULES_DIR,
+          rulesDirExists: existsSync(BUILTIN_RULES_DIR),
+          fileCount: activeFiles.length,
+          tmpDir,
+          sampleArgs: args.slice(0, 6),
+        },
+        'semgrep starting'
+      );
       const result = await runSubprocess('semgrep', args, {
         timeoutMs: PIPELINE_DEFAULTS.SEMGREP_TIMEOUT_MS,
         cwd: tmpDir,
@@ -106,6 +115,20 @@ export class StaticAnalyzer {
         log.warn('semgrep timed out — partial results may be missing');
       }
 
+      // ALWAYS log exit code, stdout/stderr length, and a stderr sample.
+      // Without this, a silent zero-finding scan looks identical to a successful
+      // zero-finding scan and we cannot tell which one is happening in prod.
+      log.info(
+        {
+          exitCode: result.exitCode,
+          stdoutLen: result.stdout.length,
+          stderrLen: result.stderr.length,
+          stderrSample: result.stderr.slice(0, 800),
+          stdoutSample: result.stdout.slice(0, 400),
+        },
+        'semgrep finished'
+      );
+
       // semgrep exits 1 when findings are present, 0 when clean
       if (result.exitCode > 1) {
         log.error({ exitCode: result.exitCode, stderr: result.stderr }, 'semgrep error');
@@ -114,16 +137,43 @@ export class StaticAnalyzer {
 
       const semgrepOutput = safeParseSemgrep(result.stdout);
       if (!semgrepOutput) {
-        log.error('Failed to parse semgrep JSON output');
+        log.error({ stdoutSample: result.stdout.slice(0, 1000) }, 'Failed to parse semgrep JSON output');
         return [];
       }
+
+      // If semgrep silently failed to load any rules, the JSON output has
+      // results=[] and errors=[<RuleParseError>...]. Surface this loudly so
+      // we never again spend hours debugging a silent rules-not-loading bug.
+      if (semgrepOutput.errors && semgrepOutput.errors.length > 0) {
+        log.error(
+          {
+            errorCount: semgrepOutput.errors.length,
+            errors: semgrepOutput.errors.slice(0, 10),
+          },
+          'semgrep reported errors in its JSON output — rules may be failing to load'
+        );
+      }
+
+      // Capture diagnostic counters from the semgrep JSON envelope so we can
+      // see at a glance whether files were even scanned or rules were skipped.
+      const envelope = result.stdout ? safeParseEnvelope(result.stdout) : null;
+      log.info(
+        {
+          rawResultCount: semgrepOutput.results.length,
+          semgrepErrorCount: semgrepOutput.errors?.length ?? 0,
+          pathsScanned: envelope?.paths?.scanned?.length ?? null,
+          skippedRulesCount: Array.isArray(envelope?.skipped_rules) ? envelope.skipped_rules.length : null,
+          pathsScannedSample: envelope?.paths?.scanned?.slice?.(0, 5) ?? null,
+        },
+        'semgrep envelope diagnostics'
+      );
 
       const findings = semgrepOutput.results.map((match) =>
         this.toRawFinding(match, tmpDir, activeFiles)
       ).filter((f): f is RawFinding => f !== null);
 
       log.info(
-        { fileCount: activeFiles.length, findings: findings.length },
+        { fileCount: activeFiles.length, findings: findings.length, rawSemgrepResultCount: semgrepOutput.results.length },
         'StaticAnalyzer complete'
       );
       return findings;
@@ -231,6 +281,23 @@ function safeParseSemgrep(output: string): SemgrepResult | null {
       return parsed as SemgrepResult;
     }
     return null;
+  } catch {
+    return null;
+  }
+}
+
+// Parse the broader semgrep envelope (not just results+errors) to extract
+// diagnostic counters: paths.scanned, skipped_rules. Used for the "envelope
+// diagnostics" log line so we can tell at a glance whether semgrep actually
+// scanned files in the deployed container.
+interface SemgrepEnvelope {
+  paths?: { scanned?: string[] };
+  skipped_rules?: unknown[];
+}
+function safeParseEnvelope(output: string): SemgrepEnvelope | null {
+  try {
+    const parsed = JSON.parse(output) as SemgrepEnvelope;
+    return parsed;
   } catch {
     return null;
   }
