@@ -74,7 +74,18 @@ RUN apt-get update -qq && \
 ENV PATH="/opt/semgrep-venv/bin:${PATH}"
 COPY --from=trufflehog-stage /usr/local/bin/trufflehog /usr/local/bin/trufflehog
 WORKDIR /app
-RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 --ingroup nodejs sheriffworker
+# IMPORTANT: --home /home/sheriffworker. The previous version used
+# `adduser --system` without --home, which on Debian defaults HOME to
+# `/nonexistent`. semgrep tries to mkdir `~/.semgrep` for its cache and
+# crashes with FileNotFoundError on every invocation, returning exit
+# code 1 with empty stdout — invisible to the rest of the pipeline.
+# Confirmed via the runtime diagnostic in commit 6d78fff:
+#   stderrSample: "FileNotFoundError: ... '/nonexistent/.semgrep'"
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 --ingroup nodejs --home /home/sheriffworker sheriffworker && \
+    mkdir -p /home/sheriffworker/.semgrep && \
+    chown -R sheriffworker:nodejs /home/sheriffworker
+ENV HOME=/home/sheriffworker
 COPY --from=builder --chown=sheriffworker:nodejs /deploy/worker ./
 # Sanity check at build time — fail the image build if either tool is broken.
 RUN semgrep --version && trufflehog --version
