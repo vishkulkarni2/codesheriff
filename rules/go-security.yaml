@@ -89,3 +89,237 @@ rules:
       category: correctness
       cwe: CWE-404
       benchmark-target: grafana
+
+  # ---------------------------------------------------------------------------
+  # Security rules (added to fix cs-test-go recall, 14% -> target 75%+)
+  # ---------------------------------------------------------------------------
+
+  - id: go-sql-injection-sprintf
+    pattern-either:
+      - pattern: $DB.Query(fmt.Sprintf(...))
+      - pattern: $DB.QueryContext($CTX, fmt.Sprintf(...))
+      - pattern: $DB.QueryRow(fmt.Sprintf(...))
+      - pattern: $DB.QueryRowContext($CTX, fmt.Sprintf(...))
+      - pattern: $DB.Exec(fmt.Sprintf(...))
+      - pattern: $DB.ExecContext($CTX, fmt.Sprintf(...))
+      - pattern: $DB.Query("..." + $VAR)
+      - pattern: $DB.Query("..." + $VAR + "...")
+      - pattern: $DB.Exec("..." + $VAR)
+      - pattern: $DB.Exec("..." + $VAR + "...")
+      # Multi-step: query built into a variable then passed to db.Query/Exec.
+      # This is the most common shape in real Go code; without it the rule
+      # only catches the inline form.
+      - patterns:
+          - pattern-either:
+              - pattern: |
+                  $Q := fmt.Sprintf(...)
+                  ...
+                  $DB.Query($Q)
+              - pattern: |
+                  $Q := fmt.Sprintf(...)
+                  ...
+                  $DB.Exec($Q)
+              - pattern: |
+                  $Q := fmt.Sprintf(...)
+                  ...
+                  $DB.QueryRow($Q)
+    message: >
+      SQL query built via fmt.Sprintf or string concatenation and passed to
+      db.Query/Exec. This is a SQL injection vulnerability. Use parameterized
+      queries instead: db.Query("SELECT ... WHERE name = ?", name). The ? (or
+      $1 for pgx) placeholder ensures the driver escapes the value.
+    severity: ERROR
+    languages: [go]
+    metadata:
+      category: security
+      cwe: CWE-89
+      owasp: A03:2021 - Injection
+
+  - id: go-command-injection-sh
+    pattern-either:
+      - pattern: exec.Command("sh", "-c", $CMD + $VAR)
+      - pattern: exec.Command("sh", "-c", $VAR + $CMD)
+      - pattern: exec.Command("bash", "-c", $CMD + $VAR)
+      - pattern: exec.Command("bash", "-c", $VAR + $CMD)
+      - pattern: exec.Command("sh", "-c", fmt.Sprintf(...))
+      - pattern: exec.Command("bash", "-c", fmt.Sprintf(...))
+      - pattern: exec.CommandContext($CTX, "sh", "-c", $CMD + $VAR)
+      - pattern: exec.CommandContext($CTX, "bash", "-c", $CMD + $VAR)
+    message: >
+      Shell command built by concatenating (or formatting) a variable into
+      "sh -c" or "bash -c". Any user-influenced value in that string is command
+      injection. Pass the binary and each argument as separate exec.Command
+      arguments instead of invoking a shell.
+    severity: ERROR
+    languages: [go]
+    metadata:
+      category: security
+      cwe: CWE-78
+      owasp: A03:2021 - Injection
+
+  - id: go-path-traversal-read
+    pattern-either:
+      - pattern: ioutil.ReadFile("..." + $VAR)
+      - pattern: ioutil.ReadFile("..." + $VAR + "...")
+      - pattern: ioutil.ReadFile(fmt.Sprintf(...))
+      - pattern: os.ReadFile("..." + $VAR)
+      - pattern: os.ReadFile("..." + $VAR + "...")
+      - pattern: os.ReadFile(fmt.Sprintf(...))
+      - pattern: os.Open("..." + $VAR)
+      - pattern: os.Open("..." + $VAR + "...")
+      - pattern: os.Open(fmt.Sprintf(...))
+      - pattern: os.OpenFile("..." + $VAR, ...)
+    message: >
+      File path built from a variable and passed to ReadFile/Open. If the value
+      is user-controlled, ".." segments can escape the intended directory. Use
+      filepath.Clean plus a prefix check, or filepath.Join with a vetted root.
+    severity: ERROR
+    languages: [go]
+    metadata:
+      category: security
+      cwe: CWE-22
+      owasp: A01:2021 - Broken Access Control
+
+  - id: go-ssrf-http-user-input
+    pattern-either:
+      - pattern: |
+          $VAR = $R.URL.Query().Get(...)
+          ...
+          http.Get($VAR)
+      - pattern: |
+          $VAR := $R.URL.Query().Get(...)
+          ...
+          http.Get($VAR)
+      - pattern: |
+          $VAR = $R.FormValue(...)
+          ...
+          http.Get($VAR)
+      - pattern: |
+          $VAR := $R.FormValue(...)
+          ...
+          http.Get($VAR)
+      - pattern: |
+          $VAR := $R.URL.Query().Get(...)
+          ...
+          http.NewRequest($METHOD, $VAR, ...)
+      - pattern: |
+          $VAR := $R.URL.Query().Get(...)
+          ...
+          http.NewRequestWithContext($CTX, $METHOD, $VAR, ...)
+    message: >
+      HTTP request target is taken from user input (query param / form value)
+      and passed directly to http.Get or http.NewRequest. This is Server-Side
+      Request Forgery — an attacker can point the request at internal-only
+      hosts (169.254.169.254, localhost, RFC1918) or file:// URLs. Validate
+      the URL scheme and host against an allowlist.
+    severity: ERROR
+    languages: [go]
+    metadata:
+      category: security
+      cwe: CWE-918
+      owasp: A10:2021 - Server-Side Request Forgery
+
+  - id: go-tls-insecure-skip-verify
+    pattern-either:
+      - pattern: "tls.Config{..., InsecureSkipVerify: true, ...}"
+      - pattern: "&tls.Config{..., InsecureSkipVerify: true, ...}"
+      - pattern: "InsecureSkipVerify: true"
+    message: >
+      TLS certificate verification disabled (InsecureSkipVerify: true). Any
+      man-in-the-middle can intercept the connection and present their own
+      certificate. Fix the trust store or pin a certificate instead of
+      skipping verification.
+    severity: ERROR
+    languages: [go]
+    metadata:
+      category: security
+      cwe: CWE-295
+
+  - id: go-weak-hash
+    pattern-either:
+      - pattern: md5.New()
+      - pattern: md5.Sum(...)
+      - pattern: sha1.New()
+      - pattern: sha1.Sum(...)
+    message: >
+      Weak cryptographic hash (MD5 / SHA-1) detected. Collisions are practical
+      and these hashes must not be used for signatures, integrity against an
+      attacker, or password storage. Use crypto/sha256 (or bcrypt / argon2 /
+      scrypt for passwords).
+    severity: ERROR
+    languages: [go]
+    metadata:
+      category: security
+      cwe: CWE-327
+      owasp: A02:2021 - Cryptographic Failures
+
+  - id: go-open-redirect
+    pattern-either:
+      - pattern: |
+          $VAR := $R.URL.Query().Get(...)
+          ...
+          http.Redirect($W, $R, $VAR, ...)
+      - pattern: |
+          $VAR = $R.URL.Query().Get(...)
+          ...
+          http.Redirect($W, $R, $VAR, ...)
+      - pattern: |
+          $VAR := $R.FormValue(...)
+          ...
+          http.Redirect($W, $R, $VAR, ...)
+    message: >
+      Redirect target is taken from a query parameter (or form value) and
+      passed to http.Redirect without validation. An attacker can craft a link
+      that sends the user to an attacker-controlled host. Validate the target
+      against an allowlist or require it to be a relative path.
+    severity: ERROR
+    languages: [go]
+    metadata:
+      category: security
+      cwe: CWE-601
+
+  - id: go-unsafe-pointer-cast
+    pattern-either:
+      - pattern: (*$T)(unsafe.Pointer($X))
+      - pattern: '*(*$T)(unsafe.Pointer($X))'
+    message: >
+      unsafe.Pointer cast bypasses Go's type safety and escape analysis. This
+      is a common source of memory corruption and aliasing bugs, and prevents
+      the race detector from seeing certain data races. Prefer safe conversions
+      (e.g. string(b) copies; encoding/binary for layout) unless the
+      performance win is measured and the invariants are documented.
+    severity: WARNING
+    languages: [go]
+    metadata:
+      category: security
+      cwe: CWE-704
+
+  - id: go-hardcoded-credential
+    pattern-either:
+      - pattern-regex: '"sk-[A-Za-z0-9_\-]{16,}"'
+      - pattern-regex: '"sk_live_[A-Za-z0-9]{16,}"'
+      - pattern-regex: '"sk_test_[A-Za-z0-9_\-]{16,}"'
+      - pattern-regex: '"ghp_[A-Za-z0-9]{30,}"'
+      - pattern-regex: '"AKIA[0-9A-Z]{16}"'
+      - pattern-regex: '"AIza[0-9A-Za-z_\-]{30,}"'
+      - pattern-regex: '"xox[bp]-[0-9A-Za-z\-]{20,}"'
+      - pattern-regex: '(?i)(dbPassword|db_password|DB_PASSWORD)\s*=\s*"[^"]{6,}"'
+      - pattern-regex: '(?i)(jwtSecret|jwt_secret|JWT_SECRET)\s*=\s*"[^"]{6,}"'
+      - pattern-regex: '(?i)(apiKey|api_key|API_KEY)\s*=\s*"[^"]{6,}"'
+    message: >
+      Hardcoded credential detected in source. Keys and passwords committed to
+      a repo are effectively public — they leak via git history, CI logs, and
+      forks. Move the value to an environment variable, a secrets manager, or
+      a config file that is not committed.
+    severity: ERROR
+    languages: [go]
+    metadata:
+      category: security
+      cwe: CWE-798
+      owasp: A07:2021 - Identification and Authentication Failures
+
+  # TODO: stack-trace leakage in HTTP response (CWE-209) — pattern is brittle
+  #       because it needs data flow from runtime/debug.Stack() through fmt.Fprintf
+  #       into a http.ResponseWriter. Skipping for now to avoid FPs on grafana.
+  # TODO: race on shared map without mutex (CWE-362) — needs data flow; skipping
+  #       to avoid massive FPs on grafana.
