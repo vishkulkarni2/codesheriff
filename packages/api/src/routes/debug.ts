@@ -139,4 +139,89 @@ export async function debugRoutes(app: FastifyInstance): Promise<void> {
       });
     }
   );
+
+  // ---------------------------------------------------------------------------
+  // GET /api/v1/debug/redis-info
+  //
+  // Lists every key in the API's Redis matching scan_diagnostic:* and bull:*,
+  // plus the Redis server INFO header so we can confirm the API and the worker
+  // are talking to the SAME Redis instance. Used to diagnose the case where
+  // the worker writes to one Redis and the API reads from another (different
+  // REDIS_URL on the two services on Render).
+  // ---------------------------------------------------------------------------
+  app.get(
+    '/debug/redis-info',
+    { preHandler: [app.authenticate] },
+    async (req, reply) => {
+      if (!(await requireAdmin(req, reply))) return;
+
+      const result: Record<string, unknown> = {};
+
+      // SCAN for scan_diagnostic:* keys (SCAN is non-blocking, KEYS is not).
+      try {
+        const diagKeys: string[] = [];
+        let cursor = '0';
+        do {
+          const [next, batch] = await redis.scan(
+            cursor,
+            'MATCH',
+            'scan_diagnostic:*',
+            'COUNT',
+            '100'
+          );
+          cursor = next;
+          diagKeys.push(...batch);
+        } while (cursor !== '0' && diagKeys.length < 200);
+        result['scanDiagnosticKeys'] = diagKeys;
+        result['scanDiagnosticKeyCount'] = diagKeys.length;
+      } catch (err) {
+        result['scanDiagnosticScanError'] = String(err).slice(0, 300);
+      }
+
+      // SCAN for bull:* (BullMQ queue keys — confirms this is the same Redis
+      // the worker uses, since the worker is a BullMQ consumer).
+      try {
+        const bullKeys: string[] = [];
+        let cursor = '0';
+        do {
+          const [next, batch] = await redis.scan(
+            cursor,
+            'MATCH',
+            'bull:*',
+            'COUNT',
+            '100'
+          );
+          cursor = next;
+          bullKeys.push(...batch);
+        } while (cursor !== '0' && bullKeys.length < 50);
+        result['bullKeysSample'] = bullKeys.slice(0, 20);
+        result['bullKeyCount'] = bullKeys.length;
+      } catch (err) {
+        result['bullScanError'] = String(err).slice(0, 300);
+      }
+
+      // INFO server section gives us the Redis server identity (Upstash returns
+      // a header with the cluster id and version).
+      try {
+        const info = await redis.info('server');
+        result['redisServerInfo'] = info.slice(0, 800);
+      } catch (err) {
+        result['redisInfoError'] = String(err).slice(0, 300);
+      }
+
+      // The URL the API process is using, with credentials redacted, so we
+      // can compare it visually against what the worker process is using.
+      const apiRedisUrl = process.env['REDIS_URL'] ?? '';
+      result['apiRedisUrlRedacted'] = apiRedisUrl.replace(
+        /:\/\/[^@]*@/,
+        '://REDACTED@'
+      );
+
+      return reply.send({
+        success: true,
+        data: result,
+        error: null,
+      });
+    }
+  );
 }
