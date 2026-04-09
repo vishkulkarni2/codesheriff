@@ -183,15 +183,12 @@ export async function processScanJob(
         lineStart: f.lineStart,
       })),
       // Per-detector raw runtime diagnostics surfaced from inside the
-      // analyzer (e.g., StaticAnalyzer's semgrep stdout/stderr/envelope).
-      // This is what we curl via /api/v1/debug/scan-diagnostic to debug
-      // silent-zero-results scans without Render log access.
+      // analyzer (e.g., StaticAnalyzer's semgrep stdout/stderr/envelope
+      // captured on every code path via the on-finally diagnostic).
+      // Persisted to the scan_diagnostic:* Redis stash and the pino logs
+      // so future debugging has the full picture without needing another
+      // round of throwaway debug routes.
       detectorDiagnostics: result.detectorDiagnostics ?? null,
-      // Build marker. If this string does not appear in the deployed
-      // diagnostic, the worker is serving a stale build despite Render
-      // reporting deploy success. Bump this on any commit where you need
-      // to confirm the rollout actually landed on the worker process.
-      buildMarker: 'static-diag-onfinally-2026-04-08-A',
       timestamp: new Date().toISOString(),
     };
     log.info(diagnostic, 'scan diagnostic summary');
