@@ -141,3 +141,211 @@ rules:
       category: correctness
       cwe: CWE-674
       benchmark-target: keycloak
+
+  # ---------------------------------------------------------------------------
+  # 2026-04-09: rules added to bring cs-test-java from 0% recall to ~75%+
+  # without regressing the keycloak benchmark fixture. The original 7 Java
+  # rules were keycloak-targeted and didn't match realistic JDBC / Apache /
+  # Spring patterns. These broaden coverage with precise AST patterns.
+  # ---------------------------------------------------------------------------
+
+  - id: java-jdbc-execute-string-concat
+    pattern-either:
+      - pattern: $STMT.executeQuery("..." + $VAR + "...")
+      - pattern: $STMT.executeQuery("..." + $VAR)
+      - pattern: $STMT.executeQuery($VAR + "...")
+      - pattern: $STMT.execute("..." + $VAR + "...")
+      - pattern: $STMT.execute("..." + $VAR)
+      - pattern: $STMT.execute($VAR + "...")
+      - pattern: $STMT.executeUpdate("..." + $VAR + "...")
+      - pattern: $STMT.executeUpdate("..." + $VAR)
+      - pattern: $STMT.executeUpdate($VAR + "...")
+      - patterns:
+          - pattern-either:
+              - pattern: |
+                  String $Q = "..." + $V + "...";
+                  ...
+                  $STMT.executeQuery($Q);
+              - pattern: |
+                  String $Q = "..." + $V + "...";
+                  ...
+                  $STMT.execute($Q);
+              - pattern: |
+                  String $Q = "..." + $V + "...";
+                  ...
+                  $STMT.executeUpdate($Q);
+    message: >
+      SQL query built by string concatenation and passed to a JDBC Statement.
+      This is a SQL injection vulnerability. Use a PreparedStatement with parameter
+      placeholders instead: PreparedStatement ps = conn.prepareStatement("SELECT
+      * FROM users WHERE id = ?"); ps.setString(1, value);
+    severity: ERROR
+    languages: [java]
+    metadata:
+      category: security
+      cwe: CWE-89
+      owasp: A03:2021 - Injection
+
+  - id: java-ldap-injection-search-concat
+    pattern-either:
+      - pattern: $CTX.search($BASE, "..." + $VAR + "...", $CTRL)
+      - pattern: $CTX.search($BASE, "..." + $VAR, $CTRL)
+      - pattern: $CTX.search($BASE, $VAR + "...", $CTRL)
+    message: >
+      LDAP search filter built by string concatenation. This is an LDAP injection
+      vulnerability. Escape the user input using a library like Spring Security's
+      LdapEncoder.filterEncode() before embedding it in the filter, or pass the
+      value as a parameter via a parameterized search.
+    severity: ERROR
+    languages: [java]
+    metadata:
+      category: security
+      cwe: CWE-90
+      owasp: A03:2021 - Injection
+
+  - id: java-insecure-deserialization
+    pattern-either:
+      - pattern: |
+          ObjectInputStream $OIS = new ObjectInputStream(...);
+          ...
+          $OIS.readObject();
+      - pattern: new ObjectInputStream(...).readObject()
+    message: >
+      ObjectInputStream.readObject() on user-controlled bytes is a classic Java
+      RCE primitive. Any class on the classpath that has a malicious readObject
+      override gets executed during deserialization. Use a safer format (JSON via
+      Jackson with type-restricted deserialization, Protobuf, or
+      java.io.ObjectInputFilter to allowlist deserialization classes).
+    severity: ERROR
+    languages: [java]
+    metadata:
+      category: security
+      cwe: CWE-502
+      owasp: A08:2021 - Software and Data Integrity Failures
+
+  - id: java-runtime-exec-string-concat
+    pattern-either:
+      - pattern: Runtime.getRuntime().exec("..." + $VAR + "...")
+      - pattern: Runtime.getRuntime().exec("..." + $VAR)
+      - pattern: Runtime.getRuntime().exec($VAR + "...")
+    message: >
+      Runtime.exec() called with a concatenated string that includes a variable.
+      The single-string form of exec() splits on whitespace, so any space in the
+      user input changes the command shape; with shell metacharacters this is a
+      command injection. Use the array form Runtime.exec(new String[]{"cmd",
+      "arg"}) and validate or allowlist the argument.
+    severity: ERROR
+    languages: [java]
+    metadata:
+      category: security
+      cwe: CWE-78
+      owasp: A03:2021 - Injection
+
+  - id: java-weak-hash-md5-sha1
+    pattern-either:
+      - pattern: MessageDigest.getInstance("MD5")
+      - pattern: MessageDigest.getInstance("md5")
+      - pattern: MessageDigest.getInstance("SHA1")
+      - pattern: MessageDigest.getInstance("SHA-1")
+      - pattern: MessageDigest.getInstance("sha1")
+      - pattern: MessageDigest.getInstance("sha-1")
+    message: >
+      MD5 and SHA1 are cryptographically broken — collisions are trivial. Do not
+      use them for password hashing, signatures, or any integrity check that needs
+      to resist an attacker. Use SHA-256 or stronger for hashing, and bcrypt /
+      argon2 / scrypt for password hashing specifically.
+    severity: ERROR
+    languages: [java]
+    metadata:
+      category: security
+      cwe: CWE-327
+      owasp: A02:2021 - Cryptographic Failures
+
+  - id: java-weak-cipher
+    pattern-either:
+      - pattern: Cipher.getInstance("DES")
+      - pattern: Cipher.getInstance("DES/...")
+      - pattern: Cipher.getInstance("RC4")
+      - pattern: Cipher.getInstance("RC4/...")
+      - pattern: Cipher.getInstance("AES/ECB/...")
+      - pattern: Cipher.getInstance("AES")
+    message: >
+      Weak or insecure cipher choice. DES and RC4 are broken. AES in ECB mode
+      leaks plaintext patterns and is unsafe for any non-trivial data. AES with
+      no mode defaults to ECB on some providers. Use AES/GCM/NoPadding with a
+      random nonce, or AES/CBC/PKCS5Padding with a random IV.
+    severity: ERROR
+    languages: [java]
+    metadata:
+      category: security
+      cwe: CWE-327
+      owasp: A02:2021 - Cryptographic Failures
+
+  - id: java-path-traversal-string-concat
+    pattern-either:
+      - pattern: Paths.get("..." + $VAR + "...")
+      - pattern: Paths.get("..." + $VAR)
+      - pattern: Paths.get($VAR + "...")
+      - pattern: Path.of("..." + $VAR + "...")
+      - pattern: Path.of("..." + $VAR)
+      - pattern: new File("..." + $VAR + "...")
+      - pattern: new File("..." + $VAR)
+      - pattern: new File($DIR, $VAR)
+    message: >
+      File path constructed from a variable. If the variable is user-controlled,
+      ".." segments can escape the intended directory. Resolve the path with
+      Path.normalize() then verify the result starts with the allowed root using
+      Path.startsWith(), or use a strict allowlist of permitted filenames.
+    severity: ERROR
+    languages: [java]
+    metadata:
+      category: security
+      cwe: CWE-22
+      owasp: A01:2021 - Broken Access Control
+
+  - id: java-hardcoded-credential-secret-pattern
+    pattern-either:
+      - pattern-regex: 'private\s+static\s+final\s+String\s+\w*(PASSWORD|SECRET|API_?KEY|TOKEN|CREDENTIAL)\w*\s*=\s*"[^"]{8,}"'
+      - pattern-regex: 'static\s+final\s+String\s+\w*(PASSWORD|SECRET|API_?KEY|TOKEN|CREDENTIAL)\w*\s*=\s*"[^"]{8,}"'
+      - pattern-regex: '"sk-[A-Za-z0-9_\-]{16,}"'
+      - pattern-regex: '"sk_live_[A-Za-z0-9]{16,}"'
+      - pattern-regex: '"sk_test_[A-Za-z0-9]{16,}"'
+      - pattern-regex: '"ghp_[A-Za-z0-9]{30,}"'
+      - pattern-regex: '"AKIA[0-9A-Z]{16}"'
+      - pattern-regex: '"AIza[0-9A-Za-z_\-]{30,}"'
+    message: >
+      Hardcoded credential or API key in source. Keys checked into source control
+      are effectively public — they leak via git history, CI logs, and forks.
+      Move the value to an environment variable, a JNDI binding, or a secrets
+      manager (Vault, AWS Secrets Manager, Spring Cloud Config).
+    severity: ERROR
+    languages: [java]
+    metadata:
+      category: security
+      cwe: CWE-798
+      owasp: A07:2021 - Identification and Authentication Failures
+
+  - id: java-string-reference-equality
+    patterns:
+      - pattern-either:
+          - pattern: |
+              if ($VAR == "...") {
+                  ...
+              }
+          - pattern: |
+              if ("..." == $VAR) {
+                  ...
+              }
+          - pattern: $VAR == "..."
+          - pattern: "\"...\" == $VAR"
+    message: >
+      String values compared with == instead of .equals(). The == operator on
+      String objects compares references, not contents. This can pass for interned
+      string literals but fail for strings built at runtime, which is exactly what
+      makes it an authorization bug — admin checks that look correct but break on
+      database-loaded role names. Use .equals() or Objects.equals().
+    severity: ERROR
+    languages: [java]
+    metadata:
+      category: security
+      cwe: CWE-697
