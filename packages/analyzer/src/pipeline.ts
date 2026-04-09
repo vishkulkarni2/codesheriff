@@ -377,8 +377,12 @@ export class AnalysisPipeline {
         // Security speculation on normal patterns
         'transmitted as plain text',
         'without encryption',
-        'without proper validation',
-        'without proper sanitization',
+        // REMOVED 2026-04-09: 'without proper validation' and
+        // 'without proper sanitization' were matching legitimate Python
+        // path-traversal, SQLi, and deserialization rule messages that use
+        // those exact phrases. They're too broad — if an LLM detector is
+        // producing generic-sounding findings we fix the prompt, not the
+        // blocklist.
         'overly permissive schema',
         'generic error message',
         // Client-side / test observations (not backend bugs)

@@ -53,6 +53,39 @@ rules:
       cwe: CWE-665
       benchmark-target: sentry
 
+  - id: python-missing-return-fallthrough
+    patterns:
+      - pattern: |
+          def $FUNC(...):
+              if ...:
+                  return True
+      - pattern-not: |
+          def $FUNC(...):
+              if ...:
+                  return True
+              return $Y
+      - pattern-not: |
+          def $FUNC(...):
+              if ...:
+                  return True
+              raise $E
+      - pattern-not: |
+          def $FUNC(...):
+              if ...:
+                  return True
+              else:
+                  ...
+    message: >
+      Function returns True on a condition but has no explicit return on the
+      fallthrough path, so it returns None implicitly. This is a common
+      authorization bug (is_admin returns None for non-admins, which is falsy
+      but semantically wrong). Return False explicitly.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: correctness
+      cwe: CWE-394
+
   - id: python-except-bare
     pattern: |
       try:

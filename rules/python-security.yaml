@@ -9,6 +9,8 @@ rules:
       - pattern: $CURSOR.execute(f"...")
       - pattern: $CURSOR.executemany(f"...")
       - pattern: $DB.execute(f"...")
+      - pattern-regex: 'f"[^"]*(?i)(SELECT|INSERT|UPDATE|DELETE|MERGE) [^"]*\{[^}]+\}[^"]*"'
+      - pattern-regex: "f'[^']*(?i)(SELECT|INSERT|UPDATE|DELETE|MERGE) [^']*\\{[^}]+\\}[^']*'"
     message: >
       SQL query built using f-string interpolation. This is a SQL injection vulnerability.
       Use parameterized queries instead: cursor.execute("SELECT ... WHERE id = %s", (value,)).
@@ -55,6 +57,160 @@ rules:
       category: correctness
       cwe: CWE-476
       benchmark-target: sentry
+
+  - id: python-weak-hash
+    pattern-either:
+      - pattern: hashlib.md5(...)
+      - pattern: hashlib.sha1(...)
+      - pattern: hashlib.new("md5", ...)
+      - pattern: hashlib.new("sha1", ...)
+    message: >
+      Weak cryptographic hash (MD5/SHA1) detected. These hashes are broken for
+      security use — collisions are trivial and they are unsuitable for password
+      hashing, signatures, or any integrity check that needs to resist an attacker.
+      Use hashlib.sha256 or bcrypt/argon2/scrypt for passwords.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: security
+      cwe: CWE-327
+      owasp: A02:2021 - Cryptographic Failures
+
+  - id: python-hardcoded-api-key
+    pattern-either:
+      - pattern-regex: '"sk-[A-Za-z0-9_\-]{16,}"'
+      - pattern-regex: '"sk_live_[A-Za-z0-9]{16,}"'
+      - pattern-regex: '"sk_test_[A-Za-z0-9]{16,}"'
+      - pattern-regex: '"ghp_[A-Za-z0-9]{30,}"'
+      - pattern-regex: '"AKIA[0-9A-Z]{16}"'
+      - pattern-regex: '"AIza[0-9A-Za-z_\-]{30,}"'
+      - pattern-regex: '"xox[bp]-[0-9A-Za-z\-]{20,}"'
+    message: >
+      Hardcoded API key or credential detected in source. Keys checked into
+      source control are effectively public — they leak via git history, CI logs,
+      and forks. Move the value to an environment variable or a secrets manager.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: security
+      cwe: CWE-798
+      owasp: A07:2021 - Identification and Authentication Failures
+
+  - id: python-flask-debug-mode
+    pattern-either:
+      - pattern: $APP.run(..., debug=True, ...)
+      - pattern: app.run(debug=True)
+    message: >
+      Flask debug mode enabled. The Werkzeug debugger exposes an interactive
+      Python console to anyone who can reach the app and reliably turns a crash
+      into remote code execution. Never run debug=True in production.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: security
+      cwe: CWE-489
+
+  - id: python-bind-all-interfaces
+    pattern-either:
+      - pattern: $APP.run(..., host="0.0.0.0", ...)
+      - pattern: socket.bind(("0.0.0.0", ...))
+      - pattern: socket.bind(("", ...))
+    message: >
+      Service binding to 0.0.0.0 exposes it on every network interface, including
+      public ones. Bind to 127.0.0.1 for local-only services or an explicit
+      internal interface. If this is intentional (container entrypoint) ignore
+      this finding.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: security
+      cwe: CWE-668
+
+  - id: python-shell-injection
+    pattern-either:
+      - pattern: subprocess.run(..., shell=True, ...)
+      - pattern: subprocess.call(..., shell=True, ...)
+      - pattern: subprocess.Popen(..., shell=True, ...)
+      - pattern: subprocess.check_output(..., shell=True, ...)
+      - pattern: os.system(...)
+      - pattern: os.popen(...)
+    message: >
+      Shell command execution with shell=True (or os.system/os.popen) passes the
+      command string to /bin/sh. Any user-influenced value in that string is a
+      command injection. Pass a list of arguments with shell=False, or escape
+      with shlex.quote if you truly need a shell.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: security
+      cwe: CWE-78
+      owasp: A03:2021 - Injection
+
+  - id: python-eval-exec
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: exec(...)
+      - pattern: compile(..., "exec")
+    message: >
+      Use of eval/exec. These execute arbitrary Python and are almost never the
+      right answer — a configuration file, ast.literal_eval, or an explicit
+      dispatch table is safer. Any user input reaching here is remote code
+      execution.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: security
+      cwe: CWE-95
+
+  - id: python-requests-verify-false
+    pattern-either:
+      - pattern: requests.get(..., verify=False, ...)
+      - pattern: requests.post(..., verify=False, ...)
+      - pattern: requests.put(..., verify=False, ...)
+      - pattern: requests.delete(..., verify=False, ...)
+      - pattern: requests.request(..., verify=False, ...)
+      - pattern: requests.Session(...).get(..., verify=False, ...)
+    message: >
+      HTTPS certificate verification disabled (verify=False). This allows any
+      man-in-the-middle to intercept the request. Fix the CA bundle or pin a
+      specific certificate instead of disabling verification.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: security
+      cwe: CWE-295
+
+  - id: python-path-traversal-open
+    pattern-either:
+      - pattern: open(f"...{$VAR}...", ...)
+      - pattern: open("..." + $VAR + "...", ...)
+      - pattern: open("..." + $VAR, ...)
+      - pattern: open("..." % $VAR, ...)
+    message: >
+      File path built from a variable and passed to open(). If the variable is
+      user-controlled, ".." segments can escape the intended directory. Resolve
+      the path with os.path.realpath and verify it starts with the allowed root,
+      or use pathlib with a safe join.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      category: security
+      cwe: CWE-22
+      owasp: A01:2021 - Broken Access Control
+
+  - id: python-jinja2-autoescape-off
+    pattern-either:
+      - pattern: jinja2.Environment(...)
+      - pattern: Environment(autoescape=False)
+    message: >
+      Jinja2 Environment created without explicit autoescape=True (or with
+      autoescape=False). Any template that renders user input will be vulnerable
+      to XSS. Pass autoescape=select_autoescape() or autoescape=True explicitly.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: security
+      cwe: CWE-79
 
   - id: python-django-raw-sql
     pattern-either:
