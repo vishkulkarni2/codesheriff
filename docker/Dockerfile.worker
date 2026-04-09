@@ -88,7 +88,15 @@ RUN addgroup --system --gid 1001 nodejs && \
 ENV HOME=/home/sheriffworker
 COPY --from=builder --chown=sheriffworker:nodejs /deploy/worker ./
 # Sanity check at build time — fail the image build if either tool is broken.
-RUN semgrep --version && trufflehog --version
+# Then re-chown sheriffworker's home: the smoke test runs as ROOT with
+# HOME=/home/sheriffworker (from the ENV above), so semgrep writes its
+# settings.yml as root inside sheriffworker's home. At runtime sheriffworker
+# can't read those root-owned files and semgrep crashes with EACCES on
+# every invocation. Chowning after the smoke test reassigns those files
+# to the runtime user. Confirmed by the runtime diagnostic in commit 6d268c0:
+#   stderrSample: "Permission denied open /home/sheriffworker/.semgrep/settings.yml"
+RUN semgrep --version && trufflehog --version && \
+    chown -R sheriffworker:nodejs /home/sheriffworker
 USER sheriffworker
 ENV NODE_ENV=production
 CMD ["node", "dist/index.js"]
