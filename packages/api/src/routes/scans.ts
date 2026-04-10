@@ -1,6 +1,7 @@
 /**
  * Scan routes
  *
+ * GET  /api/v1/scans             — list scans (optional repositoryId filter)
  * POST /api/v1/scans            — trigger a manual scan
  * GET  /api/v1/scans/:id        — get scan + paginated findings
  * GET  /api/v1/scans/:id/sarif  — export full scan as SARIF 2.1.0 JSON
@@ -51,6 +52,76 @@ export async function scanRoutes(app: FastifyInstance): Promise<void> {
   const scanQueue = new Queue<ScanJobPayload>(QUEUE_NAMES.SCAN, {
     connection: (app as unknown as { redis: ConnectionOptions }).redis,
   });
+
+  // ---------------------------------------------------------------------------
+  // GET /api/v1/scans — list scans (optionally filtered by repositoryId)
+  // ---------------------------------------------------------------------------
+  const listScansQuerySchema = z.object({
+    repositoryId: z.string().cuid().optional(),
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+  });
+
+  app.get(
+    '/scans',
+    { preHandler: [app.authenticate] },
+    async (req, reply) => {
+      const parsed = listScansQuerySchema.safeParse(req.query);
+      if (!parsed.success) {
+        return reply.status(400).send({
+          success: false,
+          data: null,
+          error: 'Invalid query parameters',
+        });
+      }
+
+      const { repositoryId, page, limit } = parsed.data;
+      const offset = (page - 1) * limit;
+
+      const where = {
+        repository: { organizationId: req.dbUser!.organizationId },
+        ...(repositoryId ? { repositoryId } : {}),
+      };
+
+      const [total, scans] = await Promise.all([
+        prisma.scan.count({ where }),
+        prisma.scan.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          skip: offset,
+          take: limit,
+          select: {
+            id: true,
+            status: true,
+            riskScore: true,
+            findingsCount: true,
+            triggeredBy: true,
+            branch: true,
+            commitSha: true,
+            createdAt: true,
+            startedAt: true,
+            completedAt: true,
+            repository: { select: { id: true, name: true, fullName: true } },
+          },
+        }),
+      ]);
+
+      return reply.send({
+        success: true,
+        data: {
+          scans: scans.map((s) => ({
+            ...s,
+            createdAt: s.createdAt.toISOString(),
+            startedAt: s.startedAt?.toISOString() ?? null,
+            completedAt: s.completedAt?.toISOString() ?? null,
+            repositoryName: s.repository.name,
+          })),
+          total,
+        },
+        error: null,
+      });
+    }
+  );
 
   // ---------------------------------------------------------------------------
   // POST /api/v1/scans — trigger manual scan

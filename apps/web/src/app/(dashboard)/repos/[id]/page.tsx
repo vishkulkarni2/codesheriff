@@ -8,6 +8,7 @@ import { redirect, notFound } from 'next/navigation';
 import { getRepo, listScans } from '@/lib/api';
 import { RiskScoreRing } from '@/components/shared/risk-score-ring';
 import { TriggerScanButton } from '@/components/shared/trigger-scan-button';
+import { RepoScanList } from '@/components/shared/repo-scan-list';
 import { timeAgo } from '@/lib/utils';
 import Link from 'next/link';
 import { ArrowLeft, GitBranch, Globe, Lock, Unlock, Clock } from 'lucide-react';
@@ -100,83 +101,13 @@ export default async function RepoPage({ params }: RepoPageProps) {
           </h2>
         </div>
 
-        {recentScans.length === 0 ? (
-          <div className="flex flex-col items-center gap-4 rounded-xl border bg-card/50 py-14 text-center">
-            <GitBranch className="h-8 w-8 text-muted-foreground/40" />
-            <div>
-              <p className="font-medium text-muted-foreground">No scans yet</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Use the <span className="font-medium">Run scan</span> button above to
-                trigger a manual scan, or push a commit to run one automatically.
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="overflow-hidden rounded-xl border">
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/40">
-                <tr>
-                  {['Status', 'Risk score', 'Findings', 'Triggered', 'When'].map((h) => (
-                    <th
-                      key={h}
-                      className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground"
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {recentScans.map((scan) => (
-                  <tr key={scan.id} className="border-b last:border-0 hover:bg-muted/30">
-                    <td className="px-4 py-3">
-                      <ScanStatusPill status={scan.status} />
-                    </td>
-                    <td className="px-4 py-3">
-                      <RiskScoreRing score={scan.riskScore ?? 0} size={36} />
-                    </td>
-                    <td className="px-4 py-3 tabular-nums">{scan.findingsCount}</td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      Manual
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      <Link
-                        href={`/scans/${scan.id}`}
-                        className="hover:text-foreground hover:underline"
-                      >
-                        {timeAgo(scan.createdAt)}
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <RepoScanList
+          repositoryId={repo.id}
+          initialScans={recentScans}
+          initialTotal={totalScans}
+        />
       </section>
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Sub-component
-// ---------------------------------------------------------------------------
-
-function ScanStatusPill({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    COMPLETE: 'bg-green-100 text-green-700',
-    RUNNING:   'bg-blue-100 text-blue-700 animate-pulse',
-    QUEUED:    'bg-gray-100 text-gray-600',
-    FAILED:    'bg-red-100 text-red-700',
-    CANCELLED: 'bg-gray-100 text-gray-500',
-  };
-  return (
-    <span
-      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-        styles[status] ?? 'bg-gray-100 text-gray-600'
-      }`}
-    >
-      {status}
-    </span>
-  );
-}
