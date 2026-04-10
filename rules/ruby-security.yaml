@@ -57,6 +57,144 @@ rules:
       owasp: A03:2021 - Injection
       benchmark-target: discourse
 
+  - id: ruby-command-injection-backtick
+    pattern-regex: '`[^`]*#\{[^}]+\}[^`]*`'
+    message: >
+      Command injection via backtick interpolation. User-controlled values
+      interpolated into backtick shell commands allow arbitrary command
+      execution. Use Open3.capture3 with separate arguments instead.
+    severity: ERROR
+    languages: [ruby]
+    metadata:
+      category: security
+      cwe: CWE-78
+      owasp: A03:2021 - Injection
+
+  - id: ruby-unsafe-yaml-load
+    pattern: YAML.load(...)
+    message: >
+      YAML.load can deserialize arbitrary Ruby objects, leading to remote code
+      execution when processing untrusted input. Use YAML.safe_load instead,
+      which only allows basic types.
+    severity: ERROR
+    languages: [ruby]
+    metadata:
+      category: security
+      cwe: CWE-502
+
+  - id: ruby-unsafe-marshal-load
+    pattern-either:
+      - pattern: Marshal.load(...)
+      - pattern: Marshal.restore(...)
+    message: >
+      Marshal.load deserializes arbitrary Ruby objects and can execute code
+      during deserialization. Never use Marshal on untrusted data. Use JSON
+      or YAML.safe_load instead.
+    severity: ERROR
+    languages: [ruby]
+    metadata:
+      category: security
+      cwe: CWE-502
+
+  - id: ruby-path-traversal
+    pattern-either:
+      - pattern: File.read("...#{$VAR}...")
+      - pattern: File.open("...#{$VAR}...", ...)
+      - pattern: File.read("..." + $VAR)
+      - pattern: File.open("..." + $VAR, ...)
+    message: >
+      File path built with user input via interpolation. An attacker can use
+      "../" sequences to read arbitrary files. Resolve the path and verify it
+      stays within the intended directory.
+    severity: ERROR
+    languages: [ruby]
+    metadata:
+      category: security
+      cwe: CWE-22
+      owasp: A01:2021 - Broken Access Control
+
+  - id: ruby-weak-hash-md5
+    pattern-either:
+      - pattern: Digest::MD5.hexdigest(...)
+      - pattern: Digest::MD5.digest(...)
+      - pattern: Digest::MD5.new
+    message: >
+      MD5 is cryptographically broken and must not be used for password
+      hashing, signatures, or integrity checks. Use Digest::SHA256 or
+      bcrypt/argon2 for passwords.
+    severity: ERROR
+    languages: [ruby]
+    metadata:
+      category: security
+      cwe: CWE-327
+      owasp: A02:2021 - Cryptographic Failures
+
+  - id: ruby-ssrf
+    pattern: Net::HTTP.get(URI($INPUT))
+    message: >
+      Server-side request forgery (SSRF). If the URL is user-controlled, an
+      attacker can reach internal services, cloud metadata endpoints, or
+      other sensitive resources. Validate and allowlist the URL before making
+      the request.
+    severity: ERROR
+    languages: [ruby]
+    metadata:
+      category: security
+      cwe: CWE-918
+      owasp: A10:2021 - Server-Side Request Forgery
+
+  - id: ruby-hardcoded-api-key
+    pattern-either:
+      - pattern-regex: '"sk-[A-Za-z0-9_\-]{16,}"'
+      - pattern-regex: '"sk_live_[A-Za-z0-9]{16,}"'
+      - pattern-regex: '"sk_test_[A-Za-z0-9]{16,}"'
+      - pattern-regex: '"sk-test-[A-Za-z0-9_\-]{16,}"'
+      - pattern-regex: '"ghp_[A-Za-z0-9]{30,}"'
+      - pattern-regex: '"AKIA[0-9A-Z]{16}"'
+      - pattern-regex: '"AIza[0-9A-Za-z_\-]{30,}"'
+      - pattern-regex: '"xox[bp]-[0-9A-Za-z\-]{20,}"'
+      - pattern-regex: '(?i)(PASSWORD|SECRET|TOKEN|CREDENTIAL)\s*=\s*"[^"]{8,}"'
+    message: >
+      Hardcoded API key or credential detected. Keys in source code leak
+      via version control history, CI logs, and forks. Move the value to
+      an environment variable or a secrets manager.
+    severity: ERROR
+    languages: [ruby]
+    metadata:
+      category: security
+      cwe: CWE-798
+      owasp: A07:2021 - Identification and Authentication Failures
+
+  - id: ruby-cookie-missing-secure
+    pattern: response.set_cookie(...)
+    message: >
+      Cookie set without the secure and httponly flags. Without secure, the
+      cookie is sent over plain HTTP, allowing interception. Without
+      httponly, JavaScript can steal the cookie via XSS. Add secure: true
+      and httponly: true to the cookie options.
+    severity: WARNING
+    languages: [ruby]
+    metadata:
+      category: security
+      cwe: CWE-614
+      owasp: A05:2021 - Security Misconfiguration
+
+  - id: ruby-mass-assignment
+    pattern-either:
+      - pattern: $OBJ.update_attributes($PARAMS)
+      - pattern: $OBJ.update_attributes!($PARAMS)
+    message: >
+      Mass assignment without strong parameters. Passing unsanitized user
+      input to update_attributes allows attackers to set any attribute,
+      including admin flags. Use strong parameters (permit) to whitelist
+      allowed fields.
+    severity: ERROR
+    languages: [ruby]
+    metadata:
+      category: security
+      cwe: CWE-915
+      owasp: A04:2021 - Insecure Design
+
   - id: ruby-nil-method-call
     pattern-either:
       - pattern: |
