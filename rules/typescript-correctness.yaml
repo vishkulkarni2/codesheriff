@@ -7,7 +7,7 @@ rules:
   # ---------------------------------------------------------------------------
 
   - id: ts-async-foreach
-    patterns:
+    pattern-either:
       - pattern: $ARRAY.forEach(async ($ITEM) => { ... })
       - pattern: $ARRAY.forEach(async ($ITEM, $IDX) => { ... })
       - pattern: $ARRAY.forEach(async function($ITEM) { ... })
@@ -17,7 +17,7 @@ rules:
       and operations may execute concurrently without coordination. Use a for...of
       loop with await, or Promise.all(array.map(async ...)) for controlled concurrency.
     severity: ERROR
-    languages: [typescript, javascript]
+    languages: [typescript]
     metadata:
       category: correctness
       cwe: CWE-252
@@ -32,11 +32,61 @@ rules:
       object references and always returns false. Use dayjs(a).isSame(dayjs(b)) or
       dayjs(a).isSame(b, 'day') for date equality.
     severity: ERROR
-    languages: [typescript, javascript]
+    languages: [typescript]
     metadata:
       category: correctness
       cwe: CWE-595
       benchmark-target: cal.com
+
+  - id: ts-as-any-cast
+    pattern: $EXPR as any
+    message: >
+      Casting to `any` bypasses TypeScript's type system entirely, hiding type
+      errors that could indicate real bugs. Use a specific type, a type guard,
+      or `unknown` with runtime validation instead.
+    severity: WARNING
+    languages: [typescript]
+    metadata:
+      category: correctness
+      cwe: CWE-704
+
+  - id: ts-ignore-directive
+    pattern-regex: "//\\s*@ts-(ignore|expect-error)"
+    paths:
+      exclude:
+        - "*.test.ts"
+        - "*.test.tsx"
+        - "*.spec.ts"
+        - "*.spec.tsx"
+        - "**/__tests__/**"
+        - "**/test/**"
+        - "**/tests/**"
+    message: >
+      `@ts-ignore` or `@ts-expect-error` suppresses TypeScript compiler errors
+      and can hide genuine type mismatches, null dereferences, or missing
+      properties. Fix the underlying type error instead, or add a specific
+      type annotation.
+    severity: WARNING
+    languages: [typescript]
+    metadata:
+      category: correctness
+      cwe: CWE-704
+
+  - id: ts-weak-hash-md5-sha1
+    pattern-either:
+      - pattern: crypto.createHash("md5")
+      - pattern: crypto.createHash('md5')
+      - pattern: crypto.createHash("sha1")
+      - pattern: crypto.createHash('sha1')
+    message: >
+      MD5 and SHA-1 are cryptographically broken and must not be used for
+      password hashing, integrity checks, or signatures. Use bcrypt, scrypt,
+      or Argon2 for passwords; SHA-256+ for integrity.
+    severity: ERROR
+    languages: [typescript]
+    metadata:
+      category: security
+      cwe: CWE-327
 
   # ts-suspicious-and-permission-check: DISABLED
   # Far too broad — any legitimate multi-permission guard triggers it.
