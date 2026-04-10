@@ -268,7 +268,7 @@ export class GitHubClient {
   }
 
   /**
-   * Create or update a GitHub Check Run for a PR/commit.
+   * Create a GitHub Check Run for a PR/commit.
    */
   async createCheckRun(
     installationId: string,
@@ -299,6 +299,45 @@ export class GitHubClient {
     });
 
     return response.data.id;
+  }
+
+  /**
+   * Update an existing GitHub Check Run (e.g. mark in_progress → completed).
+   * Falls back to creating a new check run if the update fails (e.g. stale ID).
+   */
+  async updateCheckRun(
+    installationId: string,
+    owner: string,
+    repo: string,
+    checkRunId: number,
+    headSha: string,
+    name: string,
+    status: 'in_progress' | 'completed',
+    conclusion?: 'success' | 'failure' | 'neutral',
+    output?: {
+      title: string;
+      summary: string;
+      text?: string;
+    }
+  ): Promise<number> {
+    const octokit = await this.getInstallationOctokit(installationId);
+
+    try {
+      const response = await octokit.rest.checks.update({
+        owner,
+        repo,
+        check_run_id: checkRunId,
+        status,
+        ...(conclusion ? { conclusion } : {}),
+        ...(output ? { output } : {}),
+        ...(status === 'completed' ? { completed_at: new Date().toISOString() } : {}),
+      });
+      return response.data.id;
+    } catch (err) {
+      // Fallback: create a new check run if the update fails
+      logger.warn({ err, checkRunId }, 'failed to update check run — creating new one');
+      return this.createCheckRun(installationId, owner, repo, headSha, name, status, conclusion, output);
+    }
   }
 
   /**
@@ -344,6 +383,7 @@ export class GitHubClient {
         commit_id: commitSha,
         path,
         line,
+        side: 'RIGHT', // Comment on the new version of the file
         body,
       });
     } catch (err) {

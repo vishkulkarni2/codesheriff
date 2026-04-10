@@ -14,10 +14,24 @@ export const metadata: Metadata = {
     ],
   },
   title: {
-    default: 'CodeSheriff',
+    default: 'CodeSheriff -- AI Code Review for Security | #1 on Martian Benchmark',
     template: '%s | CodeSheriff',
   },
-  description: 'AI-generated code security & quality gate',
+  description:
+    'Automated security review for every PR. Catches SQL injection, XSS, hardcoded secrets, auth bugs, and more across 6 languages. Free to start.',
+  metadataBase: new URL('https://thecodesheriff.com'),
+  openGraph: {
+    type: 'website',
+    siteName: 'CodeSheriff',
+    locale: 'en_US',
+  },
+  twitter: {
+    card: 'summary_large_image',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
