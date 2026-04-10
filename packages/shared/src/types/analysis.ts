@@ -49,6 +49,10 @@ export interface AnalysisFeatureFlags {
   enableSecretsScanning: boolean;
   enableStaticAnalysis: boolean;
   enableAutoFix?: boolean;
+  /** Gate PR inline review comments behind TEAM plan */
+  enablePRComments?: boolean;
+  /** Gate Slack scan notifications behind TEAM plan */
+  enableSlackNotification?: boolean;
   /** Enable second-pass LLM verifier that drops non-real-bug findings (default: true) */
   enableLlmVerifier?: boolean;
   maxFilesPerScan: number;

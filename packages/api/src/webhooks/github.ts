@@ -663,8 +663,45 @@ async function syncRepositoriesFromInstallation(
     }));
   }
 
+  // Enforce FREE plan repo limit (max 3 repos)
+  const FREE_REPO_LIMIT = 3;
+  const org = await prisma.organization.findUnique({
+    where: { id: orgId },
+    select: { plan: true },
+  });
+  const isFreePlan = !org || org.plan === 'FREE';
+
+  let currentRepoCount = 0;
+  if (isFreePlan) {
+    currentRepoCount = await prisma.repository.count({
+      where: { organizationId: orgId },
+    });
+  }
+
   // Upsert each repository
   for (const repo of enrichedRepos) {
+    // For FREE plans, check if this is a new repo that would exceed the limit
+    if (isFreePlan) {
+      const exists = await prisma.repository.findUnique({
+        where: {
+          organizationId_provider_fullName: {
+            organizationId: orgId,
+            provider: Provider.GITHUB,
+            fullName: repo.fullName,
+          },
+        },
+        select: { id: true },
+      });
+
+      if (!exists && currentRepoCount >= FREE_REPO_LIMIT) {
+        log.warn(
+          { orgId, repoFullName: repo.fullName, currentRepoCount, limit: FREE_REPO_LIMIT },
+          'FREE plan repo limit reached — skipping new repo sync'
+        );
+        continue;
+      }
+    }
+
     try {
       await prisma.repository.upsert({
         where: {
@@ -690,6 +727,8 @@ async function syncRepositoriesFromInstallation(
           language: repo.language,
         },
       });
+
+      if (isFreePlan) currentRepoCount++;
 
       log.info(
         { orgId, repoFullName: repo.fullName },

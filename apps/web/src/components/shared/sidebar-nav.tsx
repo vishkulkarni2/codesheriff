@@ -12,6 +12,7 @@ import {
   GitBranch,
   BookOpen,
   Settings,
+  CreditCard,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -19,6 +20,7 @@ const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/repos',     label: 'Repositories', icon: GitBranch },
   { href: '/rules',     label: 'Rules',         icon: BookOpen },
+  { href: '/pricing',   label: 'Pricing',       icon: CreditCard },
   { href: '/settings',  label: 'Settings',      icon: Settings },
 ] as const;
 

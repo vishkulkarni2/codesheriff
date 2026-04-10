@@ -238,6 +238,22 @@ export async function syncGitHubRepos(
 }
 
 // ---------------------------------------------------------------------------
+// Billing
+// ---------------------------------------------------------------------------
+
+export interface BillingStatus {
+  plan: string;
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+  stripeSubscriptionStatus: string | null;
+  planUpdatedAt: string | null;
+}
+
+export async function getBillingStatus(token: string): Promise<ApiResponse<BillingStatus>> {
+  return apiFetch<BillingStatus>('/billing/status', token);
+}
+
+// ---------------------------------------------------------------------------
 // SARIF export
 // ---------------------------------------------------------------------------
 

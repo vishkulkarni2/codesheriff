@@ -287,10 +287,11 @@ export async function processScanJob(
 
     // ----- Step 10: GitHub integrations (non-fatal) -----
     if (payload.provider === Provider.GITHUB && payload.installationId) {
-      await postGithubResults(payload, result.findings, result.riskScore, deps.githubClient, checkRunId, log);
+      await postGithubResults(payload, result.findings, result.riskScore, deps.githubClient, checkRunId, features, log);
     }
 
-    // ----- Step 11: Slack notification (non-fatal) -----
+    // ----- Step 11: Slack notification (TEAM+ only, non-fatal) -----
+    if (features.enableSlackNotification) {
     await postSlackNotification({
       payload,
       outcome: 'complete',
@@ -301,6 +302,7 @@ export async function processScanJob(
       lowCount: result.findings.filter((f) => f.severity === Severity.LOW).length,
       log,
     });
+    }
 
     log.info(
       { riskScore: result.riskScore, findings: result.findings.length, durationMs: result.durationMs },
@@ -333,10 +335,11 @@ export async function processScanJob(
     if (checkRunId !== null && payload.installationId) {
       try {
         const [owner, repo] = splitFullName(payload.repoFullName);
-        await deps.githubClient.createCheckRun(
+        await deps.githubClient.updateCheckRun(
           payload.installationId,
           owner,
           repo,
+          checkRunId,
           payload.commitSha,
           'CodeSheriff',
           'completed',
@@ -498,18 +501,24 @@ function parseDependencies(
   return {};
 }
 
-function buildFeatureFlags(_plan: string): AnalysisFeatureFlags {
-  // CodeSheriff is a managed product — we eat the Anthropic cost on the user's
-  // behalf as part of the subscription. Every scan gets the full detector
-  // pipeline regardless of plan tier. Individual detectors can still be
-  // disabled per-deployment via env flags for emergency cost control.
+function buildFeatureFlags(plan: string): AnalysisFeatureFlags {
+  const isTeamOrHigher = plan === 'TEAM' || plan === 'ENTERPRISE';
+
   return {
+    // Core detection: ALL plans get the full pipeline
     enableHallucinationDetection: process.env['ENABLE_HALLUCINATION_DETECTION'] !== 'false',
     enableAuthValidation: process.env['ENABLE_AUTH_VALIDATION'] !== 'false',
     enableLogicBugDetection: process.env['ENABLE_LOGIC_BUG_DETECTION'] !== 'false',
-    enableAutoFix: process.env['ENABLE_AUTO_FIX'] !== 'false',
     enableSecretsScanning: true,
     enableStaticAnalysis: true,
+
+    // PR comments: all plans (core value prop for PR review)
+    enablePRComments: true,
+
+    // TEAM-only features
+    enableAutoFix: isTeamOrHigher && process.env['ENABLE_AUTO_FIX'] !== 'false',
+    enableSlackNotification: isTeamOrHigher,
+
     maxFilesPerScan: parseInt(process.env['MAX_FILES_PER_SCAN'] ?? '50', 10),
     maxLinesPerFile: parseInt(process.env['MAX_LINES_PER_FILE'] ?? '1000', 10),
   };
@@ -543,6 +552,7 @@ async function postGithubResults(
   riskScore: number,
   githubClient: GitHubClient,
   checkRunId: number | null,
+  features: AnalysisFeatureFlags,
   log: Logger
 ): Promise<void> {
   if (!payload.installationId) return;
@@ -554,10 +564,11 @@ async function postGithubResults(
   if (checkRunId !== null) {
     try {
       const hasCritical = findings.some((f) => f.severity === Severity.CRITICAL || f.severity === Severity.HIGH);
-      await githubClient.createCheckRun(
+      await githubClient.updateCheckRun(
         payload.installationId,
         owner,
         repo,
+        checkRunId,
         payload.commitSha,
         'CodeSheriff',
         'completed',
@@ -572,8 +583,9 @@ async function postGithubResults(
     }
   }
 
-  // Post PR comment and inline comments (only for PRs)
+  // Post PR comment and inline comments (only for PRs, TEAM+ only)
   if (payload.prNumber === null) return;
+  if (!features.enablePRComments) return;
 
   try {
     const comment = buildPRSummaryComment({

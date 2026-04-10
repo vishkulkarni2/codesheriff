@@ -86,6 +86,19 @@ export async function ruleRoutes(app: FastifyInstance): Promise<void> {
         });
       }
 
+      // Custom rules are a TEAM+ feature
+      const orgForPlan = await prisma.organization.findUnique({
+        where: { id: req.dbUser!.organizationId },
+        select: { plan: true },
+      });
+      if (orgForPlan?.plan === 'FREE') {
+        return reply.status(403).send({
+          success: false,
+          data: null,
+          error: 'Custom rules require the Team plan. Upgrade at Settings > Plan & Billing.',
+        });
+      }
+
       const parsed = createRuleSchema.safeParse(req.body);
       if (!parsed.success) {
         return reply.status(400).send({
