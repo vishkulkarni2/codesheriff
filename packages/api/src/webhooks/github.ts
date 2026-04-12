@@ -663,8 +663,8 @@ async function syncRepositoriesFromInstallation(
     }));
   }
 
-  // Enforce FREE plan repo limit (max 3 repos)
-  const FREE_REPO_LIMIT = 3;
+  // Enforce FREE plan repo limit (1 repo per marketing site pricing)
+  const FREE_REPO_LIMIT = 1;
   const org = await prisma.organization.findUnique({
     where: { id: orgId },
     select: { plan: true },

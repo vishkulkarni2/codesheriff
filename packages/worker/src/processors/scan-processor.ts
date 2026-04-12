@@ -502,23 +502,33 @@ function parseDependencies(
 }
 
 function buildFeatureFlags(plan: string): AnalysisFeatureFlags {
-  const isTeamOrHigher = plan === 'TEAM' || plan === 'ENTERPRISE';
+  // Tier mapping — must match the marketing site at thecodesheriff.com/pricing.
+  // The Plan enum in the DB uses TEAM for the paid tier; we treat TEAM as Pro.
+  const isPro = plan === 'TEAM' || plan === 'PRO' || plan === 'ENTERPRISE' || plan === 'SCALE';
+  const isScale = plan === 'ENTERPRISE' || plan === 'SCALE';
 
   return {
-    // Core detection: ALL plans get the full pipeline
-    enableHallucinationDetection: process.env['ENABLE_HALLUCINATION_DETECTION'] !== 'false',
-    enableAuthValidation: process.env['ENABLE_AUTH_VALIDATION'] !== 'false',
-    enableLogicBugDetection: process.env['ENABLE_LOGIC_BUG_DETECTION'] !== 'false',
+    // Static analysis (semgrep + secrets): ALL plans including FREE
     enableSecretsScanning: true,
     enableStaticAnalysis: true,
 
-    // PR comments: all plans (core value prop for PR review)
+    // Full AI pipeline (hallucination, auth, logic): Pro+ only.
+    // Marketing site: "Full AI pipeline" is listed as a Pro feature.
+    // Free users get semgrep-only scanning.
+    enableHallucinationDetection: isPro && process.env['ENABLE_HALLUCINATION_DETECTION'] !== 'false',
+    enableAuthValidation: isPro && process.env['ENABLE_AUTH_VALIDATION'] !== 'false',
+    enableLogicBugDetection: isPro && process.env['ENABLE_LOGIC_BUG_DETECTION'] !== 'false',
+
+    // Auto-fix suggestions: Pro+ only
+    enableAutoFix: isPro && process.env['ENABLE_AUTO_FIX'] !== 'false',
+
+    // PR comments: ALL plans (marketing site shows this as free)
     enablePRComments: true,
 
-    // TEAM-only features
-    enableAutoFix: isTeamOrHigher && process.env['ENABLE_AUTO_FIX'] !== 'false',
-    enableSlackNotification: isTeamOrHigher,
+    // Slack notifications: Pro+ only
+    enableSlackNotification: isPro,
 
+    // FREE gets 1 repo (enforced in repos.ts), but scan limits are the same
     maxFilesPerScan: parseInt(process.env['MAX_FILES_PER_SCAN'] ?? '50', 10),
     maxLinesPerFile: parseInt(process.env['MAX_LINES_PER_FILE'] ?? '1000', 10),
   };
