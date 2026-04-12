@@ -139,7 +139,7 @@ async function handleMergeRequest(
       enqueuedAt: new Date().toISOString(),
     },
     {
-      jobId: `scan:${scan.id}`,
+      jobId: `scan-${scan.id}`,
       attempts: 3,
       backoff: { type: 'exponential', delay: 5_000 },
     }
@@ -189,7 +189,7 @@ async function handleGitlabPush(
       enqueuedAt: new Date().toISOString(),
     },
     {
-      jobId: `scan:${scan.id}`,
+      jobId: `scan-${scan.id}`,
       attempts: 3,
       backoff: { type: 'exponential', delay: 5_000 },
     }

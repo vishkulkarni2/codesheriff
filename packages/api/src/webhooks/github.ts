@@ -252,7 +252,7 @@ async function handlePullRequest(
       enqueuedAt: new Date().toISOString(),
     },
     {
-      jobId: `scan:${scan.id}`, // Idempotent — prevents duplicate jobs on GitHub retries
+      jobId: `scan-${scan.id}`, // Idempotent — prevents duplicate jobs on GitHub retries (no colons — BullMQ forbids them in custom IDs)
       attempts: 3,
       backoff: { type: 'exponential', delay: 5_000 },
     }
@@ -304,7 +304,7 @@ async function handlePush(
       enqueuedAt: new Date().toISOString(),
     },
     {
-      jobId: `scan:${scan.id}`,
+      jobId: `scan-${scan.id}`,
       attempts: 3,
       backoff: { type: 'exponential', delay: 5_000 },
     }
