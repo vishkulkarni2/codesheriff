@@ -21,6 +21,7 @@ import { dashboardRoutes } from './routes/dashboard.js';
 import { ruleRoutes } from './routes/rules.js';
 import { orgRoutes } from './routes/orgs.js';
 import { billingRoutes } from './routes/billing.js';
+import { supportRoutes } from './routes/support.js';
 
 // Webhook handlers
 import { githubWebhookRoutes } from './webhooks/github.js';
@@ -154,6 +155,9 @@ export async function buildServer(opts: ServerOptions) {
   await app.register(ruleRoutes, { prefix: '/api/v1' });
   await app.register(orgRoutes, { prefix: '/api/v1' });
   await app.register(billingRoutes, { prefix: '/api/v1' });
+
+  // Support chat — no auth required (works for marketing site too)
+  await app.register(supportRoutes, { prefix: '/api/v1' });
 
   // -------------------------------------------------------------------------
   // Global error handler — structured, never leaks stack traces in prod

@@ -13,6 +13,7 @@ import {
   BookOpen,
   Settings,
   CreditCard,
+  HelpCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -22,6 +23,7 @@ const NAV_ITEMS = [
   { href: '/rules',     label: 'Rules',         icon: BookOpen },
   { href: '/pricing',   label: 'Pricing',       icon: CreditCard },
   { href: '/settings',  label: 'Settings',      icon: Settings },
+  { href: '/support',   label: 'Support',       icon: HelpCircle },
 ] as const;
 
 export function SidebarNav() {

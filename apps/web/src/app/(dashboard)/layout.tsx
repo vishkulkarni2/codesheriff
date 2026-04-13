@@ -7,6 +7,7 @@
 import { UserButton } from '@clerk/nextjs';
 import { LogoIcon } from '@/components/shared/logo';
 import { SidebarNav } from '@/components/shared/sidebar-nav';
+import { SupportChat } from '@/components/shared/support-chat';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -33,6 +34,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <main className="flex flex-1 flex-col overflow-y-auto">
         {children}
       </main>
+
+      {/* Floating support chat widget */}
+      <SupportChat />
     </div>
   );
 }
