@@ -125,6 +125,50 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
   });
 
   // ---------------------------------------------------------------------------
+  // POST /api/v1/billing/cancel
+  // ---------------------------------------------------------------------------
+  app.post('/billing/cancel', { preHandler: [app.authenticate] }, async (req, reply) => {
+    const orgId = req.dbUser!.organizationId;
+
+    const org = await prisma.organization.findUnique({
+      where: { id: orgId },
+      select: { stripeSubscriptionId: true, stripeCustomerId: true },
+    });
+
+    if (!org?.stripeSubscriptionId) {
+      return reply.status(400).send({
+        success: false,
+        data: null,
+        error: 'No active subscription to cancel.',
+      });
+    }
+
+    const stripe = getStripe();
+
+    // Cancel at period end so the user retains access until the billing cycle ends.
+    // When the period ends, Stripe fires customer.subscription.deleted and our
+    // webhook handler downgrades the org to FREE.
+    const subscription = await stripe.subscriptions.update(org.stripeSubscriptionId, {
+      cancel_at_period_end: true,
+    });
+
+    // Sync the status immediately so the UI can reflect the pending cancellation
+    await prisma.organization.update({
+      where: { id: orgId },
+      data: {
+        stripeSubscriptionStatus: subscription.status,
+        planUpdatedAt: new Date(),
+      },
+    });
+
+    return reply.send({
+      success: true,
+      data: { cancelAtPeriodEnd: true, currentPeriodEnd: subscription.current_period_end },
+      error: null,
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // POST /api/v1/billing/portal
   // ---------------------------------------------------------------------------
   app.post('/billing/portal', { preHandler: [app.authenticate] }, async (req, reply) => {

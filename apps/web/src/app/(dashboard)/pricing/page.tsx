@@ -11,6 +11,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { UpgradeButton } from '@/components/shared/upgrade-button';
+import { CancelSubscriptionButton } from '@/components/shared/cancel-subscription-button';
 import { Check, X, ArrowRight } from 'lucide-react';
 import { getBillingStatus } from '@/lib/api';
 
@@ -121,8 +122,11 @@ export default async function PricingPage() {
           </div>
 
           {isPro ? (
-            <div className="rounded-md border border-primary/20 bg-primary/5 px-4 py-2 text-center text-sm font-medium text-primary">
-              Current plan
+            <div className="flex flex-col gap-3">
+              <div className="rounded-md border border-primary/20 bg-primary/5 px-4 py-2 text-center text-sm font-medium text-primary">
+                Current plan
+              </div>
+              <CancelSubscriptionButton />
             </div>
           ) : (
             <UpgradeButton />

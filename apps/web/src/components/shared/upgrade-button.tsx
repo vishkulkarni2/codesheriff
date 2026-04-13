@@ -76,7 +76,7 @@ export function UpgradeButton() {
         ) : (
           <>
             <Zap className="h-3.5 w-3.5 fill-current" />
-            Upgrade to Team - $49/mo
+            Upgrade to Pro — $29/mo
           </>
         )}
       </button>

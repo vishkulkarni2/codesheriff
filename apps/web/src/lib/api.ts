@@ -253,6 +253,15 @@ export async function getBillingStatus(token: string): Promise<ApiResponse<Billi
   return apiFetch<BillingStatus>('/billing/status', token);
 }
 
+export interface CancelResult {
+  cancelAtPeriodEnd: boolean;
+  currentPeriodEnd: number;
+}
+
+export async function cancelSubscription(token: string): Promise<ApiResponse<CancelResult>> {
+  return apiFetch<CancelResult>('/billing/cancel', token, { method: 'POST' });
+}
+
 // ---------------------------------------------------------------------------
 // SARIF export
 // ---------------------------------------------------------------------------
