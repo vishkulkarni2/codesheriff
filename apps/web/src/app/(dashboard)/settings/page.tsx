@@ -80,7 +80,7 @@ export default async function SettingsPage() {
           <div className="grid gap-2 text-sm">
             <Row label="Name" value={org.name} />
             <Row label="Slug" value={org.slug} mono />
-            <Row label="Plan" value={org.plan} />
+            <Row label="Plan" value={planDisplayName(org.plan)} />
             <Row label="Seats" value={String(org.seats)} />
           </div>
         </SettingsSection>
@@ -153,13 +153,13 @@ export default async function SettingsPage() {
       {/* Plan */}
       <SettingsSection icon={<CreditCard className="h-4 w-4" />} title="Plan & Billing">
         <div className="grid gap-2 text-sm">
-          <Row label="Current plan" value={org?.plan ?? '-'} />
+          <Row label="Current plan" value={org ? planDisplayName(org.plan) : '-'} />
           <Row label="Seat limit" value={org ? String(org.seats) : '-'} />
         </div>
         {org?.plan === 'FREE' && (
           <div className="mt-4">
             <p className="mb-3 text-xs text-muted-foreground">
-              Upgrade to Team for unlimited scans, priority support, and up to 25 seats.
+              Upgrade to Pro for unlimited scans, priority support, and up to 25 seats.
             </p>
             <UpgradeButton />
           </div>
@@ -200,6 +200,25 @@ function SettingsSection({
       {children}
     </div>
   );
+}
+
+/**
+ * Map the DB plan enum to the user-facing display name.
+ * The database stores TEAM for the paid tier; the marketing site calls it "Pro".
+ */
+function planDisplayName(plan: string): string {
+  switch (plan) {
+    case 'TEAM':
+    case 'PRO':
+      return 'Pro';
+    case 'ENTERPRISE':
+    case 'SCALE':
+      return 'Scale';
+    case 'FREE':
+      return 'Free';
+    default:
+      return plan;
+  }
 }
 
 function Row({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
