@@ -397,7 +397,8 @@ async function fetchFiles(
         owner,
         repo,
         payload.prNumber,
-        maxFiles
+        maxFiles,
+        payload.commitSha
       );
     } else {
       // Manual / branch scan: walk the FULL repo tree at this commit, not the

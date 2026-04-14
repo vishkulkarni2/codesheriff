@@ -53,7 +53,8 @@ export class GitHubClient {
     owner: string,
     repo: string,
     prNumber: number,
-    maxFiles: number
+    maxFiles: number,
+    commitSha?: string
   ): Promise<AnalysisFile[]> {
     const octokit = await this.getInstallationOctokit(installationId);
 
@@ -88,7 +89,7 @@ export class GitHubClient {
             owner,
             repo,
             path: file.filename,
-            ref: file.sha,
+            ...(commitSha ? { ref: commitSha } : {}),
           });
 
           const data = contentResponse.data;
