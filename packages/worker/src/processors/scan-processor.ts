@@ -369,7 +369,22 @@ async function fetchFiles(
 
   // ---- GitHub ----
   if (payload.provider === Provider.GITHUB) {
-    if (!payload.installationId) {
+    // The installationId may come from the webhook payload OR from the org's
+    // stored githubInstallationId. Webhooks sometimes omit the installation
+    // field, and the payload value can be null for manual scans. Fall back to
+    // the org's stored value so PR scans still work.
+    let installationId = payload.installationId;
+    if (!installationId) {
+      const repoWithOrg = await prisma.repository.findUnique({
+        where: { id: payload.repositoryId },
+        select: { organization: { select: { githubInstallationId: true } } },
+      });
+      installationId = repoWithOrg?.organization?.githubInstallationId ?? null;
+      if (installationId) {
+        log.info({ installationId }, 'using org githubInstallationId as fallback');
+      }
+    }
+    if (!installationId) {
       log.warn('GitHub scan missing installationId — cannot fetch files');
       return [];
     }
@@ -378,7 +393,7 @@ async function fetchFiles(
 
     if (payload.prNumber !== null) {
       return deps.githubClient.getPRFiles(
-        payload.installationId,
+        installationId,
         owner,
         repo,
         payload.prNumber,
@@ -391,7 +406,7 @@ async function fetchFiles(
       // long-lived branches were silently scanning ~zero files.
       log.info({ owner, repo, commitSha: payload.commitSha }, 'manual scan: fetching full branch tree');
       return deps.githubClient.getBranchTreeFiles(
-        payload.installationId,
+        installationId,
         owner,
         repo,
         payload.commitSha,
