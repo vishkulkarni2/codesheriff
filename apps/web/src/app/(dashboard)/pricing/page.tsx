@@ -22,6 +22,7 @@ interface PlanFeature {
   free: boolean | string;
   pro: boolean | string;
   scale: boolean | string;
+  comingSoon?: boolean;
 }
 
 const FEATURES: PlanFeature[] = [
@@ -33,9 +34,9 @@ const FEATURES: PlanFeature[] = [
   { label: 'Slack integration', free: false, pro: true, scale: true },
   { label: 'SARIF export', free: false, pro: true, scale: true },
   { label: 'CLI access', free: false, pro: true, scale: true },
-  { label: 'Custom rules', free: false, pro: false, scale: true },
-  { label: 'Policy enforcement', free: false, pro: false, scale: true },
-  { label: 'SSO / SAML', free: false, pro: false, scale: true },
+  { label: 'Custom rules', free: false, pro: false, scale: true, comingSoon: true },
+  { label: 'Policy enforcement', free: false, pro: false, scale: true, comingSoon: true },
+  { label: 'SSO / SAML', free: false, pro: false, scale: true, comingSoon: true },
   { label: 'Email support', free: false, pro: true, scale: true },
   { label: 'Priority support', free: false, pro: false, scale: true },
 ];
@@ -142,14 +143,14 @@ export default async function PricingPage() {
               <span className="text-sm text-muted-foreground">per dev / month</span>
             </div>
             <p className="mt-3 text-sm text-muted-foreground">
-              Minimum 20 developers. Everything in Pro plus custom rules, policy enforcement, and SSO. Starts at $500/mo.
+              Minimum 20 developers. Everything in Pro plus custom rules, SSO, and policy enforcement. Some features launching Q3 2026. Starts at $500/mo.
             </p>
           </div>
 
           <div className="mb-6 flex-1">
             <ul className="flex flex-col gap-3 text-sm">
               {FEATURES.map((f) => (
-                <FeatureRow key={f.label} label={f.label} value={f.scale} />
+                <FeatureRow key={f.label} label={f.label} value={f.scale} comingSoon={f.comingSoon ?? false} />
               ))}
             </ul>
           </div>
@@ -178,7 +179,7 @@ export default async function PricingPage() {
   );
 }
 
-function FeatureRow({ label, value }: { label: string; value: boolean | string }) {
+function FeatureRow({ label, value, comingSoon }: { label: string; value: boolean | string; comingSoon?: boolean }) {
   return (
     <li className="flex items-start gap-2">
       {value === true ? (
@@ -190,6 +191,11 @@ function FeatureRow({ label, value }: { label: string; value: boolean | string }
       )}
       <span className={value === false ? 'text-muted-foreground/60' : ''}>
         {typeof value === 'string' ? `${label}: ${value}` : label}
+        {comingSoon && value !== false && (
+          <span className="ml-1.5 inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+            Coming Q3
+          </span>
+        )}
       </span>
     </li>
   );
