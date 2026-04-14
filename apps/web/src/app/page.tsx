@@ -21,7 +21,7 @@ import { LogoIcon } from '@/components/shared/logo';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'CodeSheriff -- AI Code Review for Security | #1 on Martian Benchmark',
+  title: 'CodeSheriff -- AI Code Review for Security | Highest Score on Code Review Benchmark',
   description:
     'Automated security review for every PR. Catches SQL injection, XSS, hardcoded secrets, auth bugs, and more across 6 languages. Free to start.',
   openGraph: {
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'CodeSheriff -- AI Code Review for Security',
     description:
-      'Automated security review for every PR. #1 on the Martian Code Review Benchmark.',
+      'Automated security review for every PR. Highest published score on the Martian Code Review Benchmark.',
   },
   alternates: {
     canonical: 'https://thecodesheriff.com',
@@ -96,7 +96,7 @@ export default async function LandingPage() {
             className="mb-6 inline-flex items-center gap-2 rounded-full border border-yellow-300 bg-yellow-50 px-4 py-1.5 text-sm font-medium text-yellow-800 transition hover:bg-yellow-100"
           >
             <Trophy className="h-4 w-4" />
-            #1 on the Martian Code Review Benchmark -- 64.6% F1
+            64.6% F1 on the Martian Code Review Benchmark -- highest published score
             <ArrowRight className="h-3.5 w-3.5" />
           </a>
 
@@ -236,11 +236,11 @@ export default async function LandingPage() {
           <div className="mx-auto max-w-3xl px-4 text-center">
             <Trophy className="mx-auto mb-4 h-10 w-10 text-yellow-500" />
             <h2 className="mb-4 text-3xl font-bold">
-              Ranked #1 on the Martian Code Review Benchmark
+              Scored 64.6% F1 on the Martian Code Review Benchmark
             </h2>
             <p className="mb-8 text-muted-foreground">
-              Independent benchmark across 50 real pull requests, scored by multiple LLM judges.
-              CodeSheriff beat every other tool.
+              Evaluated using the published benchmark methodology across 50 real pull requests,
+              scored by multiple LLM judges. The highest score in the field, pending official inclusion.
             </p>
             <div className="overflow-x-auto">
               <table className="mx-auto text-sm">
