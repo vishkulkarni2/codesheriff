@@ -5,6 +5,12 @@
  * Entry point. Sets up Commander with two subcommands:
  *   codesheriff review   — scans current directory or staged git changes
  *   codesheriff scan     — scans a specific file or directory
+ *
+ * TODO: Gate CLI access behind a CodeSheriff API key (TEAM+ only).
+ * The CLI currently runs locally with just an Anthropic API key and has no
+ * authentication to the CodeSheriff backend. Add a --api-key flag (or
+ * CODESHERIFF_API_KEY env var) that validates against the backend before
+ * allowing scans. Free-tier users should get a clear upgrade prompt.
  */
 
 import { Command } from 'commander';

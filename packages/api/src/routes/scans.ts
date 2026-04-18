@@ -384,6 +384,19 @@ export async function scanRoutes(app: FastifyInstance): Promise<void> {
     async (req, reply) => {
       const { id } = req.params as { id: string };
 
+      // SARIF export is a TEAM+ feature
+      const orgForPlan = await prisma.organization.findUnique({
+        where: { id: req.dbUser!.organizationId },
+        select: { plan: true },
+      });
+      if (orgForPlan?.plan === 'FREE') {
+        return reply.status(403).send({
+          success: false,
+          data: null,
+          error: 'SARIF export requires the Team plan. Upgrade at Settings > Plan & Billing.',
+        });
+      }
+
       // IDOR prevention: org-scoped lookup (same pattern as GET /scans/:id)
       const scan = await prisma.scan.findFirst({
         where: {
