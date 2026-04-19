@@ -118,7 +118,8 @@ export async function buildServer(opts: ServerOptions) {
     (req, body, done) => {
       (req as unknown as { rawBody: Buffer }).rawBody = body as Buffer;
       try {
-        done(null, JSON.parse(body.toString('utf8')));
+        const str = body.toString('utf8').trim();
+        done(null, str ? JSON.parse(str) : null);
       } catch (err) {
         done(err as Error, undefined);
       }
