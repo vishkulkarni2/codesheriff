@@ -102,6 +102,96 @@ CodeSheriff fetches file content via GitHub's API for analysis. Code is processe
 - Use the chat widget on the dashboard (you might be using it now)
 - For enterprise customers: your dedicated Slack channel
 
+## Custom Rules (Pro/Team Plan)
+
+Custom Rules let you enforce your team's specific coding standards. CodeSheriff checks every PR against your rules in addition to the built-in detections.
+
+### How to create a rule
+
+1. Go to Dashboard > Rules
+2. Click "New Rule"
+3. Fill in: name, description, severity (critical/high/medium/low), and the rule pattern
+4. Toggle "Enabled" and save
+
+### Example Rules
+
+**Block console.log in production code:**
+- Name: No console.log in production
+- Description: console.log statements should not ship to production. Use a proper logging library instead.
+- Severity: Medium
+- Pattern: Detect any use of console.log, console.warn, console.error in non-test files
+
+**Require error handling in async functions:**
+- Name: Async functions must have try-catch
+- Description: Every async function should have proper error handling to prevent unhandled promise rejections.
+- Severity: High
+- Pattern: Flag async functions that don't contain a try-catch block
+
+**Flag hardcoded API keys:**
+- Name: No hardcoded secrets
+- Description: API keys, tokens, and passwords should come from environment variables, not hardcoded strings.
+- Severity: Critical
+- Pattern: Detect string literals matching API key patterns (sk_, pk_, api_key=, password=, etc.)
+
+**Enforce naming conventions:**
+- Name: React components must use PascalCase
+- Description: All React component files and function names must use PascalCase.
+- Severity: Low
+- Pattern: Flag React component exports that don't start with an uppercase letter
+
+**Ban deprecated libraries:**
+- Name: No moment.js
+- Description: moment.js is deprecated. Use date-fns or dayjs instead.
+- Severity: Medium
+- Pattern: Detect import/require statements for moment or moment-timezone
+
+**Require auth middleware on API routes:**
+- Name: All API routes must have authentication
+- Description: Every route handler must include authentication middleware to prevent unauthorized access.
+- Severity: Critical
+- Pattern: Flag route handlers (app.get, app.post, etc.) that don't include an auth preHandler
+
+### Rule Scope
+
+- Rules apply to all repos in your organization
+- Rules are checked on every PR scan alongside built-in detections
+- Rule violations appear as inline comments on the PR, just like other findings
+- You can enable/disable rules without deleting them
+- AI-specific rules are labeled and can be filtered in the dashboard
+
+## Feature Details
+
+### PR Scanning
+CodeSheriff scans every pull request automatically when opened or updated. The scan runs a multi-stage pipeline:
+1. **Stage 1 — Static Analysis (Semgrep)**: Pattern-based detection of known vulnerability classes (OWASP Top 10, CWE). Fast, deterministic, zero false negatives for known patterns.
+2. **Stage 2 — Secrets Detection (TruffleHog)**: Scans for leaked API keys, passwords, tokens, private keys, and credentials. Checks file content AND git history.
+3. **Stage 3 — AI Analysis (Claude)**: Deep analysis for logic bugs, hallucinated APIs, authentication bypasses, and context-dependent vulnerabilities that pattern matching cannot catch.
+
+### Inline PR Comments
+CodeSheriff posts comments directly on the lines with issues. Each comment includes:
+- The finding type (e.g., "SQL Injection", "Hardcoded Secret", "Hallucinated API")
+- Severity level (Critical, High, Medium, Low)
+- A clear explanation of why it's a problem
+- A suggested fix (Pro plan)
+
+### Summary Comment
+Each PR gets a summary comment at the top with:
+- Overall risk score (0-100)
+- Count of findings by severity
+- Key recommendations
+
+### Auto-Fix Suggestions (Pro)
+For many findings, CodeSheriff suggests a specific code fix you can apply directly. The fix is shown as a diff in the PR comment.
+
+### Hallucination Detection (Pro)
+Unique to CodeSheriff. Detects when AI-generated code references APIs, methods, or libraries that don't exist. Common when code is written with Copilot, Cursor, or other AI coding tools.
+
+### SARIF Export (Pro)
+Export scan results in SARIF format for integration with GitHub Advanced Security, GitLab SAST dashboards, or any SARIF-compatible tool.
+
+### Slack Notifications (Pro)
+Get notified in Slack when a scan completes with critical or high findings. Configure in Dashboard > Settings > Integrations.
+
 ## Troubleshooting
 
 ### Scan stuck at QUEUED
