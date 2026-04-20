@@ -47,7 +47,7 @@ export function buildPRSummaryComment(params: {
 
   const criticalFindings = findings
     .filter((f) => f.severity === Severity.CRITICAL || f.severity === Severity.HIGH)
-    .slice(0, 5);
+    .slice(0, 10);
 
   const criticalList =
     criticalFindings.length > 0

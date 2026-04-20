@@ -638,21 +638,24 @@ async function postGithubResults(
     .filter((f) => f.severity === Severity.CRITICAL || f.severity === Severity.HIGH)
     .slice(0, 10);
 
-  for (const finding of inlineFindings) {
+  if (inlineFindings.length > 0) {
     try {
-      const body = buildInlineComment(finding as Parameters<typeof buildInlineComment>[0]);
-      await githubClient.postInlineComment(
+      const comments = inlineFindings.map((finding) => ({
+        path: finding.filePath,
+        line: finding.lineStart,
+        body: buildInlineComment(finding as Parameters<typeof buildInlineComment>[0]),
+      }));
+
+      await githubClient.postBatchReview(
         payload.installationId,
         owner,
         repo,
         payload.prNumber,
         payload.commitSha,
-        finding.filePath,
-        finding.lineStart,
-        body
+        comments
       );
     } catch (err) {
-      log.warn({ err, path: finding.filePath }, 'failed to post inline comment');
+      log.warn({ err }, 'failed to post batch inline comments');
     }
   }
 }

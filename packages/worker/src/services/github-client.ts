@@ -363,6 +363,7 @@ export class GitHubClient {
 
   /**
    * Post an inline review comment on a specific file line.
+   * Falls back to file-level comment if the line isn't in the PR diff.
    */
   async postInlineComment(
     installationId: string,
@@ -377,6 +378,7 @@ export class GitHubClient {
     const octokit = await this.getInstallationOctokit(installationId);
 
     try {
+      // Try line-level comment first (requires line to be in the diff)
       await octokit.rest.pulls.createReviewComment({
         owner,
         repo,
@@ -384,12 +386,63 @@ export class GitHubClient {
         commit_id: commitSha,
         path,
         line,
-        side: 'RIGHT', // Comment on the new version of the file
+        side: 'RIGHT',
         body,
       });
-    } catch (err) {
-      // Inline comment can fail if the line isn't in the diff — log and continue
-      logger.warn({ err, path, line }, 'failed to post inline review comment');
+    } catch {
+      // Line not in diff — fall back to file-level comment
+      try {
+        await octokit.rest.pulls.createReviewComment({
+          owner,
+          repo,
+          pull_number: prNumber,
+          commit_id: commitSha,
+          path,
+          body: `**Line ${line}:**\n\n${body}`,
+          subject_type: 'file',
+        });
+      } catch (err) {
+        logger.warn({ err, path, line }, 'failed to post inline review comment (both line and file level)');
+      }
+    }
+  }
+
+  /**
+   * Post multiple inline comments as a single review (batch API).
+   * More reliable than individual createReviewComment calls.
+   */
+  async postBatchReview(
+    installationId: string,
+    owner: string,
+    repo: string,
+    prNumber: number,
+    commitSha: string,
+    comments: Array<{ path: string; line: number; body: string }>
+  ): Promise<void> {
+    const octokit = await this.getInstallationOctokit(installationId);
+
+    // Split into diff-line comments and file-level comments
+    // GitHub's createReview API requires all comments to be on valid diff lines,
+    // so we try the batch first, then fall back per-comment on failure
+    try {
+      await octokit.rest.pulls.createReview({
+        owner,
+        repo,
+        pull_number: prNumber,
+        commit_id: commitSha,
+        event: 'COMMENT',
+        comments: comments.map((c) => ({
+          path: c.path,
+          line: c.line,
+          side: 'RIGHT' as const,
+          body: c.body,
+        })),
+      });
+    } catch {
+      // Batch failed (likely some lines not in diff) — fall back to individual comments
+      for (const c of comments) {
+        await this.postInlineComment(installationId, owner, repo, prNumber, commitSha, c.path, c.line, c.body);
+      }
     }
   }
 
