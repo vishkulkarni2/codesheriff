@@ -195,6 +195,11 @@ model Scan {
   startedAt   DateTime?
   completedAt DateTime?
 
+  /// Persistent failure triage — mirrors Redis scan_error stash shape (commit 911d5dd)
+  errorMessage String? @db.Text
+  errorType    String?
+  errorStack   String? @db.Text
+
   createdAt DateTime @default(now())
 
   // Relations
