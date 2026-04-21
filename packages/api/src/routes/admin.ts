@@ -7,29 +7,167 @@
  * monitoring tools can call it without a user session.
  */
 
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import type { Redis } from 'ioredis';
 import { prisma } from '@codesheriff/db';
 
 const ADMIN_API_KEY = process.env['ADMIN_API_KEY'] ?? '';
 
 export async function adminRoutes(app: FastifyInstance): Promise<void> {
+  // Shared admin auth check
+  const requireAdmin = (req: FastifyRequest, reply: FastifyReply): boolean => {
+    const apiKey = req.headers['x-admin-key'] ?? req.headers['authorization']?.replace('Bearer ', '');
+    if (!ADMIN_API_KEY || apiKey !== ADMIN_API_KEY) {
+      void reply.status(401).send({
+        success: false,
+        data: null,
+        error: 'Invalid or missing admin API key',
+      });
+      return false;
+    }
+    return true;
+  };
+
+  /**
+   * GET /api/v1/admin/scans?status=FAILED&limit=50
+   * List scans filtered by status for incident triage.
+   * Read-only; admin-key gated; rate-limited.
+   */
+  app.get(
+    '/admin/scans',
+    {
+      config: { rateLimit: { max: 30, timeWindow: '1 minute' } },
+    },
+    async (req, reply) => {
+      if (!requireAdmin(req, reply)) return;
+
+      const query = req.query as { status?: string; limit?: string };
+      const status = (query.status ?? 'FAILED').toUpperCase();
+      const allowed = ['QUEUED', 'RUNNING', 'COMPLETE', 'FAILED', 'CANCELLED'];
+      if (!allowed.includes(status)) {
+        return reply.status(400).send({
+          success: false,
+          data: null,
+          error: `Invalid status. Must be one of ${allowed.join(', ')}`,
+        });
+      }
+
+      const limit = Math.min(parseInt(query.limit ?? '50', 10) || 50, 200);
+
+      const scans = await prisma.scan.findMany({
+        where: { status: status as 'QUEUED' | 'RUNNING' | 'COMPLETE' | 'FAILED' | 'CANCELLED' },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        select: {
+          id: true,
+          status: true,
+          triggeredBy: true,
+          prNumber: true,
+          branch: true,
+          commitSha: true,
+          durationMs: true,
+          startedAt: true,
+          completedAt: true,
+          createdAt: true,
+          riskScore: true,
+          findingsCount: true,
+          repository: {
+            select: { fullName: true, provider: true },
+          },
+        },
+      });
+
+      return reply.send({
+        success: true,
+        data: {
+          count: scans.length,
+          scans: scans.map((s) => ({
+            id: s.id,
+            status: s.status,
+            repo: s.repository?.fullName ?? 'unknown',
+            provider: s.repository?.provider ?? null,
+            triggeredBy: s.triggeredBy,
+            prNumber: s.prNumber,
+            branch: s.branch,
+            commitSha: s.commitSha,
+            durationMs: s.durationMs,
+            startedAt: s.startedAt,
+            completedAt: s.completedAt,
+            createdAt: s.createdAt,
+            riskScore: s.riskScore,
+            findingsCount: s.findingsCount,
+          })),
+        },
+        error: null,
+      });
+    },
+  );
+
+  /**
+   * GET /api/v1/admin/scans/:scanId/error
+   * Read stashed failure diagnostics (errorMessage + stack) from Redis.
+   * Populated by worker scan-processor on the failure path. 7-day TTL.
+   */
+  app.get<{ Params: { scanId: string } }>(
+    '/admin/scans/:scanId/error',
+    {
+      config: { rateLimit: { max: 30, timeWindow: '1 minute' } },
+    },
+    async (req, reply) => {
+      if (!requireAdmin(req, reply)) return;
+
+      const { scanId } = req.params;
+      if (!scanId || !/^[a-z0-9]{20,40}$/i.test(scanId)) {
+        return reply.status(400).send({
+          success: false,
+          data: null,
+          error: 'Invalid scanId',
+        });
+      }
+
+      const redis = (app as FastifyInstance & { redis?: Redis }).redis;
+      if (!redis) {
+        return reply.status(503).send({
+          success: false,
+          data: null,
+          error: 'Redis not available',
+        });
+      }
+
+      const raw = await redis.get(`scan_error:${scanId}`);
+      if (!raw) {
+        return reply.status(404).send({
+          success: false,
+          data: null,
+          error: 'No stashed error diagnostic for this scan (may be pre-instrumentation or expired)',
+        });
+      }
+
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        return reply.status(500).send({
+          success: false,
+          data: null,
+          error: 'Stashed diagnostic is not valid JSON',
+        });
+      }
+
+      return reply.send({ success: true, data: parsed, error: null });
+    },
+  );
+
   app.get(
     '/admin/stats',
     {
       config: { rateLimit: { max: 30, timeWindow: '1 minute' } },
     },
     async (req, reply) => {
-      const apiKey = req.headers['x-admin-key'] ?? req.headers['authorization']?.replace('Bearer ', '');
-
-      if (!ADMIN_API_KEY || apiKey !== ADMIN_API_KEY) {
-        return reply.status(401).send({
-          success: false,
-          data: null,
-          error: 'Invalid or missing admin API key',
-        });
-      }
+      if (!requireAdmin(req, reply)) return;
 
       const now = new Date();
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
@@ -38,10 +176,13 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
         totalUsers,
         totalRepos,
         totalScans,
+        scansLast24h,
         scansLast7d,
         scansLast30d,
         completedScans,
         failedScans,
+        failedScansLast24h,
+        failedScansLast7d,
         totalFindings,
         findingsBySeverity,
         orgsByPlan,
@@ -51,10 +192,13 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
         prisma.user.count(),
         prisma.repository.count(),
         prisma.scan.count(),
+        prisma.scan.count({ where: { createdAt: { gte: oneDayAgo } } }),
         prisma.scan.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
         prisma.scan.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
         prisma.scan.count({ where: { status: 'COMPLETE' } }),
         prisma.scan.count({ where: { status: 'FAILED' } }),
+        prisma.scan.count({ where: { status: 'FAILED', createdAt: { gte: oneDayAgo } } }),
+        prisma.scan.count({ where: { status: 'FAILED', createdAt: { gte: sevenDaysAgo } } }),
         prisma.finding.count(),
         prisma.finding.groupBy({
           by: ['severity'],
@@ -103,9 +247,12 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
             totalScans,
             completedScans,
             failedScans,
+            failedScansLast24h,
+            failedScansLast7d,
             totalFindings,
           },
           activity: {
+            scansLast24h,
             scansLast7d,
             scansLast30d,
           },
