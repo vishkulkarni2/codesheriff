@@ -105,8 +105,9 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
 
   /**
    * GET /api/v1/admin/scans/:scanId/error
-   * Read stashed failure diagnostics (errorMessage + stack) from Redis.
-   * Populated by worker scan-processor on the failure path. 7-day TTL.
+   * Returns failure diagnostics for a scan. DB columns are primary (persistent,
+   * no TTL); falls back to Redis stash for records written before this schema
+   * change (commit 911d5dd legacy records, 7-day TTL).
    */
   app.get<{ Params: { scanId: string } }>(
     '/admin/scans/:scanId/error',
@@ -125,36 +126,68 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
         });
       }
 
-      const redis = (app as FastifyInstance & { redis?: Redis }).redis;
-      if (!redis) {
-        return reply.status(503).send({
-          success: false,
-          data: null,
-          error: 'Redis not available',
-        });
-      }
+      // DB-first: read persistent error columns added in this migration
+      const scan = await prisma.scan.findUnique({
+        where: { id: scanId },
+        select: {
+          id: true,
+          status: true,
+          errorMessage: true,
+          errorType: true,
+          errorStack: true,
+          durationMs: true,
+          completedAt: true,
+        },
+      });
 
-      const raw = await redis.get(`scan_error:${scanId}`);
-      if (!raw) {
+      if (!scan) {
         return reply.status(404).send({
           success: false,
           data: null,
-          error: 'No stashed error diagnostic for this scan (may be pre-instrumentation or expired)',
+          error: 'Scan not found',
         });
       }
 
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(raw);
-      } catch {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          error: 'Stashed diagnostic is not valid JSON',
+      if (scan.errorMessage !== null) {
+        return reply.send({
+          success: true,
+          data: {
+            scanId: scan.id,
+            source: 'db',
+            errorType: scan.errorType,
+            errorMessage: scan.errorMessage,
+            errorStack: scan.errorStack,
+            durationMs: scan.durationMs,
+            failedAt: scan.completedAt?.toISOString() ?? null,
+          },
+          error: null,
         });
       }
 
-      return reply.send({ success: true, data: parsed, error: null });
+      // Fallback: Redis stash for legacy records pre-migration
+      const redis = (app as FastifyInstance & { redis?: Redis }).redis;
+      if (redis) {
+        const raw = await redis.get(`scan_error:${scanId}`);
+        if (raw) {
+          let parsed: unknown;
+          try {
+            parsed = JSON.parse(raw);
+          } catch {
+            return reply.status(500).send({
+              success: false,
+              data: null,
+              error: 'Stashed diagnostic is not valid JSON',
+            });
+          }
+          return reply.send({ success: true, data: { ...(parsed as object), source: 'redis' }, error: null });
+        }
+      }
+
+      return reply.status(404).send({
+        success: false,
+        data: null,
+        error: 'No error diagnostic for this scan (not a failed scan, or pre-instrumentation)',
+      });
     },
   );
 
