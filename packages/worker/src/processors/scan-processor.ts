@@ -328,8 +328,7 @@ export async function processScanJob(
 
     // Capture failure diagnostics in Redis so admin tooling can triage without
     // Render log retention. Mirrors the scan_diagnostic:* success-path stash.
-    // Scan schema doesn't carry errorMessage yet (schema change needs approval);
-    // Redis is a safe stop-gap with 7-day TTL.
+    // Redis stash kept as belt-and-suspenders; DB columns are now the primary store.
     const startedAt = (await prisma.scan.findUnique({
       where: { id: payload.scanId },
       select: { startedAt: true },
@@ -366,6 +365,9 @@ export async function processScanJob(
       data: {
         status: ScanStatus.FAILED,
         completedAt: new Date(),
+        errorMessage: errorPayload.errorMessage,
+        errorType: errorPayload.errorType,
+        errorStack: errorPayload.errorStack ?? null,
         ...(durationMs !== null ? { durationMs } : {}),
       },
     });
