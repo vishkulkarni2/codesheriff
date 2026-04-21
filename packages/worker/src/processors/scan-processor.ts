@@ -633,10 +633,36 @@ async function postGithubResults(
     log.warn({ err }, 'failed to post PR summary comment');
   }
 
-  // Post inline comments for HIGH+ findings (cap at 10 to avoid spam)
-  const inlineFindings = findings
-    .filter((f) => f.severity === Severity.CRITICAL || f.severity === Severity.HIGH)
-    .slice(0, 10);
+  // Post inline comments.
+  // Policy (tonight's call with Vish): surface everything for critical/high
+  // severity, manage noise for medium/low. Raw for high-severity, curated for
+  // lower. Info-level findings are dashboard-only.
+  //   - CRITICAL + HIGH: include ALL, no cap (batch API removed rate-limit concern)
+  //   - MEDIUM + LOW:    up to INLINE_LOW_SEVERITY_CAP (default 20, env-overridable)
+  //   - INFO:            skipped inline, shown only in dashboard
+  //   - Hard sanity guard at 100 total to prevent API disasters on pathological scans.
+  const inlineLowSeverityCap = parseInt(
+    process.env['INLINE_LOW_SEVERITY_CAP'] ?? '20',
+    10
+  );
+  const INLINE_HARD_CAP = 100;
+
+  const criticalHighInline = findings.filter(
+    (f) => f.severity === Severity.CRITICAL || f.severity === Severity.HIGH
+  );
+  const mediumLowInline = findings
+    .filter((f) => f.severity === Severity.MEDIUM || f.severity === Severity.LOW)
+    .slice(0, inlineLowSeverityCap);
+
+  let inlineFindings = [...criticalHighInline, ...mediumLowInline];
+
+  if (inlineFindings.length > INLINE_HARD_CAP) {
+    log.warn(
+      { total: inlineFindings.length, cap: INLINE_HARD_CAP },
+      'inline comment total exceeded hard cap — truncating to prevent API storm'
+    );
+    inlineFindings = inlineFindings.slice(0, INLINE_HARD_CAP);
+  }
 
   if (inlineFindings.length > 0) {
     try {

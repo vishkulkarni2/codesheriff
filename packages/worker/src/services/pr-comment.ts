@@ -45,9 +45,12 @@ export function buildPRSummaryComment(params: {
 
   const counts = countBySeverity(findings);
 
-  const criticalFindings = findings
-    .filter((f) => f.severity === Severity.CRITICAL || f.severity === Severity.HIGH)
-    .slice(0, 10);
+  const SUMMARY_CAP = 10;
+  const allCriticalHigh = findings.filter(
+    (f) => f.severity === Severity.CRITICAL || f.severity === Severity.HIGH
+  );
+  const totalCriticalHigh = allCriticalHigh.length;
+  const criticalFindings = allCriticalHigh.slice(0, SUMMARY_CAP);
 
   const criticalList =
     criticalFindings.length > 0
@@ -58,6 +61,13 @@ export function buildPRSummaryComment(params: {
           )
           .join('\n')
       : '_No critical or high findings._';
+
+  const criticalHeader =
+    totalCriticalHigh > SUMMARY_CAP
+      ? `### Critical & High Findings (showing ${SUMMARY_CAP} of ${totalCriticalHigh})`
+      : totalCriticalHigh > 0
+        ? `### Critical & High Findings (${totalCriticalHigh})`
+        : `### Critical & High Findings`;
 
   return `## CodeSheriff Analysis 🔍
 
@@ -70,7 +80,7 @@ export function buildPRSummaryComment(params: {
 | 🟡 Medium | ${counts.medium} |
 | 🟢 Low | ${counts.low} |
 
-### Critical & High Findings
+${criticalHeader}
 ${criticalList}
 
 > Powered by CodeSheriff · [Full Report](${apiUrl}/scans/${scanId})`;
