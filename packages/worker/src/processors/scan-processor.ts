@@ -326,11 +326,47 @@ export async function processScanJob(
   } catch (err) {
     log.error({ err }, 'scan job failed');
 
+    // Capture failure diagnostics in Redis so admin tooling can triage without
+    // Render log retention. Mirrors the scan_diagnostic:* success-path stash.
+    // Scan schema doesn't carry errorMessage yet (schema change needs approval);
+    // Redis is a safe stop-gap with 7-day TTL.
+    const startedAt = (await prisma.scan.findUnique({
+      where: { id: payload.scanId },
+      select: { startedAt: true },
+    }))?.startedAt ?? null;
+    const durationMs = startedAt ? Date.now() - startedAt.getTime() : null;
+    const errorPayload = {
+      scanId: payload.scanId,
+      repoFullName: payload.repoFullName,
+      provider: payload.provider,
+      prNumber: payload.prNumber,
+      commitSha: payload.commitSha,
+      errorType: (err as { name?: string; constructor?: { name?: string } })?.constructor?.name
+        ?? (err as { name?: string })?.name
+        ?? 'Error',
+      errorMessage: (err as { message?: string })?.message?.slice(0, 1000) ?? String(err).slice(0, 1000),
+      errorStack: (err as { stack?: string })?.stack?.slice(0, 4000) ?? null,
+      durationMs,
+      failedAt: new Date().toISOString(),
+    };
+    try {
+      // 7 day TTL matches Render log retention expectations
+      await deps.redis.setex(
+        `scan_error:${payload.scanId}`,
+        7 * 24 * 3600,
+        JSON.stringify(errorPayload),
+      );
+      await deps.redis.setex('scan_error:last', 7 * 24 * 3600, JSON.stringify(errorPayload));
+    } catch (stashErr) {
+      log.warn({ stashErr }, 'failed to stash scan error diagnostic in redis');
+    }
+
     await prisma.scan.update({
       where: { id: payload.scanId },
       data: {
         status: ScanStatus.FAILED,
         completedAt: new Date(),
+        ...(durationMs !== null ? { durationMs } : {}),
       },
     });
 
