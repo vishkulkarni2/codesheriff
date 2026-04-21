@@ -158,6 +158,74 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     },
   );
 
+  /**
+   * DELETE /api/v1/admin/scans/:scanId
+   * Hard-delete a single scan and its cascade children (Findings).
+   * Admin-key gated. Intended for operational cleanup of known-bad
+   * historical records that poison aggregate metrics (e.g. failed
+   * dogfood scans from before the pipeline stabilized).
+   *
+   * Not a bulk endpoint — blast radius intentionally small.
+   */
+  app.delete<{ Params: { scanId: string } }>(
+    '/admin/scans/:scanId',
+    {
+      config: { rateLimit: { max: 20, timeWindow: '1 minute' } },
+    },
+    async (req, reply) => {
+      if (!requireAdmin(req, reply)) return;
+
+      const { scanId } = req.params;
+      if (!scanId || !/^[a-z0-9]{20,40}$/i.test(scanId)) {
+        return reply.status(400).send({
+          success: false,
+          data: null,
+          error: 'Invalid scanId',
+        });
+      }
+
+      const existing = await prisma.scan.findUnique({
+        where: { id: scanId },
+        select: { id: true, status: true, findingsCount: true },
+      });
+      if (!existing) {
+        return reply.status(404).send({
+          success: false,
+          data: null,
+          error: 'Scan not found',
+        });
+      }
+
+      // Transactional delete: children first (explicit for audit clarity),
+      // then scan. Finding.scanId has onDelete: Cascade in the schema, so
+      // the explicit deleteMany is defensive — it returns a count we log.
+      const result = await prisma.$transaction(async (tx) => {
+        const findings = await tx.finding.deleteMany({ where: { scanId } });
+        await tx.scan.delete({ where: { id: scanId } });
+        return { findingsDeleted: findings.count };
+      });
+
+      req.log.warn(
+        { scanId, status: existing.status, findingsDeleted: result.findingsDeleted },
+        'admin scan delete',
+      );
+
+      return reply.send({
+        success: true,
+        data: {
+          deleted: {
+            scanId,
+            previousStatus: existing.status,
+            relatedRowsDeleted: {
+              findings: result.findingsDeleted,
+            },
+          },
+        },
+        error: null,
+      });
+    },
+  );
+
   app.get(
     '/admin/stats',
     {
