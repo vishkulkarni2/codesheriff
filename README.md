@@ -136,6 +136,18 @@ Stages 4–6 run concurrently. All stages are non-fatal — a detector failure n
 
 ---
 
+## Repo configuration
+
+Drop a `.codesheriff.yml` file at the root of any connected repo to tune PR
+comment behavior per-repo — severity threshold for inline comments, noise caps,
+summary length. Missing or malformed config falls back to safe defaults; scans
+never fail because of config.
+
+See [`packages/worker/CONFIG.md`](packages/worker/CONFIG.md) for the full schema
+and examples.
+
+---
+
 ## Environment variables
 
 See `.env.example` for the full list. Key variables:

@@ -32,6 +32,12 @@ export function buildPRSummaryComment(params: {
   findings: RawFinding[];
   apiUrl: string;
   repoFullName: string;
+  /**
+   * Max findings shown in the "Critical & High Findings" summary list.
+   * Configurable via `.codesheriff.yml` → `comments.summary_top_n`.
+   * Defaults to 10 to preserve historical behavior.
+   */
+  summaryTopN?: number;
 }): string {
   const { riskScore, scanId, findings, apiUrl, repoFullName } = params;
 
@@ -45,7 +51,7 @@ export function buildPRSummaryComment(params: {
 
   const counts = countBySeverity(findings);
 
-  const SUMMARY_CAP = 10;
+  const SUMMARY_CAP = params.summaryTopN ?? 10;
   const allCriticalHigh = findings.filter(
     (f) => f.severity === Severity.CRITICAL || f.severity === Severity.HIGH
   );

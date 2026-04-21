@@ -32,6 +32,10 @@ import { GitLabClient } from '../services/gitlab-client.js';
 import { decryptToken } from '../services/token-crypto.js';
 import { buildPRSummaryComment, buildInlineComment } from '../services/pr-comment.js';
 import { sendSlackNotification } from '../services/slack-notifier.js';
+import {
+  loadRepoConfigFromFiles,
+  type RepoConfig,
+} from '../services/repo-config.js';
 import { logger } from '../utils/logger.js';
 
 function listRulesDir(): { path: string; files: string[] } | null {
@@ -98,6 +102,17 @@ export async function processScanJob(
       await completeScan(payload.scanId, 0, [], 0);
       return;
     }
+
+    // ----- Step 1b: Load repo-level `.codesheriff.yml` config (if present) -----
+    // Never fails — bad config falls back to defaults and logs a warning.
+    const envInlineLowCap = process.env['INLINE_LOW_SEVERITY_CAP']
+      ? parseInt(process.env['INLINE_LOW_SEVERITY_CAP'], 10)
+      : undefined;
+    const repoConfig = loadRepoConfigFromFiles(
+      files,
+      log,
+      Number.isFinite(envInlineLowCap) ? envInlineLowCap : undefined,
+    );
 
     // ----- Step 2: Parse dependencies -----
     const dependencies = parseDependencies(files);
@@ -287,7 +302,7 @@ export async function processScanJob(
 
     // ----- Step 10: GitHub integrations (non-fatal) -----
     if (payload.provider === Provider.GITHUB && payload.installationId) {
-      await postGithubResults(payload, result.findings, result.riskScore, deps.githubClient, checkRunId, features, log);
+      await postGithubResults(payload, result.findings, result.riskScore, deps.githubClient, checkRunId, features, repoConfig, log);
     }
 
     // ----- Step 11: Slack notification (TEAM+ only, non-fatal) -----
@@ -579,6 +594,7 @@ async function postGithubResults(
   githubClient: GitHubClient,
   checkRunId: number | null,
   features: AnalysisFeatureFlags,
+  repoConfig: RepoConfig,
   log: Logger
 ): Promise<void> {
   if (!payload.installationId) return;
@@ -620,6 +636,7 @@ async function postGithubResults(
       findings: findings as Parameters<typeof buildPRSummaryComment>[0]['findings'],
       apiUrl,
       repoFullName: payload.repoFullName,
+      summaryTopN: repoConfig.comments.summaryTopN,
     });
 
     await githubClient.postPRComment(
@@ -637,24 +654,53 @@ async function postGithubResults(
   // Policy (tonight's call with Vish): surface everything for critical/high
   // severity, manage noise for medium/low. Raw for high-severity, curated for
   // lower. Info-level findings are dashboard-only.
-  //   - CRITICAL + HIGH: include ALL, no cap (batch API removed rate-limit concern)
-  //   - MEDIUM + LOW:    up to INLINE_LOW_SEVERITY_CAP (default 20, env-overridable)
-  //   - INFO:            skipped inline, shown only in dashboard
-  //   - Hard sanity guard at 100 total to prevent API disasters on pathological scans.
-  const inlineLowSeverityCap = parseInt(
-    process.env['INLINE_LOW_SEVERITY_CAP'] ?? '20',
-    10
-  );
+  //
+  // Repo-level `.codesheriff.yml` can override:
+  //   comments.inline_severity_threshold: all | high (default) | critical | none
+  //   comments.inline_low_cap: (for "all"/"high") max medium+low comments
+  //
+  // Precedence: repo config > env var > built-in default.
+  //
+  //   - "none":     skip inline entirely — summary card only
+  //   - "critical": CRITICAL only, uncapped
+  //   - "high":     CRITICAL + HIGH uncapped; MEDIUM + LOW up to inline_low_cap
+  //   - "all":      every severity (including INFO), MEDIUM + LOW + INFO up to inline_low_cap
+  //
+  //   Hard sanity guard at 100 total to prevent API disasters on pathological scans.
+  const threshold = repoConfig.comments.inlineSeverityThreshold;
+  const inlineLowSeverityCap = repoConfig.comments.inlineLowCap;
   const INLINE_HARD_CAP = 100;
 
-  const criticalHighInline = findings.filter(
-    (f) => f.severity === Severity.CRITICAL || f.severity === Severity.HIGH
-  );
-  const mediumLowInline = findings
-    .filter((f) => f.severity === Severity.MEDIUM || f.severity === Severity.LOW)
-    .slice(0, inlineLowSeverityCap);
+  let inlineFindings: typeof findings = [];
 
-  let inlineFindings = [...criticalHighInline, ...mediumLowInline];
+  if (threshold === 'none') {
+    // Summary card only — skip inline entirely.
+    inlineFindings = [];
+  } else if (threshold === 'critical') {
+    inlineFindings = findings.filter((f) => f.severity === Severity.CRITICAL);
+  } else if (threshold === 'high') {
+    const criticalHighInline = findings.filter(
+      (f) => f.severity === Severity.CRITICAL || f.severity === Severity.HIGH
+    );
+    const mediumLowInline = findings
+      .filter((f) => f.severity === Severity.MEDIUM || f.severity === Severity.LOW)
+      .slice(0, inlineLowSeverityCap);
+    inlineFindings = [...criticalHighInline, ...mediumLowInline];
+  } else {
+    // "all"
+    const criticalHighInline = findings.filter(
+      (f) => f.severity === Severity.CRITICAL || f.severity === Severity.HIGH
+    );
+    const lowerInline = findings
+      .filter(
+        (f) =>
+          f.severity === Severity.MEDIUM ||
+          f.severity === Severity.LOW ||
+          f.severity === Severity.INFO
+      )
+      .slice(0, inlineLowSeverityCap);
+    inlineFindings = [...criticalHighInline, ...lowerInline];
+  }
 
   if (inlineFindings.length > INLINE_HARD_CAP) {
     log.warn(
