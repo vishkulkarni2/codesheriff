@@ -15,7 +15,21 @@ export const metadata = { title: 'Get started' };
 // Don't cache — we need a fresh check after GitHub App install
 export const revalidate = 0;
 
-export default async function OnboardingPage() {
+export default async function OnboardingPage({
+  searchParams,
+}: {
+  searchParams: { installation_id?: string; setup_action?: string };
+}) {
+  // GitHub redirects here after App installation with ?installation_id=&setup_action=install.
+  // Forward to the dedicated callback handler that links the installation to the org,
+  // then syncs repos and redirects to /repos. This fires because the GitHub App
+  // setup_url is configured as /onboarding rather than /api/github/callback.
+  if (searchParams.installation_id) {
+    const params = new URLSearchParams({ installation_id: searchParams.installation_id });
+    if (searchParams.setup_action) params.set('setup_action', searchParams.setup_action);
+    redirect(`/api/github/callback?${params.toString()}`);
+  }
+
   const { getToken, userId } = auth();
   if (!userId) redirect('/sign-in');
 
