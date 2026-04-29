@@ -226,7 +226,7 @@ Every piece of copy should feature the hallucination detector prominently. "The 
 **Action:** Rewrite landing page hero, blog posts, Twitter bio, Show HN post around this frame.
 
 #### 3. Exploit the GitLab Gap Hard
-Cubic explicitly says "We only support GitHub." We support GitHub AND GitLab. Any enterprise running GitLab cannot use Cubic. Create a landing page `codesheriff.dev/gitlab` targeting GitLab shops. Run ads or outreach to GitLab communities.
+Cubic explicitly says "We only support GitHub." We support GitHub AND GitLab. Any enterprise running GitLab cannot use Cubic. Create a landing page `thecodesheriff.com/gitlab` targeting GitLab shops. Run ads or outreach to GitLab communities.
 
 **Action:** Add a GitLab-specific landing page. Target "CodeRabbit GitLab alternative," "AI code review GitLab" search terms.
 

@@ -157,7 +157,7 @@ cp .env.example .env
 **Step 2: Create a GitHub org for benchmark PRs**
 - Create org: `codesheriff-benchmark` (or similar)
 - Install CodeSheriff GitHub App on this org
-- Ensure webhook URL (api.codesheriff.dev/webhooks/github) is reachable
+- Ensure webhook URL (api.thecodesheriff.com/webhooks/github) is reachable
 
 **Step 3: Fork benchmark PRs and trigger reviews**
 ```

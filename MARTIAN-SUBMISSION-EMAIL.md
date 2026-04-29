@@ -34,4 +34,4 @@ Please let us know if you need any additional information or if there are issues
 
 Best,
 Vish Kulkarni
-CodeSheriff (https://codesheriff.dev)
+CodeSheriff (https://thecodesheriff.com)

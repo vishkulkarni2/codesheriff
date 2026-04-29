@@ -45,7 +45,7 @@
 | **No production Redis** | No hosted Redis. Need Upstash, Railway, or Render Redis. | 30 min | Vish |
 | **App not deployed** | API, worker, and web are not deployed anywhere. Need Render/Railway/Fly.io. | 3 hours | Rache |
 | **E2E test never run** | The full flow (GitHub push -> webhook -> scan -> PR comment) has never been tested with real repos. | 3 hours | Rache + Vish |
-| **No domain setup** | app.codesheriff.dev and api.codesheriff.dev not configured. Marketing site references these URLs. | 1 hour | Vish |
+| **No domain setup** | app.thecodesheriff.com and api.thecodesheriff.com not configured. Marketing site references these URLs. | 1 hour | Vish |
 | **semgrep/TruffleHog not verified** | The static analyzer and secrets scanner shell out to semgrep and trufflehog binaries. Not confirmed these are installed in Docker images. | 1 hour | Rache |
 | **Cal.com booking page** | Marketing site links to cal.com/codesheriff/demo but the page doesn't exist. | 30 min | Vish |
 
@@ -139,8 +139,8 @@ The code quality is high. The architecture is solid. But the "last mile" deploym
 
 ### Beta Signup Flow
 
-1. User visits codesheriff.dev (marketing site)
-2. Clicks "Get started free" -> redirected to app.codesheriff.dev/sign-up
+1. User visits thecodesheriff.com (marketing site)
+2. Clicks "Get started free" -> redirected to app.thecodesheriff.com/sign-up
 3. Signs up via Clerk (GitHub OAuth preferred for frictionless GitHub App install)
 4. Onboarding wizard: Install GitHub App -> select repos -> first scan triggers automatically
 5. Dashboard shows results within 2-3 minutes
@@ -166,7 +166,7 @@ The code quality is high. The architecture is solid. But the "last mile" deploym
 
 | Week | Content | Channel |
 |---|---|---|
-| 1 | "What is CodeSheriff?" blog post | codesheriff.dev/blog, Dev.to |
+| 1 | "What is CodeSheriff?" blog post | thecodesheriff.com/blog, Dev.to |
 | 2 | "5 Security Bugs AI Assistants Introduce" | Blog + Twitter thread |
 | 2 | Demo video: 2-min setup to first scan | YouTube, Twitter, LinkedIn |
 | 3 | "How autotune works" technical deep dive | Blog + HN |
@@ -193,10 +193,10 @@ The code quality is high. The architecture is solid. But the "last mile" deploym
 | Verify semgrep + TruffleHog in Docker images | P0 | Rache | 1h |
 | Deploy API + Worker to Render/Railway | P0 | Rache | 3h |
 | Deploy Web to Vercel | P0 | Rache | 1h |
-| Configure DNS: app.codesheriff.dev, api.codesheriff.dev | P0 | Vish | 1h |
+| Configure DNS: app.thecodesheriff.com, api.thecodesheriff.com | P0 | Vish | 1h |
 | Run Prisma migrations on production DB | P0 | Rache | 30m |
 | Verify marketing site is live on Vercel | P1 | Vish | 30m |
-| **Milestone:** API health check returns 200 on api.codesheriff.dev/health | | | |
+| **Milestone:** API health check returns 200 on api.thecodesheriff.com/health | | | |
 
 ### Week 2 (Apr 8-14): E2E Testing & Bug Fixes
 
@@ -259,7 +259,7 @@ The code quality is high. The architecture is solid. But the "last mile" deploym
 
 ### Go Criteria (ALL must be true by Apr 14)
 
-- [ ] A new user can sign up at app.codesheriff.dev
+- [ ] A new user can sign up at app.thecodesheriff.com
 - [ ] GitHub App install flow works (onboarding wizard)
 - [ ] Pushing code to a connected repo triggers a scan automatically
 - [ ] Scan results appear on dashboard within 5 minutes
@@ -292,7 +292,7 @@ The code quality is high. The architecture is solid. But the "last mile" deploym
 | **Error monitoring** | Sentry (free tier: 5K events/mo) | $0 | |
 | **Logging** | Axiom (free tier: 500MB/mo) | $0 | |
 | **Uptime monitoring** | BetterUptime (free tier) | $0 | |
-| **Domain** | codesheriff.dev | ~$12/yr | Likely already owned |
+| **Domain** | thecodesheriff.com | ~$12/yr | Owned |
 | **Email** | Resend (free tier: 100 emails/day) | $0 | |
 | **Anthropic API** | Pay-as-you-go | ~$5-20/mo at beta scale | 3 detectors per scan |
 
@@ -303,10 +303,10 @@ The code quality is high. The architecture is solid. But the "last mile" deploym
 ## Appendix: Quick Reference
 
 ### Key URLs (Post-Deploy)
-- Marketing: https://codesheriff.dev (or codesheriff-marketing.vercel.app)
-- App: https://app.codesheriff.dev
-- API: https://api.codesheriff.dev
-- Docs: https://codesheriff.dev/docs
+- Marketing: https://thecodesheriff.com
+- App: https://app.thecodesheriff.com
+- API: https://api.thecodesheriff.com
+- Docs: https://thecodesheriff.com/docs
 - Demo booking: https://cal.com/codesheriff/demo
 
 ### Key Repos

@@ -108,7 +108,7 @@ vercel --prod
 | **Vercel** | PENDING | Vish: Login + deploy (5 min) |
 | **Render** | PENDING | Vish: Create account + services (10 min) |
 | **Anthropic** | HAVE KEY | Use existing or create production key |
-| **Domain DNS** | PENDING | Vish: Point app.codesheriff.dev + api.codesheriff.dev |
+| **Domain DNS** | DONE | app.thecodesheriff.com + api.thecodesheriff.com live |
 
 ---
 
@@ -121,7 +121,7 @@ vercel --prod
    - Publishable key → `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
    - Secret key → `CLERK_SECRET_KEY`
 5. Go to **Webhooks** → Add endpoint:
-   - URL: `https://api.codesheriff.dev/webhooks/clerk`
+   - URL: `https://api.thecodesheriff.com/webhooks/clerk`
    - Events: `user.created`, `user.updated`, `user.deleted`
    - Copy signing secret → `CLERK_WEBHOOK_SECRET`
 
@@ -137,7 +137,7 @@ vercel --prod
    - Price: $29/month, recurring
    - Copy price ID → `STRIPE_TEAM_PRICE_ID`
 4. Create Webhook endpoint:
-   - URL: `https://api.codesheriff.dev/webhooks/stripe`
+   - URL: `https://api.thecodesheriff.com/webhooks/stripe`
    - Events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`
    - Copy signing secret → `STRIPE_WEBHOOK_SECRET`
 5. (Optional) Create coupon:

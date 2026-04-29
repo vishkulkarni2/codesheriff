@@ -587,7 +587,7 @@ function buildSarif(
           driver: {
             name: 'CodeSheriff',
             version: '1.0.0',
-            informationUri: 'https://codesheriff.dev',
+            informationUri: 'https://thecodesheriff.com',
             rules: Array.from(rulesMap.values()),
           },
         },

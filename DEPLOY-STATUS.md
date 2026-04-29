@@ -118,7 +118,7 @@ open -a Docker
 ```
 
 #### J. DNS Configuration
-Point `app.codesheriff.dev` and `api.codesheriff.dev` to deployment hosts.
+Point `app.thecodesheriff.com` and `api.thecodesheriff.com` to deployment hosts.
 
 ---
 

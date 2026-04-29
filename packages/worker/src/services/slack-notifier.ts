@@ -39,7 +39,7 @@ export interface SlackNotificationPayload {
   /** Optional PR context */
   prNumber?: number | null;
   prTitle?: string | null;
-  /** Base URL of the CodeSheriff frontend, e.g. "https://codesheriff.dev" */
+  /** Base URL of the CodeSheriff frontend, e.g. "https://app.thecodesheriff.com" */
   frontendUrl: string;
 }
 
@@ -209,7 +209,7 @@ function buildSlackPayload(payload: SlackNotificationPayload): object {
     elements: [
       {
         type: 'mrkdwn',
-        text: `Sent by <https://codesheriff.dev|CodeSheriff> · <${scanUrl}|View full report>`,
+        text: `Sent by <https://thecodesheriff.com|CodeSheriff> · <${scanUrl}|View full report>`,
       },
     ],
   });

@@ -638,7 +638,7 @@ async function postGithubResults(
   if (!payload.installationId) return;
 
   const [owner, repo] = splitFullName(payload.repoFullName);
-  const apiUrl = process.env['FRONTEND_URL'] ?? 'https://codesheriff.dev';
+  const apiUrl = process.env['FRONTEND_URL'] ?? 'https://app.thecodesheriff.com';
 
   // Update Check Run to completed
   if (checkRunId !== null) {
@@ -817,7 +817,7 @@ async function postSlackNotification({
       lowCount,
       prNumber: payload.prNumber,
       prTitle: payload.prTitle,
-      frontendUrl: process.env['FRONTEND_URL'] ?? 'https://codesheriff.dev',
+      frontendUrl: process.env['FRONTEND_URL'] ?? 'https://app.thecodesheriff.com',
     });
 
     log.info({ outcome }, 'slack notification sent');

@@ -19,16 +19,12 @@ Fill in these exact values:
 
 | Field | Value |
 |---|---|
-| **GitHub App name** | `CodeSheriff-Review` (live name as of 2026-04) |
-| **Homepage URL** | `https://thecodesheriff.com` |
+| **GitHub App name** | `CodeSheriff` (if taken, try `CodeSheriff-dev`) |
+| **Homepage URL** | `https://codesheriff-marketing.vercel.app` |
 | **Callback URL** | `https://app.thecodesheriff.com/api/github/callback` |
-| **Setup URL** (required) | `https://app.thecodesheriff.com/api/github/callback` |
+| **Setup URL** (optional) | `https://app.thecodesheriff.com/onboarding` |
 | **Webhook URL** | `https://api.thecodesheriff.com/webhooks/github` |
-| **Webhook secret** | stored in Render env var `GITHUB_APP_WEBHOOK_SECRET` (rotate via `openssl rand -hex 20`) |
-
-**DOMAIN NOTE (2026-04-22):** The `codesheriff.dev` domain is on Porkbun parking and is dead. Production moved to `thecodesheriff.com`. If the live App console still references `.dev` URLs, update it immediately, otherwise installs redirect users to a parked page and no repos appear.
-
-**Setup URL should be the callback route directly** (not `/onboarding`). The `/onboarding` page now forwards to the callback when `installation_id` is present (safety net in commit `7dee044`), but pointing Setup URL at the callback removes a hop.
+| **Webhook secret** | `2b8846142071f6bfaf1753a08174a7ea87ed2d96` |
 
 ### Permissions (Repository):
 - **Contents**: Read-only

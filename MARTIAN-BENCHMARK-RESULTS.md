@@ -104,7 +104,7 @@
    - Opus 4.5 judge: F1=64.6% | Sonnet 4.5 judge: F1=64.2%
 
    ## Details
-   - Tool: [CodeSheriff](https://codesheriff.dev/) - AI code review with self-improving detection
+   - Tool: [CodeSheriff](https://thecodesheriff.com/) - AI code review with self-improving detection
    - Pipeline: semgrep + LLM multi-stage analysis with autotune
    - Results added to both anthropic judge model directories
    - CodeSheriff added to evaluated tools list in README"
