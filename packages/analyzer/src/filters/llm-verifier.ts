@@ -7,7 +7,8 @@
  *
  * Fail-safe rules (no LLM call):
  *   - CRITICAL severity → always REAL_BUG, keep
- *   - SecretsScanner detector → always REAL_BUG, keep
+ *   - SecretsScanner detector (TruffleHog) → always REAL_BUG, keep
+ *   - SECRET category in test/spec/fixture file → always drop (test fixtures have fake creds by design)
  *
  * Error policy: any LLM error (API, parse, timeout) → fail-open (keep)
  *
@@ -35,6 +36,10 @@ Classify as FALSE_POSITIVE (default) if:
 - The exploit path requires assumptions not supported by the code shown
 - It is missing error handling for an edge case that is not clearly likely to occur
 - You are uncertain or the evidence is ambiguous — when in doubt, REJECT
+- The "secret" value is clearly a placeholder or template: YOUR_API_KEY, YOUR_TOKEN_HERE, CHANGE_ME, EXAMPLE_KEY, xxx, REPLACE_ME, <secret>, or similar pattern
+- The "credential" is a Redis/cache key prefix, namespace, or protocol string (e.g., "chat:token:", "session:", "user:", "prefix:")
+- The "token" is a sentinel or control-flow string used in application logic (e.g., "NO_HEARTBEAT", "SKIP_CHECK", "BYPASS")
+- The value is clearly a test fixture, mock, or documentation example (file path contains test/, spec/, __tests__, fixtures/, mock/, example/)
 
 CRITICAL: This is a PR diff — code is incomplete. NEVER flag issues caused by missing imports, helper functions defined elsewhere, or truncated context.
 
@@ -200,10 +205,22 @@ export class LlmVerifier {
       return { finding, keep: true, bypassed: 'keep' };
     }
 
-    // Bypass rule: SecretsScanner or SECRET category → always keep, no LLM call
-    if (finding.detector === 'SecretsScanner' || finding.category === FindingCategory.SECRET) {
-      log.debug({ ruleId: finding.ruleId, title: finding.title }, 'LlmVerifier bypass: SECRET → KEEP');
+    // Bypass rule: TruffleHog (SecretsScanner) → always keep, no LLM call.
+    // TruffleHog uses entropy analysis + known credential signatures — very high precision.
+    // Semgrep SECRET-category rules fire on placeholders and key prefixes — LLM verifies those.
+    if (finding.detector === 'SecretsScanner') {
+      log.debug({ ruleId: finding.ruleId, title: finding.title }, 'LlmVerifier bypass: TruffleHog → KEEP');
       return { finding, keep: true, bypassed: 'keep' };
+    }
+
+    // Drop SECRET-category findings in test/spec/fixture files — test fixtures
+    // intentionally contain fake credentials; flagging them is pure noise.
+    if (
+      finding.category === FindingCategory.SECRET &&
+      /[/.](?:test|spec|mock|fixture|example|sample)[/.]|__tests__|\.test\.|\.spec\./i.test(finding.filePath)
+    ) {
+      log.debug({ ruleId: finding.ruleId, filePath: finding.filePath }, 'LlmVerifier bypass: SECRET in test file → DROP');
+      return { finding, keep: false, bypassed: 'drop' };
     }
 
     // NOTE: SECURITY HIGH bypass was removed. High-severity security findings
